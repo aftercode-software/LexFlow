@@ -1,7 +1,9 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { extractDataFromPdf, processPDF } from './services/pdf/process-pdf'
+import { PDFType } from './types'
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,8 +51,9 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer) =>
+    extractDataFromPdf(arrayBuffer)
+  )
 
   createWindow()
 

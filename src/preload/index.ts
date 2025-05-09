@@ -1,8 +1,13 @@
-import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  extractDataFromPdf: async (arrayBuffer: ArrayBuffer) => {
+    const extractedData = await ipcRenderer.invoke('pdf:extract-data', arrayBuffer)
+    return extractedData
+  }
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
