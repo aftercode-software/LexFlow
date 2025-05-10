@@ -2,43 +2,42 @@ import fs from 'fs'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
-import { DatosProfesional, DatosTercero, PDFType } from '../../types'
+import { DatosProfesional, DatosTercero } from '../../types'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerMonto } from './utils'
 
-export async function extractDataFromPdf(arrayBuffer: ArrayBuffer) {
+export async function extractDataFromPdf(
+  arrayBuffer: ArrayBuffer,
+  pdfType: 'profesional' | 'tercero'
+): Promise<DatosProfesional | DatosTercero> {
   try {
     const tempFilePath = path.join(process.cwd() + '/tmp', 'temp.pdf')
     fs.writeFileSync(tempFilePath, Buffer.from(arrayBuffer))
-
-    const extractedText = await processPDF(tempFilePath, PDFType.PROFESIONAL)
+    console.log('PDF file created at:', tempFilePath)
+    console.log('PDF type:', pdfType)
+    console.log('ArrayBuffer:', arrayBuffer)
+    const extractedText = await processPDF(tempFilePath, pdfType)
 
     fs.unlinkSync(tempFilePath)
     return extractedText
   } catch (error) {
     console.error('Error processing PDF:', error)
-    return { error: 'Failed to process PDF' }
+    throw error
   }
 }
 
 export async function processPDF(
   pdfPath: string,
-  type: PDFType.PROFESIONAL
-): Promise<DatosProfesional>
-export async function processPDF(pdfPath: string, type: PDFType.TERCERO): Promise<DatosTercero>
-
-export async function processPDF(
-  pdfPath: string,
-  type: PDFType
+  type: 'profesional' | 'tercero'
 ): Promise<DatosProfesional | DatosTercero> {
   const { createWorker } = Tesseract
   const worker = await createWorker('spa', OEM.DEFAULT)
 
   let extractedData: DatosProfesional | DatosTercero | null = null
 
-  if (type === PDFType.PROFESIONAL) {
+  if (type === 'profesional') {
     extractedData = (await processProfesionalPDF(worker, pdfPath)) as DatosProfesional
-  } else if (type === PDFType.TERCERO) {
+  } else if (type === 'tercero') {
     extractedData = (await processTerceroPDF(worker, pdfPath)) as DatosTercero
   }
   await worker.terminate()
@@ -127,7 +126,7 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
   const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9\/-]+)/i)?.[1] ?? ''
 
   console.log({
-    name,
+    nombre,
     domicilioTipo,
     domicilio,
     provincia,

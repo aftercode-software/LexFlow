@@ -7,19 +7,21 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { PDFTypes } from './ModuloPDF'
+import { Button } from '../ui/button'
 import PDFUploader from './PDFUploader'
 
 export default function ProcesarPDF({
   file,
   setFile,
   handleProcess,
+  typePdf,
   setTypePDF
 }: {
   file: File | null
   setFile: React.Dispatch<React.SetStateAction<File | null>>
   handleProcess: () => void
-  setTypePDF: (type: PDFTypes) => void
+  typePdf: 'profesional' | 'tercero' | null
+  setTypePDF: (type: 'profesional' | 'tercero') => void
 }) {
   return (
     <Card className="w-fit">
@@ -31,32 +33,19 @@ export default function ProcesarPDF({
 
         <div>
           <Label>Tipo de documento</Label>
-          <Select
-            onValueChange={(value) => {
-              if (value === 'profesional') {
-                setTypePDF(PDFTypes.Profesional)
-              }
-              if (value === 'tercero') {
-                setTypePDF(PDFTypes.Tercero)
-              }
-            }}
-          >
+          <Select onValueChange={(value) => setTypePDF(value as 'profesional' | 'tercero')}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Tipo de documento" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white">
               <SelectItem value="profesional">Profesional</SelectItem>
               <SelectItem value="tercero">Tercero</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <button
-          className="border-2 border-blue-500 p-1 rounded-lg"
-          onClick={handleProcess}
-          disabled={!file}
-        >
-          Procesar PDF
-        </button>
+        <Button variant="outline" disabled={!file || !typePdf} onClick={handleProcess}>
+          Procesar
+        </Button>
       </CardContent>
     </Card>
   )

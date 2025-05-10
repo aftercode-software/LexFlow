@@ -51,8 +51,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer) =>
-    extractDataFromPdf(arrayBuffer)
+  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer, pdfType: PDFType) =>
+    extractDataFromPdf(arrayBuffer, pdfType)
   )
 
   createWindow()

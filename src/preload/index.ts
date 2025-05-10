@@ -3,8 +3,9 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 // Custom APIs for renderer
 const api = {
-  extractDataFromPdf: async (arrayBuffer: ArrayBuffer) => {
-    const extractedData = await ipcRenderer.invoke('pdf:extract-data', arrayBuffer)
+  extractDataFromPdf: async (arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => {
+    const extractedData = await ipcRenderer.invoke('pdf:extract-data', arrayBuffer, pdfType)
+    console.log(extractedData)
     return extractedData
   }
 }
