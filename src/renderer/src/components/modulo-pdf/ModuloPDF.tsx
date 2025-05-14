@@ -105,7 +105,7 @@ export default function EscanearBoleta() {
           <CardContent className="mt-4">
             <div className="my-4">
               <Label>Tipo de documento</Label>
-              <Select onValueChange={(val) => setTypePDF(val)}>
+              <Select onValueChange={(val) => setTypePDF(val as 'profesional' | 'tercero')}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecciona tipo" />
                 </SelectTrigger>
@@ -186,18 +186,6 @@ function StepIndicator({ number, label, active }: StepIndicatorProps) {
       <span className={`ml-2 font-medium ${active ? 'text-aftercode' : 'text-gray-500'}`}>
         {label}
       </span>
-    </div>
-  )
-}
-
-function StepPill({ label, active }: { label: string; active: boolean }) {
-  return (
-    <div
-      className={`px-5 py-2 rounded-full transition ${
-        active ? 'bg-aftercode text-white' : 'bg-white border border-aftercode text-aftercode'
-      }`}
-    >
-      {label}
     </div>
   )
 }

@@ -59,8 +59,9 @@ app.whenReady().then(() => {
 
   const tokenFile = path.join(app.getPath('userData'), 'token.enc')
 
-  ipcMain.handle('login', async (_e, username: string, password: string) => {
-    const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
+  ipcMain.handle('login', async (_, username: string, password: string) => {
+    console.log('Login:', username, password)
+    const resp = await fetch('http://localhost:3000/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -124,7 +125,7 @@ app.whenReady().then(() => {
   //   return JSON.parse(data)
   // })
 
-  ipcMain.handle('search-demandado', async (_event, dni: string) => {
+  ipcMain.handle('searchDemandado', async (_event, dni: string) => {
     const token: string | null = await fs
       .readFile(tokenFile)
       .then((data) =>
@@ -145,6 +146,8 @@ app.whenReady().then(() => {
       const text = await res.text()
       throw new Error(`Error ${res.status}: ${text}`)
     }
+
+    console.log('Respuesta de la API:', res)
 
     return res.json()
   })

@@ -1,5 +1,4 @@
-'use client'
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -23,9 +22,8 @@ import {
 } from '@/components/ui/accordion'
 import { AlertCircle, CheckCircle2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 import { z } from 'zod'
-import { fetchDniData } from '@renderer/lib/forms'
+import { buscarDemandado, validateDocument } from '@renderer/lib/documentUtils'
 
 type FormValues = z.infer<typeof formularioTerceroSchema>
 
@@ -36,6 +34,7 @@ interface Props extends Partial<FormValues> {
 export default function FormTerceros({
   fechaEmision,
   dni,
+  cuil,
   boleta,
   nombre,
   domicilio,
@@ -46,118 +45,194 @@ export default function FormTerceros({
   onSubmit
 }: Props) {
   const [isSearching, setIsSearching] = useState(false)
-  const [dniFound, setDniFound] = useState(false)
+  const [documentFound, setDocumentFound] = useState(false)
   const [showWarning, setShowWarning] = useState(false)
   const [warningMessage, setWarningMessage] = useState('')
   const [autoCompletedFields, setAutoCompletedFields] = useState<string[]>([])
-  const [accordionOpen, setAccordionOpen] = useState<string[]>([])
-  const previousDni = useRef<string>('')
+  const [accordionOpen, setAccordionOpen] = useState<string>('')
+  const previousValue = useRef<string>('')
+  const [currentField, setCurrentField] = useState<'dni' | 'cuil'>(cuil === dni ? 'dni' : 'cuil')
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formularioTerceroSchema),
     defaultValues: {
-      boleta: boleta || '',
-      fechaEmision: fechaEmision || '',
-      dni: dni || '',
-      nombre: nombre || '',
-      domicilio: domicilio || '',
-      provincia: provincia || '',
-      expediente: expediente || '',
-      bruto: bruto || '',
-      valor: valor || ''
+      boleta,
+      fechaEmision,
+      dni,
+      cuil,
+      nombre,
+      domicilio,
+      provincia,
+      expediente,
+      bruto,
+      valor
     }
   })
 
   useEffect(() => {
     form.reset({
-      boleta: boleta || '',
-      fechaEmision: fechaEmision || '',
-      dni: dni || '',
-      nombre: nombre || '',
-      domicilio: domicilio || '',
-      provincia: provincia || '',
-      expediente: expediente || '',
-      bruto: bruto || '',
-      valor: valor || ''
+      boleta,
+      fechaEmision,
+      dni,
+      cuil,
+      nombre,
+      domicilio,
+      provincia,
+      expediente,
+      bruto,
+      valor
     })
-  }, [boleta, fechaEmision, dni, nombre, domicilio, provincia, expediente, bruto, valor])
+    const newCurrentField = cuil === dni ? 'dni' : 'cuil'
+    if (newCurrentField !== currentField) {
+      setCurrentField(newCurrentField)
+      // Si el campo actual cambia debido a props, reseteamos el valor previo
+      // para permitir una nueva búsqueda si el número es el mismo pero el tipo cambió.
+      previousValue.current = ''
+    }
+    // Limpiar estados de búsqueda si las props cambian
+    setDocumentFound(false)
+    setAutoCompletedFields([])
+    setShowWarning(false)
+  }, [
+    boleta,
+    fechaEmision,
+    dni,
+    cuil,
+    nombre,
+    domicilio,
+    provincia,
+    expediente,
+    bruto,
+    valor,
+    form,
+    currentField
+  ])
 
-  const searchByDni = async () => {
-    const valorDni = form.getValues('dni').trim()
+  const handleSearchByDocumento = async () => {
+    const docValue = form.getValues(currentField)?.trim() || ''
 
-    // Validar caracteres especiales
-    const specialCharsRegex = /[|°&?!@#$%^*()_+\-=[\]{};':"\\,.<>/?]/
-    if (specialCharsRegex.test(valorDni)) {
+    // Validación temprana en el cliente para feedback inmediato (opcional, ya que buscarDemandado valida)
+    const { valid, error: clientValidationError } = validateDocument(currentField, docValue)
+    if (!valid) {
       setShowWarning(true)
-      setWarningMessage('El DNI contiene caracteres especiales.')
+      setWarningMessage(
+        clientValidationError || `Formato de ${currentField.toUpperCase()} incorrecto.`
+      )
+      setDocumentFound(false)
+      setAutoCompletedFields([])
       return
     }
-    if (valorDni.length < 7) return
 
-    if (valorDni === previousDni.current) return
-    previousDni.current = valorDni
+    // Evitar búsqueda si el valor no cambió y ya se encontró previamente.
+    if (docValue === previousValue.current && documentFound) {
+      return
+    }
+    previousValue.current = docValue
 
-    setShowWarning(false)
     setIsSearching(true)
-    setDniFound(false)
+    setShowWarning(false)
+    setDocumentFound(false)
+    setAutoCompletedFields([]) // Limpiar campos autocompletados antes de nueva búsqueda
 
     try {
-      const data = await fetchDniData(valorDni)
-      if (data) {
-        form.setValue('nombre', data.nombre)
-        form.setValue('domicilio', data.domicilio)
+      const demandadoData = await buscarDemandado(docValue, currentField)
+
+      if (demandadoData) {
+        form.setValue('nombre', demandadoData.nombre)
+        form.setValue('domicilio', demandadoData.domicilio)
+        // Podrías querer setear el DNI/CUIL si la API lo devuelve y es diferente al buscado
+        // form.setValue(currentField, docValue); // Asegura que el valor usado para la búsqueda esté en el campo
 
         setAutoCompletedFields(['nombre', 'domicilio'])
-        setAccordionOpen(['auto-completed'])
-        setDniFound(true)
+        setAccordionOpen('auto-completed')
+        setDocumentFound(true)
       } else {
+        setDocumentFound(false)
         setAutoCompletedFields([])
-        setDniFound(false)
+        if (currentField === 'cuil') {
+          // Si falló con CUIL, cambia a DNI y permite al usuario reintentar.
+          // El valor actual del input (que era CUIL) se mantendrá,
+          // y ahora se tratará como DNI en la próxima búsqueda.
+          setCurrentField('dni')
+          // Opcionalmente, podrías limpiar el valor del campo 'dni' si no quieres que herede el valor de 'cuil'
+          // form.setValue('dni', ''); // Descomentar si quieres limpiar el campo DNI
+          setWarningMessage(
+            'CUIL no encontrado. Se cambió el tipo de documento a DNI. Verifique el número y presione buscar si corresponde.'
+          )
+          setShowWarning(true)
+        } else {
+          // Falló con DNI (o era DNI desde el inicio y falló)
+          setWarningMessage('Documento no encontrado.')
+          setShowWarning(true)
+        }
       }
-    } catch (error: any) {
-      console.error('Error al buscar datos por DNI:', error)
+    } catch (err: any) {
+      console.error('Error al buscar demandado:', err)
+      setDocumentFound(false)
+      setAutoCompletedFields([])
       setShowWarning(true)
-      setWarningMessage(error.message || 'Ocurrió un error al buscar los datos.')
+      setWarningMessage(
+        err.message || `Error procesando la búsqueda del ${currentField.toUpperCase()}.`
+      )
     } finally {
       setIsSearching(false)
     }
   }
 
-  // sólo advertencia, no dispara búsqueda automática
+  // Efecto para advertir sobre caracteres inválidos en DNI mientras se escribe
   useEffect(() => {
-    const sub = form.watch((_, { name }) => {
-      if (name === 'dni') {
-        const v = form.getValues('dni') || ''
-        if (v.length >= 7) {
+    const subscription = form.watch((values, { name, type }) => {
+      if (name === 'dni' && type === 'change') {
+        const dniValue = values.dni || ''
+        if (dniValue.length >= 7) {
+          // O la longitud mínima que consideres para DNI
           const specialCharsRegex = /[|°&?!@#$%^*()_+\-=[\]{};':"\\,.<>/?]/
-          if (specialCharsRegex.test(v)) {
-            setShowWarning(true)
-            setWarningMessage('El DNI contiene caracteres especiales.')
-          } else {
+          const hasSpecialChars = specialCharsRegex.test(dniValue)
+          // Solo muestra la advertencia de caracteres especiales si no hay otra advertencia activa
+          // o si la advertencia actual no es sobre documento no encontrado/error de API.
+          if (
+            hasSpecialChars &&
+            (!showWarning || warningMessage !== 'El DNI contiene caracteres especiales.')
+          ) {
+            // No sobreescribir advertencias más importantes (ej: no encontrado)
+            if (!documentFound && !isSearching) {
+              setShowWarning(true)
+              setWarningMessage('El DNI contiene caracteres especiales no permitidos.')
+            }
+          } else if (
+            !hasSpecialChars &&
+            warningMessage === 'El DNI contiene caracteres especiales no permitidos.'
+          ) {
+            // Si se corrigieron los caracteres especiales, y esa era la advertencia, la quita.
             setShowWarning(false)
+            setWarningMessage('')
           }
+        } else if (warningMessage === 'El DNI contiene caracteres especiales no permitidos.') {
+          // Si el DNI es muy corto y la advertencia era por caracteres, la quita.
+          setShowWarning(false)
+          setWarningMessage('')
         }
       }
     })
-    return () => sub.unsubscribe()
-  }, [form.watch])
+    return () => subscription.unsubscribe()
+  }, [form, showWarning, warningMessage, documentFound, isSearching]) // Añadidas dependencias
 
-  const handleSubmit = (data: FormValues) => {
+  const handleSubmitForm = (data: FormValues) => {
     if (onSubmit) onSubmit(data)
   }
 
   return (
     <div className="bg-white border rounded-lg p-6">
       {showWarning && (
-        <Alert variant="warning" className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
+        <Alert variant="default" className="mb-6 bg-amber-50 border-amber-200 text-amber-800">
           <AlertCircle className="h-4 w-4 mr-2" />
           <AlertDescription>{warningMessage}</AlertDescription>
         </Alert>
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Primera fila */}
+        <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
+          {/* boleta + fecha */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               name="boleta"
@@ -172,7 +247,6 @@ export default function FormTerceros({
                 </FormItem>
               )}
             />
-
             <FormField
               name="fechaEmision"
               control={form.control}
@@ -188,32 +262,43 @@ export default function FormTerceros({
             />
           </div>
 
-          {/* DNI */}
+          {/* campo único: DNI o CUIL */}
           <div className="relative">
             <FormField
-              name="dni"
+              name={currentField}
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>DNI</FormLabel>
+                  <FormLabel>{currentField === 'dni' ? 'DNI' : 'CUIL'}</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Input
                         {...field}
-                        className={cn(dniFound && 'border-green-500 focus-visible:ring-green-500')}
+                        value={field.value ?? ''}
+                        className={cn(
+                          documentFound && 'border-green-500 focus-visible:ring-green-500'
+                        )}
                         onChange={(e) => {
                           field.onChange(e)
-                          setDniFound(false)
+                          setDocumentFound(false)
                         }}
-                        onBlur={() => searchByDni()}
+                        onBlur={() => {
+                          field.onBlur()
+                          handleSearchByDocumento()
+                        }}
                       />
                     </FormControl>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={searchByDni}
-                      disabled={isSearching || field.value.length < 7}
+                      onClick={handleSearchByDocumento}
+                      disabled={
+                        isSearching ||
+                        !form.getValues(currentField) ||
+                        (form.getValues(currentField) ?? '').length <
+                          (currentField === 'dni' ? 7 : 10)
+                      }
                     >
                       {isSearching ? (
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
@@ -222,10 +307,10 @@ export default function FormTerceros({
                       )}
                     </Button>
                   </div>
-                  {dniFound && (
+                  {documentFound && (
                     <div className="text-green-600 text-sm flex items-center mt-1">
                       <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Datos encontrados
+                      Demandado encontrado
                     </div>
                   )}
                   <FormMessage />
@@ -234,13 +319,13 @@ export default function FormTerceros({
             />
           </div>
 
-          {/* Auto-completados */}
+          {/* auto-completados */}
           {autoCompletedFields.length > 0 && (
             <Accordion
               type="single"
               collapsible
               value={accordionOpen}
-              onValueChange={setAccordionOpen}
+              onValueChange={(value) => setAccordionOpen(value || '')}
               className="border rounded-md"
             >
               <AccordionItem value="auto-completed" className="border-none">
@@ -271,7 +356,6 @@ export default function FormTerceros({
                         </FormItem>
                       )}
                     />
-
                     <FormField
                       name="domicilio"
                       control={form.control}
@@ -297,7 +381,7 @@ export default function FormTerceros({
             </Accordion>
           )}
 
-          {/* Campos restantes */}
+          {/* campos restantes */}
           {!autoCompletedFields.length && (
             <div className="space-y-4">
               <FormField
@@ -313,7 +397,6 @@ export default function FormTerceros({
                   </FormItem>
                 )}
               />
-
               <FormField
                 name="domicilio"
                 control={form.control}
@@ -330,7 +413,7 @@ export default function FormTerceros({
             </div>
           )}
 
-          {/* Resto de campos */}
+          {/* provincia, expediente, bruto, valor */}
           <FormField
             name="provincia"
             control={form.control}
@@ -344,7 +427,6 @@ export default function FormTerceros({
               </FormItem>
             )}
           />
-
           <FormField
             name="expediente"
             control={form.control}
@@ -352,13 +434,12 @@ export default function FormTerceros({
               <FormItem>
                 <FormLabel>Expediente</FormLabel>
                 <FormControl>
-                  <Input {...field} value={field.value || ''} />
+                  <Input {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               name="bruto"
@@ -373,7 +454,6 @@ export default function FormTerceros({
                 </FormItem>
               )}
             />
-
             <FormField
               name="valor"
               control={form.control}
@@ -388,13 +468,6 @@ export default function FormTerceros({
               )}
             />
           </div>
-
-          <Button
-            type="submit"
-            className="w-full md:w-auto float-right bg-[#0f172a] hover:bg-[#1e293b]"
-          >
-            Enviar datos
-          </Button>
         </form>
       </Form>
     </div>

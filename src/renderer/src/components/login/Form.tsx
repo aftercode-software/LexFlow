@@ -29,6 +29,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const onSubmit = async ({ username, password }: LoginFormData) => {
     try {
+      console.log('Logging in with username:', username)
+      console.log('Logging in with password:', password)
       await window.api.login(username, password)
       navigate('/escanear-pdf')
     } catch (e: any) {
