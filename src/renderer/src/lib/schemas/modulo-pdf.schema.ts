@@ -19,7 +19,7 @@ export const formularioTerceroSchema = z.object({
   cuil: z.string().nullable(),
   boleta: z.string(),
   nombre: z.string(),
-  domicilioTipo: z.string(),
+  // domicilioTipo: z.string(),
   domicilio: z.string(),
   provincia: z.string(),
   expediente: z.string().nullable(),

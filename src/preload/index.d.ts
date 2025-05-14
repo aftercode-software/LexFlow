@@ -5,6 +5,8 @@ interface Api {
     arrayBuffer: ArrayBuffer,
     pdfType: 'profesional' | 'tercero'
   ) => Promise<DatosTercero | DatosProfesional>
+  login: (username: string, password: string) => Promise<any>
+  searchDemandado: (nro: string) => Promise<any>
 }
 
 declare global {

@@ -7,6 +7,22 @@ const api = {
     const extractedData = await ipcRenderer.invoke('pdf:extract-data', arrayBuffer, pdfType)
     console.log(extractedData)
     return extractedData
+  },
+  login: async (user: string, password: string) => {
+    const response = await ipcRenderer.invoke('login', user, password)
+    return response
+  },
+  getToken: async () => {
+    const token = await ipcRenderer.invoke('getToken')
+    return token
+  },
+  logout: async () => {
+    const response = await ipcRenderer.invoke('logout')
+    return response
+  },
+  searchDemandado: async (nro: string) => {
+    const response = await ipcRenderer.invoke('searchDemandado', nro)
+    return response
   }
 }
 

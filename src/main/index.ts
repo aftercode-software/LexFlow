@@ -1,9 +1,11 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent, shell } from 'electron'
-import { join } from 'path'
+import { app, BrowserWindow, ipcMain, safeStorage, shell } from 'electron'
+import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { extractDataFromPdf, processPDF } from './services/pdf/process-pdf'
+import { extractDataFromPdf } from './services/pdf/process-pdf'
 import { PDFType } from './types'
+import fs from 'fs/promises'
+import fetch from 'node-fetch'
 
 function createWindow(): void {
   // Create the browser window.
@@ -55,6 +57,97 @@ app.whenReady().then(() => {
     extractDataFromPdf(arrayBuffer, pdfType)
   )
 
+  const tokenFile = path.join(app.getPath('userData'), 'token.enc')
+
+  ipcMain.handle('login', async (_e, username: string, password: string) => {
+    const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    const text = await resp.text()
+    if (!resp.ok) throw new Error(text)
+
+    // extraigo el token
+    const { access_token } = JSON.parse(text)
+
+    // cifro y guardo
+    if (safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(access_token)
+      await fs.writeFile(tokenFile, encrypted)
+    } else {
+      await fs.writeFile(tokenFile, access_token, 'utf8')
+    }
+
+    return { success: true }
+  })
+
+  // 2️⃣ Leer token ya descifrado
+  ipcMain.handle('getToken', async () => {
+    try {
+      const data = await fs.readFile(tokenFile)
+      return safeStorage.isEncryptionAvailable()
+        ? safeStorage.decryptString(data)
+        : data.toString('utf8')
+    } catch {
+      return null
+    }
+  })
+
+  // 3️⃣ Logout: borro token
+  ipcMain.handle('logout', async () => {
+    await fs.unlink(tokenFile).catch(() => {})
+  })
+
+  // 4️⃣ Submit de forms-pdf: leo el token y hago fetch con Authorization
+  // ipcMain.handle('submit-boletas', async (_e, payload: any) => {
+  //   const token = await fs
+  //     .readFile(tokenFile)
+  //     .then((buf) =>
+  //       safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(buf) : buf.toString('utf8')
+  //     )
+  //     .catch(() => null)
+
+  //   if (!token) throw new Error('No hay sesión activa')
+
+  //   const resp = await fetch('https://tuservidor.local/api/boletas', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       Authorization: `Bearer ${token}`
+  //     },
+  //     body: JSON.stringify(payload)
+  //   })
+
+  //   const data = await resp.text()
+  //   if (!resp.ok) throw new Error(data)
+  //   return JSON.parse(data)
+  // })
+
+  ipcMain.handle('search-demandado', async (_event, dni: string) => {
+    const token: string | null = await fs
+      .readFile(tokenFile)
+      .then((data) =>
+        safeStorage.isEncryptionAvailable()
+          ? safeStorage.decryptString(data)
+          : data.toString('utf8')
+      )
+      .catch(() => null)
+    if (!token) throw new Error('No hay token de autenticación')
+
+    const res = await fetch(`http://localhost:3000/api/demandados/${dni}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`Error ${res.status}: ${text}`)
+    }
+
+    return res.json()
+  })
   createWindow()
 
   app.on('activate', function () {
