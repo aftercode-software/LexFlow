@@ -6,6 +6,7 @@ import EscanearBoleta from './components/modulo-pdf/ModuloPDF'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import Login from './pages/Login'
 import { PdfLayout } from './layout/PDFLayout'
+import { ModuloPrecarga } from './components/precarga/ModuloPrecarga'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Route element={<PdfLayout />}>
           <Route path="/escanear-pdf" element={<EscanearBoleta />} />
           <Route path="/subir-pdf" element={<h2>Página encontrada</h2>} />
+          <Route path="/modulo-precarga" element={<ModuloPrecarga />} />
         </Route>
 
         {/* Opcional: 404 */}

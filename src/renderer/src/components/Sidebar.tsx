@@ -38,6 +38,13 @@ export function Sidebar() {
                 <FileUp size={18} />
                 Subir boletas
               </a>
+              <a
+                href="/modulo-precarga"
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-aftercode/5 hover:text-aftercode"
+              >
+                <FileUp size={18} />
+                Precarga
+              </a>
             </nav>
           </div>
 
