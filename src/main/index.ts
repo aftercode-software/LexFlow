@@ -6,6 +6,9 @@ import { extractDataFromPdf } from './services/pdf/process-pdf'
 import { PDFType } from './types'
 import fs from 'fs/promises'
 import fetch from 'node-fetch'
+import { spawn } from 'child_process'
+import { flujoCarga } from './playwright/procesar-boletas'
+import { loginMatricula } from './playwright/manual-login'
 
 function createWindow(): void {
   // Create the browser window.
@@ -152,6 +155,11 @@ app.whenReady().then(() => {
     return res.json()
   })
   createWindow()
+ipcMain.handle('precarga:procesar', () => flujoCarga())
+
+ipcMain.handle('precarga:login', () => loginMatricula())
+
+
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

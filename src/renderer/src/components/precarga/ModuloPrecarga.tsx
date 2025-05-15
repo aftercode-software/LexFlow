@@ -1,7 +1,14 @@
-import React from 'react'
 
 export const ModuloPrecarga = () => {
   return (
-    <div>ModuloPrecarga</div>
+    <div>
+      <button onClick={() => window.api.iniciarLoginManual()}>
+        Iniciar sesión manual
+      </button>
+
+      <button onClick={() => window.api.iniciarPrecarga()}>
+        Procesar boletas
+      </button>
+    </div>
   )
 }

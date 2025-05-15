@@ -23,7 +23,10 @@ const api = {
   searchDemandado: async (nro: string) => {
     const response = await ipcRenderer.invoke('searchDemandado', nro)
     return response
-  }
+  },
+    iniciarPrecarga: () => ipcRenderer.invoke('precarga:procesar'),
+  iniciarLoginManual: () => ipcRenderer.invoke('precarga:login')
+
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
