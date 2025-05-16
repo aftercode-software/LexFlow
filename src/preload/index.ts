@@ -28,6 +28,10 @@ const api = {
   generateDocument: async (data: any) => {
     const response = await ipcRenderer.invoke('generateDocument', data)
     return response
+  },
+  getRecaudadores: async () => {
+    const response = await ipcRenderer.invoke('getRecaudadores')
+    return response
   }
 }
 

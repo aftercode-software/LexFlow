@@ -1,13 +1,13 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, safeStorage, shell } from 'electron'
+import fs from 'fs/promises'
 import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { extractDataFromPdf } from './services/pdf/process-pdf'
-import { PDFType } from './types'
-import fs from 'fs/promises'
 
 import fetch from 'node-fetch'
 import { compileDocument, convertDocxToPdf } from './docx/util'
+import { getRecaudadores } from './services/recaudador'
 
 function createWindow(): void {
   // Create the browser window.
@@ -55,15 +55,17 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer, pdfType: PDFType) =>
-    extractDataFromPdf(arrayBuffer, pdfType)
+  ipcMain.handle(
+    'pdf:extract-data',
+    async (_, arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') =>
+      extractDataFromPdf(arrayBuffer, pdfType)
   )
 
   const tokenFile = path.join(app.getPath('userData'), 'token.enc')
 
   ipcMain.handle('login', async (_, username: string, password: string) => {
     console.log('Login:', username, password)
-    const resp = await fetch('http://localhost:3000/api/auth/login', {
+    const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -102,6 +104,10 @@ app.whenReady().then(() => {
     await fs.unlink(tokenFile).catch(() => {})
   })
 
+  ipcMain.handle('getRecaudadores', async () => {
+    return getRecaudadores()
+  })
+
   // 4️⃣ Submit de forms-pdf: leo el token y hago fetch con Authorization
   // ipcMain.handle('submit-boletas', async (_e, payload: any) => {
   //   const token = await fs
@@ -138,7 +144,7 @@ app.whenReady().then(() => {
       .catch(() => null)
     if (!token) throw new Error('No hay token de autenticación')
 
-    const res = await fetch(`http://localhost:3000/api/demandados/${dni}`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/demandados/${dni}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

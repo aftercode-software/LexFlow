@@ -1,19 +1,19 @@
-import { useState, useCallback } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { Card, CardHeader, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
-  SelectItem
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
+import { DatosProfesional, DatosTercero } from '@renderer/lib/types'
 import { ChevronLeft, RotateCcw } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { useDropzone } from 'react-dropzone'
 import FormProfesionales from './forms/FormProfesionales'
 import FormTerceros from './forms/FormTerceros'
-import { DatosProfesional, DatosTercero } from '@renderer/lib/types'
 
 // Definimos los pasos del wizard
 enum Steps {
@@ -60,17 +60,6 @@ export default function EscanearBoleta() {
       }
     }
     reader.readAsArrayBuffer(file)
-  }
-
-  // Envía los datos corregidos
-  const handleSubmit = async () => {
-    try {
-      console.log('Enviar al servidor:', extractedData)
-      const result = await window.api.generateDocument(extractedData)
-      console.log('Resultado:', result)
-    } catch (err) {
-      console.error('Error al generar doc:', err)
-    }
   }
 
   return (
@@ -162,9 +151,9 @@ export default function EscanearBoleta() {
                 <FormTerceros {...(extractedData as DatosTercero)} />
               )}
             </div>
-            <div className="flex justify-end">
+            {/* <div className="flex justify-end">
               <Button onClick={handleSubmit}>Enviar datos</Button>
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       )}

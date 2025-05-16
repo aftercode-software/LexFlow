@@ -36,7 +36,13 @@ export function validateDocument(
   return { valid: true }
 }
 
-export type Demandado = { id: string; nombre: string; domicilio: string }
+export type Demandado = {
+  id: string
+  apellido: string
+  nombre: string
+  apellidoYNombre: string
+  domicilio: string
+}
 
 export async function buscarDemandado(
   valor: string,
@@ -58,5 +64,11 @@ export async function buscarDemandado(
     return null
   }
 
-  return { id: response.id, nombre: response.apellidoYNombre, domicilio: response.domicilio }
+  return {
+    id: response.id,
+    apellido: response.apellido,
+    nombre: response.nombre,
+    apellidoYNombre: response.apellidoYNombre,
+    domicilio: response.domicilio
+  }
 }

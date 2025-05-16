@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { formularioTerceroSchema } from '@/lib/schemas/modulo-pdf.schema'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -12,38 +16,42 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion'
-import { AlertCircle, CheckCircle2, Search } from 'lucide-react'
+import { formularioTerceroSchema } from '@/lib/schemas/modulo-pdf.schema'
 import { cn } from '@/lib/utils'
-import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { buscarDemandado, validateDocument } from '@renderer/lib/documentUtils'
+import { AlertCircle, CheckCircle2, Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
 
 type FormValues = z.infer<typeof formularioTerceroSchema>
-
-interface Props extends Partial<FormValues> {
-  onSubmit?: (data: FormValues) => void
-}
 
 export default function FormTerceros({
   fechaEmision,
   dni,
   cuil,
   boleta,
-  nombre,
+  nombreCompleto,
   domicilio,
   provincia,
   expediente,
   bruto,
-  valor,
-  onSubmit
-}: Props) {
+  valorEnLetras
+}: {
+  fechaEmision: string
+  dni: string | null
+  cuil: string | null
+  boleta: string
+  nombre: string
+  apellido: string
+  nombreCompleto: string
+  domicilio: string
+  provincia: string
+  expediente: string | null
+  bruto: number
+  valorEnLetras: string
+}) {
   const [isSearching, setIsSearching] = useState(false)
   const [documentFound, setDocumentFound] = useState(false)
   const [showWarning, setShowWarning] = useState(false)
@@ -60,12 +68,14 @@ export default function FormTerceros({
       fechaEmision,
       dni,
       cuil,
-      nombre,
+      nombre: '',
+      apellido: '',
+      nombreCompleto,
       domicilio,
       provincia,
       expediente,
       bruto,
-      valor
+      valorEnLetras
     }
   })
 
@@ -75,12 +85,12 @@ export default function FormTerceros({
       fechaEmision,
       dni,
       cuil,
-      nombre,
+      nombreCompleto,
       domicilio,
       provincia,
       expediente,
       bruto,
-      valor
+      valorEnLetras
     })
     const newCurrentField = cuil === dni ? 'dni' : 'cuil'
     if (newCurrentField !== currentField) {
@@ -98,12 +108,12 @@ export default function FormTerceros({
     fechaEmision,
     dni,
     cuil,
-    nombre,
+    nombreCompleto,
     domicilio,
     provincia,
     expediente,
     bruto,
-    valor,
+    valorEnLetras,
     form,
     currentField
   ])
@@ -136,14 +146,17 @@ export default function FormTerceros({
 
     try {
       const demandadoData = await buscarDemandado(docValue, currentField)
+      console.log('demandadoData', demandadoData)
 
       if (demandadoData) {
         form.setValue('nombre', demandadoData.nombre)
+        form.setValue('apellido', demandadoData.apellido)
+        form.setValue('nombreCompleto', demandadoData.apellidoYNombre)
         form.setValue('domicilio', demandadoData.domicilio)
         // Podrías querer setear el DNI/CUIL si la API lo devuelve y es diferente al buscado
         // form.setValue(currentField, docValue); // Asegura que el valor usado para la búsqueda esté en el campo
 
-        setAutoCompletedFields(['nombre', 'domicilio'])
+        setAutoCompletedFields(['nombre', 'apellido', 'nombreCompleto', 'domicilio'])
         setAccordionOpen('auto-completed')
         setDocumentFound(true)
       } else {
@@ -171,9 +184,7 @@ export default function FormTerceros({
       setDocumentFound(false)
       setAutoCompletedFields([])
       setShowWarning(true)
-      setWarningMessage(
-        err.message || `Error procesando la búsqueda del ${currentField.toUpperCase()}.`
-      )
+      setWarningMessage('El demandado no se encuentra en la base de datos.')
     } finally {
       setIsSearching(false)
     }
@@ -217,8 +228,16 @@ export default function FormTerceros({
     return () => subscription.unsubscribe()
   }, [form, showWarning, warningMessage, documentFound, isSearching]) // Añadidas dependencias
 
-  const handleSubmitForm = (data: FormValues) => {
-    if (onSubmit) onSubmit(data)
+  const { handleSubmit } = form
+
+  const onSubmit = (data: FormValues) => {
+    try {
+      // const result = await window.api.generateDocument(extractedData)
+      console.log('Resultado:', data)
+    } catch (err) {
+      console.error('Error al generar doc:', err)
+    }
+    console.log('Data: ', data)
   }
 
   return (
@@ -231,7 +250,7 @@ export default function FormTerceros({
       )}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmitForm)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* boleta + fecha */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
@@ -269,7 +288,7 @@ export default function FormTerceros({
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{currentField === 'dni' ? 'DNI' : 'CUIL'}</FormLabel>
+                  <FormLabel>{currentField === 'dni' ? 'DNI' : 'CUIT'}</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Input
@@ -357,6 +376,44 @@ export default function FormTerceros({
                       )}
                     />
                     <FormField
+                      name="apellido"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Apellido</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className={cn(
+                                autoCompletedFields.includes('apellido') &&
+                                  'border-green-200 bg-green-50'
+                              )}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      name="nombreCompleto"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nombre completo</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              className={cn(
+                                autoCompletedFields.includes('nombreCompleto') &&
+                                  'border-green-200 bg-green-50'
+                              )}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
                       name="domicilio"
                       control={form.control}
                       render={({ field }) => (
@@ -390,6 +447,32 @@ export default function FormTerceros({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nombre</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="apellido"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Apellido</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                name="nombreCompleto"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre completo</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -448,18 +531,18 @@ export default function FormTerceros({
                 <FormItem>
                   <FormLabel>Bruto</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input type="number" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
-              name="valor"
+              name="valorEnLetras"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Valor</FormLabel>
+                  <FormLabel>Valor en letras</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

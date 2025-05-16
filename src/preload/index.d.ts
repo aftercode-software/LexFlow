@@ -8,6 +8,7 @@ interface Api {
   login: (username: string, password: string) => Promise<any>
   searchDemandado: (nro: string) => Promise<any>
   generateDocument: (data: any) => Promise<any>
+  getRecaudadores: () => Promise<any>
 }
 
 declare global {

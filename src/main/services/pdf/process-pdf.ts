@@ -4,7 +4,7 @@ import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
 import { DatosProfesional, DatosTercero } from '../../types'
 import { getTextFromImage } from './ocr'
-import { cropImage, extraerBoleta, extraerMonto } from './utils'
+import { cropImage, extraerBoleta, extraerMonto, numeroALetras } from './utils'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
@@ -100,7 +100,7 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
 
   const mediaTxt = await getTextFromImage(worker, mediaImg)
 
-  const nombre =
+  const nombreCompleto =
     mediaTxt
       .match(/EMPLAZA\s+a\s+([\s\S]+?)\s+con\s+domicilio/i)?.[1]
       .replace(/[\n\r]+/g, ' ')
@@ -126,7 +126,7 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
   const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9\/-]+)/i)?.[1] ?? ''
 
   console.log({
-    nombre,
+    nombreCompleto,
     domicilioTipo,
     domicilio,
     provincia,
@@ -135,14 +135,11 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
 
   const montoTxt = await getTextFromImage(worker, montoImg)
 
-  const { bruto, valor } = extraerMonto(montoTxt) ?? {
-    bruto: '',
-    valor: 0
-  }
+  const bruto = extraerMonto(montoTxt) ?? 0
+  const valorEnLetras = numeroALetras(bruto)
 
   console.log({
-    bruto,
-    valor
+    bruto
   })
 
   const recaudadorTxt = await getTextFromImage(worker, recaudadorImg)
@@ -157,13 +154,13 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
     dni,
     cuil,
     boleta,
-    nombre,
+    nombreCompleto,
     domicilioTipo,
     domicilio,
     provincia,
     expediente,
     bruto,
-    valor
+    valorEnLetras
   }
 }
 async function processProfesionalPDF(
@@ -244,14 +241,12 @@ async function processProfesionalPDF(
 
   const montoTxt = await getTextFromImage(worker, parteMonto)
 
-  const { bruto, valor } = extraerMonto(montoTxt) ?? {
-    bruto: '',
-    valor: 0
-  }
+  const bruto = extraerMonto(montoTxt) ?? 0
+  const valorEnLetras = numeroALetras(bruto)
 
   console.log({
     bruto,
-    valor
+    valorEnLetras
   })
 
   return {
@@ -264,6 +259,6 @@ async function processProfesionalPDF(
     domicilio,
     provincia,
     bruto,
-    valor
+    valorEnLetras
   }
 }

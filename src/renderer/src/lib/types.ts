@@ -7,8 +7,8 @@ export interface DatosProfesional {
   domicilioTipo: string
   domicilio: string
   provincia: string
-  bruto: string
-  valor: number
+  bruto: number
+  valorEnLetras: string
 }
 
 export interface DatosTercero {
@@ -17,10 +17,11 @@ export interface DatosTercero {
   cuil: string | null
   boleta: string
   nombre: string
-  domicilioTipo: string
+  apellido: string
+  nombreCompleto: string
   domicilio: string
   provincia: string
   expediente: string | null
-  bruto: string
-  valor: number
+  bruto: number
+  valorEnLetras: string
 }
