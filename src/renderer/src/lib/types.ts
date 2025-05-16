@@ -4,6 +4,8 @@ export interface DatosProfesional {
   cuil: string | null
   boleta: string
   nombre: string
+  nombreCompleto: string
+  matricula: string
   domicilioTipo: string
   domicilio: string
   provincia: string

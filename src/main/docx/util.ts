@@ -1,40 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { spawn } from 'child_process'
 import { createReport } from 'docx-templates'
+import fsPromises from 'fs/promises'
 import fs from 'fs'
 import path from 'path'
+import { app } from 'electron'
 
-const data = {
-  tipo: 'Tercero',
-  boleta: 'F0029948',
-  bruto: '183.757,97',
-  demandado: {
-    cuil: '30716567199',
-    dni: '71656719',
-    domicilio: 'JUAN JUSTO Nro:1640 de MAIPU',
-    domicilioTipo: 'REAL',
-    apellidoYNombre: 'Pl DESARROLLOS SA'
-  },
-  expediente: '6073/2023',
-  fechaEmision: '18/10/2024',
-  provincia: 'MENDOZA',
-  montoLetras:
-    'Ciento Ochenta y Tres Mil Setecientos Cincuenta y Siete con Noventa y Siete Centavos',
-  monto: 183757.97,
-  recaudador: {
-    id: 1,
-    nombre: 'Gomez Torre Rodrigo',
-    sexo: 'M',
-    matricula: '7714',
-    telefono: '2616521150',
-    celular: '2616521150',
-    organismo: 'CAJA FORENSE',
-    descripcion: 'CAP',
-    email: 'ragomeztorre@gmail.com',
-    oficial: 'BENINGAZA ESTELA'
-  }
-}
+import { PDFDocument } from 'pdf-lib'
 
-export async function compileDocument(): Promise<Uint8Array<ArrayBufferLike>> {
+export async function compileDocument(data: any): Promise<Uint8Array<ArrayBufferLike>> {
   console.log('Compiling document with data:', data)
   try {
     const template = fs.readFileSync('src/renderer/src/doc/escrito.docx')
@@ -93,4 +67,61 @@ export async function convertDocxToPdf(docxPath: string): Promise<void> {
       }
     })
   })
+}
+
+export async function generateWrittenPdf(data: any): Promise<string> {
+  // 1.1 Escribir plantilla .docx
+
+  const template = fs.readFileSync('src/renderer/src/doc/escrito.docx')
+  const docxBuffer = await createReport({
+    template,
+    data,
+    cmdDelimiter: ['{{', '}}'],
+    failFast: true
+  })
+
+  const tempDir = path.join(app.getPath('temp'), 'boletas-temp')
+  await fsPromises.mkdir(tempDir, { recursive: true })
+
+  const docxPath = path.join(tempDir, `${data.boleta}.docx`)
+  await fsPromises.writeFile(docxPath, docxBuffer)
+
+  // 1.2 Convertir DOCX → PDF
+  await new Promise<void>((resolve, reject) => {
+    const proc = spawn('soffice', [
+      '--headless',
+      '--convert-to',
+      'pdf',
+      '--outdir',
+      tempDir,
+      docxPath
+    ])
+    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`soffice exit ${code}`))))
+  })
+
+  const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
+  return pdfPath
+}
+
+export async function mergePdfs(
+  originalPdfPath: string,
+  writtenPdfPath: string
+): Promise<Uint8Array> {
+  const [origBytes, writtenBytes] = await Promise.all([
+    fsPromises.readFile(originalPdfPath),
+    fsPromises.readFile(writtenPdfPath)
+  ])
+
+  const mergedDoc = await PDFDocument.create()
+  const [origDoc, writtenDoc] = await Promise.all([
+    PDFDocument.load(origBytes),
+    PDFDocument.load(writtenBytes)
+  ])
+
+  const origPages = await mergedDoc.copyPages(origDoc, origDoc.getPageIndices())
+  const writtenPages = await mergedDoc.copyPages(writtenDoc, writtenDoc.getPageIndices())
+  origPages.forEach((p) => mergedDoc.addPage(p))
+  writtenPages.forEach((p) => mergedDoc.addPage(p))
+
+  return mergedDoc.save()
 }

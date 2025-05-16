@@ -1,4 +1,3 @@
-import { formularioProfesionalSchema } from '@/lib/schemas/modulo-pdf.schema'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@renderer/components/ui/button'
 import {
@@ -10,84 +9,57 @@ import {
   FormMessage
 } from '@renderer/components/ui/form'
 import { Input } from '@renderer/components/ui/input'
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 import Recaudador from './Recaudador'
+import Demandado from './Demandado'
+import { baseFormSchema, profesionalesSchema } from '@renderer/lib/schemas/forms.schemas'
 
-type FormValues = z.infer<typeof formularioProfesionalSchema>
+type FormValues = z.infer<typeof profesionalesSchema>
+export type BaseFormValues = z.infer<typeof baseFormSchema>
 
 export default function FormProfesionales({
   fechaEmision,
   dni,
   cuil,
   boleta,
-  nombre,
+  nombreCompleto,
   domicilio,
   provincia,
   bruto,
+  matricula,
   valorEnLetras
 }: {
   fechaEmision: string
   dni: string | null
   cuil: string | null
   boleta: string
-  nombre: string
+  nombreCompleto: string
   domicilio: string
   provincia: string
   bruto: number
+  matricula: string
   valorEnLetras: string
 }) {
   const form = useForm<FormValues>({
-    resolver: zodResolver(formularioProfesionalSchema),
+    resolver: zodResolver(profesionalesSchema),
     defaultValues: {
-      recaudador: {
-        id: 0,
-        nombre: '',
-        matricula: 0,
-        telefono: '',
-        celular: '',
-        organismo: '',
-        descripcion: '',
-        email: '',
-        oficial: ''
-      },
-      fechaEmision,
-      dni,
-      cuil,
       boleta,
-      nombre,
-      domicilio,
+      fechaEmision,
+      matricula,
+      demandado: {
+        dni: dni,
+        cuil: cuil,
+        nombre: '',
+        apellido: '',
+        nombreCompleto,
+        domicilio
+      },
       provincia,
       bruto,
       valorEnLetras
     }
   })
-
-  useEffect(() => {
-    form.reset({
-      recaudador: {
-        id: 0,
-        nombre: '',
-        matricula: 0,
-        telefono: '',
-        celular: '',
-        organismo: '',
-        descripcion: '',
-        email: '',
-        oficial: ''
-      },
-      fechaEmision,
-      dni,
-      cuil,
-      boleta,
-      nombre,
-      domicilio,
-      provincia,
-      bruto,
-      valorEnLetras
-    })
-  }, [fechaEmision, dni, cuil, boleta, nombre, domicilio, provincia, bruto, valorEnLetras])
 
   const { handleSubmit } = form
 
@@ -105,26 +77,13 @@ export default function FormProfesionales({
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Recaudador />
-        <FormField
-          control={form.control}
-          name="fechaEmision"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fecha de emisión</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {dni ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
+            name="boleta"
             control={form.control}
-            name="dni"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>DNI</FormLabel>
+                <FormLabel>Boleta</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value ?? ''} />
                 </FormControl>
@@ -132,13 +91,12 @@ export default function FormProfesionales({
               </FormItem>
             )}
           />
-        ) : (
           <FormField
+            name="fechaEmision"
             control={form.control}
-            name="cuil"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>CUIL</FormLabel>
+                <FormLabel>Fecha de emisión</FormLabel>
                 <FormControl>
                   <Input {...field} value={field.value ?? ''} />
                 </FormControl>
@@ -146,46 +104,23 @@ export default function FormProfesionales({
               </FormItem>
             )}
           />
-        )}
+        </div>
         <FormField
           control={form.control}
-          name="boleta"
+          name="matricula"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Boleta</FormLabel>
+              <FormLabel>Matrícula</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="nombre"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nombre</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="domicilio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Domicilio</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
+        <Demandado form={form as unknown as UseFormReturn<BaseFormValues>} />
+
         <FormField
           control={form.control}
           name="provincia"
@@ -199,32 +134,34 @@ export default function FormProfesionales({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="bruto"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bruto</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="valorEnLetras"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Valor en letras</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            name="bruto"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Bruto</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            name="valorEnLetras"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Valor en letras</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <Button type="submit">Enviar</Button>
       </form>
     </Form>

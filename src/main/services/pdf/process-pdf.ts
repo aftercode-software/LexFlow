@@ -3,27 +3,31 @@ import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
 import { DatosProfesional, DatosTercero } from '../../types'
+import fsPromises from 'fs/promises'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerMonto, numeroALetras } from './utils'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
   pdfType: 'profesional' | 'tercero'
-): Promise<DatosProfesional | DatosTercero> {
-  try {
-    const tempFilePath = path.join(process.cwd() + '/tmp', 'temp.pdf')
-    fs.writeFileSync(tempFilePath, Buffer.from(arrayBuffer))
-    console.log('PDF file created at:', tempFilePath)
-    console.log('PDF type:', pdfType)
-    console.log('ArrayBuffer:', arrayBuffer)
-    const extractedText = await processPDF(tempFilePath, pdfType)
+): Promise<{
+  data: DatosProfesional | DatosTercero
+  originalPdfPath: string
+}> {
+  // 1) Asegúrate de que exista tmp/
+  const tmpDir = path.join(process.cwd(), 'tmp')
+  await fsPromises.mkdir(tmpDir, { recursive: true })
 
-    fs.unlinkSync(tempFilePath)
-    return extractedText
-  } catch (error) {
-    console.error('Error processing PDF:', error)
-    throw error
-  }
+  // 2) Guarda el PDF “original” con un nombre único
+  const originalPdfPath = path.join(tmpDir, `original-${Date.now()}.pdf`)
+  await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
+  console.log('PDF original guardado en:', originalPdfPath)
+
+  // 3) Extrae los datos usando tu lógica existente
+  const data = await processPDF(originalPdfPath, pdfType)
+
+  // 4) NO borramos aquí el original, lo necesitarás luego
+  return { data, originalPdfPath }
 }
 
 export async function processPDF(
@@ -136,10 +140,11 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
   const montoTxt = await getTextFromImage(worker, montoImg)
 
   const bruto = extraerMonto(montoTxt) ?? 0
-  const valorEnLetras = numeroALetras(bruto)
+  const valorEnLetras = numeroALetras(bruto).toUpperCase()
 
   console.log({
-    bruto
+    bruto,
+    valorEnLetras
   })
 
   const recaudadorTxt = await getTextFromImage(worker, recaudadorImg)
@@ -242,7 +247,7 @@ async function processProfesionalPDF(
   const montoTxt = await getTextFromImage(worker, parteMonto)
 
   const bruto = extraerMonto(montoTxt) ?? 0
-  const valorEnLetras = numeroALetras(bruto)
+  const valorEnLetras = numeroALetras(bruto).toUpperCase()
 
   console.log({
     bruto,

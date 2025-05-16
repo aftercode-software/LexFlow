@@ -25,9 +25,8 @@ const api = {
     const response = await ipcRenderer.invoke('searchDemandado', nro)
     return response
   },
-  generateDocument: async (data: any) => {
-    const response = await ipcRenderer.invoke('generateDocument', data)
-    return response
+  generateDocument: async (data, originalPdfPath) => {
+    return await ipcRenderer.invoke('generateDocument', { data, originalPdfPath })
   },
   getRecaudadores: async () => {
     const response = await ipcRenderer.invoke('getRecaudadores')

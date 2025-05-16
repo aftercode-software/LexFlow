@@ -1,3 +1,5 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -8,14 +10,13 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { DatosProfesional, DatosTercero } from '@renderer/lib/types'
-import { ChevronLeft, RotateCcw } from 'lucide-react'
-import { useCallback, useState } from 'react'
-import { useDropzone } from 'react-dropzone'
+import type { DatosProfesional, DatosTercero } from '@renderer/lib/types'
+import { ChevronLeft } from 'lucide-react'
+import { useState } from 'react'
+import { FileUpload } from './file-upload'
 import FormProfesionales from './forms/FormProfesionales'
 import FormTerceros from './forms/FormTerceros'
 
-// Definimos los pasos del wizard
 enum Steps {
   UPLOAD = 1,
   REVIEW = 2
@@ -26,34 +27,19 @@ export default function EscanearBoleta() {
   const [file, setFile] = useState<File | null>(null)
   const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>(null)
   const [extractedData, setExtractedData] = useState<DatosProfesional | DatosTercero | null>(null)
+  const [originalPdfPath, setOriginalPdfPath] = useState<string>('')
 
-  // Resetea todo para subir un nuevo PDF
-  const reset = () => {
-    setFile(null)
-    setTypePDF(null)
-    setExtractedData(null)
-    setStep(Steps.UPLOAD)
-  }
-
-  // Drag & drop
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length) setFile(acceptedFiles[0])
-  }, [])
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'application/pdf': [] },
-    multiple: false
-  })
-
-  // Escanea el PDF
   const handleProcess = () => {
     if (!file || !typePDF) return
     const reader = new FileReader()
     reader.onload = async () => {
       try {
         const buffer = reader.result as ArrayBuffer
-        const data = await window.api.extractDataFromPdf(buffer, typePDF)
+        const { data, originalPdfPath } = await window.api.extractDataFromPdf(buffer, typePDF)
+
+        console.log('Ruta del PDF original:', originalPdfPath)
         setExtractedData(data)
+        setOriginalPdfPath(originalPdfPath)
         setStep(Steps.REVIEW)
       } catch (e) {
         alert(e)
@@ -63,28 +49,25 @@ export default function EscanearBoleta() {
   }
 
   return (
-    <div className="p-6 flex flex-col min-h-screen bg-aftercode\/5">
+    <div className="p-6 flex flex-col min-h-screen bg-pink-50/30">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            onClick={() => setStep(Steps.UPLOAD)}
-            className="text-aftercode hover:bg-aftercode/5 size-8 rounded-full"
-          >
-            <ChevronLeft className="w-4 h-4 text-aftercode" />
-          </Button>
+        <div className="flex flex-col items-left">
+          {step !== Steps.UPLOAD && (
+            <section>
+              <Button
+                variant="ghost"
+                onClick={() => setStep(Steps.UPLOAD)}
+                className="hover:bg-pink-50 hover:text-pink-500 text-left"
+              >
+                <ChevronLeft className="w-4 h-4 text-pink-500" />
+                Volver
+              </Button>
+            </section>
+          )}
 
-          <h1 className="text-2xl font-bold text-black">Módulo de Extracción PDF</h1>
+          <h1 className="text-2xl font-bold text-black">Escanear boletas</h1>
         </div>
-        <Button
-          variant="ghost"
-          onClick={reset}
-          className="text-gray-700 hover:text-aftercode hover:bg-aftercode/5"
-        >
-          <RotateCcw />
-          Subir nuevo PDF
-        </Button>
       </div>
 
       <div className="flex items-center justify-between mb-8 w-full">
@@ -96,9 +79,9 @@ export default function EscanearBoleta() {
       {/* Paso 1 */}
       {step === Steps.UPLOAD && (
         <Card>
-          <CardContent className="mt-4">
-            <div className="my-4">
-              <Label>Tipo de documento</Label>
+          <CardContent className="mt-6 space-y-6">
+            <div>
+              <Label className="text-base font-medium mb-2 block">Tipo de documento</Label>
               <Select onValueChange={(val) => setTypePDF(val as 'profesional' | 'tercero')}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecciona tipo" />
@@ -109,25 +92,17 @@ export default function EscanearBoleta() {
                 </SelectContent>
               </Select>
             </div>
-            <div
-              {...getRootProps()}
-              className={`border-2 border-dashed p-8 rounded cursor-pointer text-center transition-colors ${
-                isDragActive ? 'border-aftercode bg-aftercode/5' : 'border-gray-300'
-              }`}
-            >
-              <input {...getInputProps()} />
-              {file ? (
-                <p>{file.name}</p>
-              ) : (
-                <p>Arrastra y suelta tu PDF aquí, o haz click para seleccionar</p>
-              )}
+
+            <div>
+              <Label className="text-base font-medium mb-2 block">Archivo PDF</Label>
+              <FileUpload file={file} onFileChange={setFile} />
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="pt-4 flex justify-end">
               <Button
                 onClick={handleProcess}
                 disabled={!file || !typePDF}
-                className="hover:bg-aftercode"
+                className="bg-pink-500 hover:bg-pink-600 text-white"
               >
                 Escanear
               </Button>
@@ -140,20 +115,24 @@ export default function EscanearBoleta() {
       {step === Steps.REVIEW && extractedData && (
         <Card>
           <CardHeader>
-            <p className="text-lg font-medium text-gray-800">Datos extraídos</p>
-            <p className="text-sm text-gray-500">Revisá la información antes de enviar</p>
+            <p className="text-xl font-medium text-gray-800">
+              Boleta de {typePDF === 'profesional' ? 'Profesionales' : 'Terceros'}
+            </p>
+            <p className="text-base text-gray-500">
+              Revisá que los datos sean correctos antes de enviar
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-6">
               {typePDF === 'profesional' ? (
-                <FormProfesionales {...(extractedData as DatosProfesional)} />
+                <FormProfesionales
+                  {...(extractedData as DatosProfesional)}
+                  pdfRoute={originalPdfPath}
+                />
               ) : (
-                <FormTerceros {...(extractedData as DatosTercero)} />
+                <FormTerceros {...(extractedData as DatosTercero)} pdfRoute={originalPdfPath} />
               )}
             </div>
-            {/* <div className="flex justify-end">
-              <Button onClick={handleSubmit}>Enviar datos</Button>
-            </div> */}
           </CardContent>
         </Card>
       )}
@@ -172,12 +151,12 @@ function StepIndicator({ number, label, active }: StepIndicatorProps) {
     <div className={`flex items-center whitespace-nowrap ${active ? '' : 'opacity-70'}`}>
       <div
         className={`flex items-center justify-center w-6 h-6 rounded-full transition-colors ${
-          active ? 'bg-aftercode text-white' : 'border border-gray text-gray-500'
+          active ? 'bg-pink-500 text-white' : 'border border-gray text-gray-500'
         }`}
       >
         {number}
       </div>
-      <span className={`ml-2 font-medium ${active ? 'text-aftercode' : 'text-gray-500'}`}>
+      <span className={`ml-2 font-medium ${active ? 'text-pink-500' : 'text-gray-500'}`}>
         {label}
       </span>
     </div>

@@ -1,19 +1,20 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, ipcMain, safeStorage, shell } from 'electron'
 import fs from 'fs/promises'
+import fsPromises from 'fs/promises'
 import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { extractDataFromPdf } from './services/pdf/process-pdf'
 
 import fetch from 'node-fetch'
-import { compileDocument, convertDocxToPdf } from './docx/util'
+import { generateWrittenPdf, mergePdfs } from './docx/util'
 import { getRecaudadores } from './services/recaudador'
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1600,
+    height: 900,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -57,8 +58,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'pdf:extract-data',
-    async (_, arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') =>
-      extractDataFromPdf(arrayBuffer, pdfType)
+    async (_, arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => {
+      const { data, originalPdfPath } = await extractDataFromPdf(arrayBuffer, pdfType)
+
+      return { data, originalPdfPath }
+    }
   )
 
   const tokenFile = path.join(app.getPath('userData'), 'token.enc')
@@ -160,16 +164,25 @@ app.whenReady().then(() => {
     return res.json()
   })
 
-  ipcMain.handle('generateDocument', async (_, data: any) => {
-    console.log('Compiling document with aaadata:', data)
-    const buffer = await compileDocument()
-    const docxPath = path.join(app.getPath('temp'), 'document.docx')
-    await fs.writeFile(docxPath, buffer)
+  ipcMain.handle('generateDocument', async (_, { data, originalPdfPath }) => {
+    console.log('Generando documento', data)
+    console.log('Generando escrito para boleta', data.boleta)
 
-    console.log('Document compiled and saved to:', docxPath)
-    await convertDocxToPdf(docxPath)
+    // 1) Generar PDF “escrito”
+    const writtenPdfPath = await generateWrittenPdf(data)
 
-    return { success: true }
+    // 2) Merge
+    const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
+
+    // 3) Guardar en C:\boletas\{boleta}.pdf
+    const outputDir = 'C:\\boletas'
+    await fsPromises.mkdir(outputDir, { recursive: true })
+
+    const finalPath = path.join(outputDir, `${data.boleta}.pdf`)
+    await fsPromises.writeFile(finalPath, mergedBytes)
+
+    console.log('PDF final guardado en', finalPath)
+    return { success: true, path: finalPath }
   })
   createWindow()
 

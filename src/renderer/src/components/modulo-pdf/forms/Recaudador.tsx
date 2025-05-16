@@ -6,9 +6,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { useAuth } from '@renderer/context/AuthContext'
-import { recaudadorSchema } from '@renderer/lib/schemas/modulo-pdf.schema'
-import React, { useEffect, useState } from 'react'
+import { recaudadorSchema } from '@renderer/lib/schemas/forms.schemas'
+import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -71,8 +70,8 @@ export default function Recaudador() {
                 </SelectTrigger>
                 <SelectContent>
                   {recaudadores.map((recaudador) => (
-                    <SelectItem key={recaudador.id} value={JSON.stringify(recaudador)}>
-                      {recaudador.nombre}
+                    <SelectItem key={recaudador.idNombre} value={JSON.stringify(recaudador)}>
+                      {recaudador.idNombre}
                     </SelectItem>
                   ))}
                 </SelectContent>

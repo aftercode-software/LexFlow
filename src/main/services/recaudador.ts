@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { getToken } from './pdf/utils'
 
 export async function getRecaudadores() {

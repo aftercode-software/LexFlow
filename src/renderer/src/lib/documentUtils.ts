@@ -24,6 +24,7 @@ export function validateDocument(
       error: `${field.toUpperCase()} contiene caracteres especiales.`
     }
   }
+  console.log('Validando longitud:', field, value)
   if (!isLengthValid(field, value)) {
     return {
       valid: false,
