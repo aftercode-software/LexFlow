@@ -7,6 +7,7 @@ interface Api {
   ) => Promise<DatosTercero | DatosProfesional>
   login: (username: string, password: string) => Promise<any>
   searchDemandado: (nro: string) => Promise<any>
+  generateDocument: (data: any) => Promise<any>
 }
 
 declare global {

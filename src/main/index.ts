@@ -5,7 +5,9 @@ import icon from '../../resources/icon.png?asset'
 import { extractDataFromPdf } from './services/pdf/process-pdf'
 import { PDFType } from './types'
 import fs from 'fs/promises'
+
 import fetch from 'node-fetch'
+import { compileDocument, convertDocxToPdf } from './docx/util'
 
 function createWindow(): void {
   // Create the browser window.
@@ -150,6 +152,18 @@ app.whenReady().then(() => {
     console.log('Respuesta de la API:', res)
 
     return res.json()
+  })
+
+  ipcMain.handle('generateDocument', async (_, data: any) => {
+    console.log('Compiling document with aaadata:', data)
+    const buffer = await compileDocument()
+    const docxPath = path.join(app.getPath('temp'), 'document.docx')
+    await fs.writeFile(docxPath, buffer)
+
+    console.log('Document compiled and saved to:', docxPath)
+    await convertDocxToPdf(docxPath)
+
+    return { success: true }
   })
   createWindow()
 

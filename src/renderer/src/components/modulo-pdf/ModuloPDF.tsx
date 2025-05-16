@@ -63,9 +63,14 @@ export default function EscanearBoleta() {
   }
 
   // Envía los datos corregidos
-  const handleSubmit = () => {
-    console.log('Enviar al servidor:', extractedData)
-    // lógica de envío
+  const handleSubmit = async () => {
+    try {
+      console.log('Enviar al servidor:', extractedData)
+      const result = await window.api.generateDocument(extractedData)
+      console.log('Resultado:', result)
+    } catch (err) {
+      console.error('Error al generar doc:', err)
+    }
   }
 
   return (

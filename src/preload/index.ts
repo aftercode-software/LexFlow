@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge, ipcRenderer } from 'electron'
 
@@ -22,6 +23,10 @@ const api = {
   },
   searchDemandado: async (nro: string) => {
     const response = await ipcRenderer.invoke('searchDemandado', nro)
+    return response
+  },
+  generateDocument: async (data: any) => {
+    const response = await ipcRenderer.invoke('generateDocument', data)
     return response
   }
 }
