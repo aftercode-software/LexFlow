@@ -1,29 +1,20 @@
-export interface DatosProfesional {
-  fechaEmision: string
-  dni: string | null
-  cuil: string | null
+export type DatosFormulario = {
   boleta: string
-  nombre: string
-  nombreCompleto: string
-  matricula: string
-  domicilioTipo: string
-  domicilio: string
-  provincia: string
+  fechaEmision: string
   bruto: number
   valorEnLetras: string
+  tipoDocumento: 'DNI' | 'CUIL' | 'CUIT'
+  documento: string
+  domicilio: string
+  apellidoYNombre: string
 }
 
-export interface DatosTercero {
-  fechaEmision: string
-  dni: string | null
-  cuil: string | null
-  boleta: string
-  nombre: string
-  apellido: string
-  nombreCompleto: string
-  domicilio: string
-  provincia: string
-  expediente: string | null
-  bruto: number
-  valorEnLetras: string
+export type FormularioTerceros = DatosFormulario & {
+  expediente: string
+  tipo: 'Tercero'
+}
+
+export type FormularioProfesionales = DatosFormulario & {
+  matricula: string
+  tipo: 'Profesional'
 }

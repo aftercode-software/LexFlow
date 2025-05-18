@@ -16,67 +16,62 @@ import Recaudador from './Recaudador'
 import Demandado from './Demandado'
 import { Button } from '@renderer/components/ui/button'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
+import { FormularioTerceros } from '@renderer/lib/types'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
 
 export default function FormTerceros({
-  fechaEmision,
-  dni,
-  cuil,
-  cuit,
   boleta,
-  nombreCompleto,
-  domicilio,
-  provincia,
-  expediente,
+  fechaEmision,
   bruto,
   valorEnLetras,
+  tipoDocumento,
+  documento,
+  domicilio,
+  apellidoYNombre,
+  expediente,
+  tipo,
   pdfRoute
-}: {
-  fechaEmision: string
-  dni: string | null
-  cuil: string | null
-  cuit: string | null
-  boleta: string
-  nombre: string
-  apellido: string
-  nombreCompleto: string
-  domicilio: string
-  provincia: string
-  expediente: string | null
-  bruto: number
-  valorEnLetras: string
-  pdfRoute: string
-}) {
+}: FormularioTerceros & { pdfRoute: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(tercerosSchema),
     defaultValues: {
-      boleta,
-      fechaEmision,
+      tipo,
+      recaudador: { id: 0, nombre: '' },
       demandado: {
-        dni: dni,
-        cuil: cuil,
-        cuit: cuit,
-        nombre: '',
+        dni: tipoDocumento === 'DNI' ? documento : null,
+        cuil: tipoDocumento === 'CUIL' ? documento : null,
+        cuit: tipoDocumento === 'CUIT' ? documento : null,
         apellido: '',
-        nombreCompleto,
+        nombre: '',
+        nombreCompleto: apellidoYNombre,
         domicilio
       },
-      provincia,
-      expediente,
+      fechaEmision,
+      boleta,
       bruto,
-      valorEnLetras
+      valorEnLetras,
+      expediente
     }
   })
+
+  console.log('defaultValues:', tipoDocumento)
+  console.log('Valores por defecto:', form.getValues())
 
   const { handleSubmit } = form
 
   const onSubmit = async (data: FormValues) => {
+    console.log('Datos del formulario:', data)
     try {
       console.log('PDF route:', pdfRoute)
       console.log('Data a enviar:', data)
+
       const result = await window.api.generateDocument(data, pdfRoute)
+
+      const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
+
+      console.log('Boleta subida:', uploadBoleta)
       console.log('Resultado:', result)
     } catch (err) {
       console.error('Error al generar doc:', err)
@@ -125,38 +120,26 @@ export default function FormTerceros({
 
         <Demandado form={form as unknown as UseFormReturn<BaseFormValues>} />
         {/* provincia, expediente, bruto, valor */}
-        <FormField
-          name="provincia"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Provincia</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          name="expediente"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Expediente</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <FormField
+            name="expediente"
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="max-w-[200px]">
+                <FormLabel>Expediente</FormLabel>
+                <FormControl>
+                  <Input {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             name="bruto"
             control={form.control}
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="max-w-[200px]">
                 <FormLabel>Bruto</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
@@ -169,7 +152,7 @@ export default function FormTerceros({
             name="valorEnLetras"
             control={form.control}
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Valor en letras</FormLabel>
                 <FormControl>
                   <Input {...field} />

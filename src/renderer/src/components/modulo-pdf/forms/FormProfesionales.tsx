@@ -13,49 +13,42 @@ import { useForm, UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 import Recaudador from './Recaudador'
 import Demandado from './Demandado'
-import { baseFormSchema, profesionalesSchema } from '@renderer/lib/schemas/forms.schemas'
+import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
+import { FormularioProfesionales } from '@renderer/lib/types'
 
-type FormValues = z.infer<typeof profesionalesSchema>
+type FormValues = z.infer<typeof baseFormSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
 
 export default function FormProfesionales({
-  fechaEmision,
-  dni,
-  cuil,
   boleta,
-  nombreCompleto,
-  domicilio,
-  provincia,
+  fechaEmision,
   bruto,
+  valorEnLetras,
+  tipoDocumento,
+  documento,
+  domicilio,
+  apellidoYNombre,
+  tipo,
   matricula,
-  valorEnLetras
-}: {
-  fechaEmision: string
-  dni: string | null
-  cuil: string | null
-  boleta: string
-  nombreCompleto: string
-  domicilio: string
-  provincia: string
-  bruto: number
-  matricula: string
-  valorEnLetras: string
-}) {
+  pdfRoute
+}: FormularioProfesionales & { pdfRoute: string }) {
   const form = useForm<FormValues>({
-    resolver: zodResolver(profesionalesSchema),
+    resolver: zodResolver(baseFormSchema),
     defaultValues: {
-      boleta,
-      fechaEmision,
-      matricula,
+      tipo,
+      recaudador: { id: 0, nombre: '' },
       demandado: {
-        dni: dni,
-        cuil: cuil,
-        nombre: '',
+        dni: tipoDocumento === 'DNI' ? documento : null,
+        cuil: tipoDocumento === 'CUIL' ? documento : null,
+        cuit: tipoDocumento === 'CUIT' ? documento : null,
         apellido: '',
-        nombreCompleto,
-        domicilio
+        nombre: '',
+        nombreCompleto: apellidoYNombre,
+        domicilio,
+        matricula
       },
-      provincia,
+      fechaEmision,
+      boleta,
       bruto,
       valorEnLetras
     }
@@ -63,10 +56,17 @@ export default function FormProfesionales({
 
   const { handleSubmit } = form
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     try {
-      // const result = await window.api.generateDocument(extractedData)
-      console.log('Resultado:', data)
+      console.log('PDF route:', pdfRoute)
+      console.log('Data a enviar:', data)
+
+      const result = await window.api.generateDocument(data, pdfRoute)
+
+      const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
+
+      console.log('Boleta subida:', uploadBoleta)
+      console.log('Resultado:', result)
     } catch (err) {
       console.error('Error al generar doc:', err)
     }
@@ -105,41 +105,15 @@ export default function FormProfesionales({
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="matricula"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Matrícula</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <Demandado form={form as unknown as UseFormReturn<BaseFormValues>} />
 
-        <FormField
-          control={form.control}
-          name="provincia"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Provincia</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <FormField
             name="bruto"
             control={form.control}
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="max-w-[200px]">
                 <FormLabel>Bruto</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} />
@@ -152,7 +126,7 @@ export default function FormProfesionales({
             name="valorEnLetras"
             control={form.control}
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Valor en letras</FormLabel>
                 <FormControl>
                   <Input {...field} />
@@ -162,7 +136,11 @@ export default function FormProfesionales({
             )}
           />
         </div>
-        <Button type="submit">Enviar</Button>
+        <div className="w-full flex justify-end">
+          <Button type="submit" size="lg">
+            Generar PDF
+          </Button>
+        </div>
       </form>
     </Form>
   )

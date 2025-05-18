@@ -1,5 +1,3 @@
-'use client'
-
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -10,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import type { DatosProfesional, DatosTercero } from '@renderer/lib/types'
+import type { FormularioProfesionales, FormularioTerceros } from '@renderer/lib/types'
 import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { FileUpload } from './file-upload'
@@ -26,7 +24,9 @@ export default function EscanearBoleta() {
   const [step, setStep] = useState<Steps>(Steps.UPLOAD)
   const [file, setFile] = useState<File | null>(null)
   const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>(null)
-  const [extractedData, setExtractedData] = useState<DatosProfesional | DatosTercero | null>(null)
+  const [extractedData, setExtractedData] = useState<
+    FormularioProfesionales | FormularioTerceros | null
+  >(null)
   const [originalPdfPath, setOriginalPdfPath] = useState<string>('')
 
   const handleProcess = () => {
@@ -126,11 +126,14 @@ export default function EscanearBoleta() {
             <div className="grid gap-6">
               {typePDF === 'profesional' ? (
                 <FormProfesionales
-                  {...(extractedData as DatosProfesional)}
+                  {...(extractedData as FormularioProfesionales)}
                   pdfRoute={originalPdfPath}
                 />
               ) : (
-                <FormTerceros {...(extractedData as DatosTercero)} pdfRoute={originalPdfPath} />
+                <FormTerceros
+                  {...(extractedData as FormularioTerceros)}
+                  pdfRoute={originalPdfPath}
+                />
               )}
             </div>
           </CardContent>

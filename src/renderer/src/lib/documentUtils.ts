@@ -1,4 +1,4 @@
-export type DocField = 'dni' | 'cuil'
+export type DocField = 'dni' | 'cuil' | 'cuit'
 
 const specialCharsRegex = /[|°&?!@#$%^*()_+\-=[\]{};':"\\,.<>/?]/
 
@@ -45,10 +45,7 @@ export type Demandado = {
   domicilio: string
 }
 
-export async function buscarDemandado(
-  valor: string,
-  field: 'dni' | 'cuil'
-): Promise<Demandado | null> {
+export async function buscarDemandado(valor: string, field: DocField): Promise<Demandado | null> {
   const doc = valor.trim()
   if (!doc) {
     throw new Error('El documento está vacío.')

@@ -61,17 +61,13 @@ export async function convertDocxToPdf(docxPath: string): Promise<void> {
       if (code === 0) {
         resolve()
       } else {
-        reject(
-          new Error(`LibreOffice exited with code ${code}: ${stderrData}`) // eslint-disable-line @typescript-eslint/no-throw-literal
-        )
+        reject(new Error(`LibreOffice exited with code ${code}: ${stderrData}`))
       }
     })
   })
 }
 
 export async function generateWrittenPdf(data: any): Promise<string> {
-  // 1.1 Escribir plantilla .docx
-
   const template = fs.readFileSync('src/renderer/src/doc/escrito.docx')
   const docxBuffer = await createReport({
     template,
@@ -86,7 +82,6 @@ export async function generateWrittenPdf(data: any): Promise<string> {
   const docxPath = path.join(tempDir, `${data.boleta}.docx`)
   await fsPromises.writeFile(docxPath, docxBuffer)
 
-  // 1.2 Convertir DOCX → PDF
   await new Promise<void>((resolve, reject) => {
     const proc = spawn('soffice', [
       '--headless',

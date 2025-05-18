@@ -9,7 +9,7 @@ export function cropImage(
   y: number,
   width: number,
   height: number
-) {
+): Promise<Buffer<ArrayBufferLike>> {
   const image = sharp(imageToCrop)
   return image.extract({ left: x, top: y, width, height }).toBuffer()
 }
@@ -47,10 +47,8 @@ export function numeroALetras(n: number): string {
   }
   if (n === 0) return 'Cero'
 
-  // if n is float, round to integer. isFloat doesn't exist
-  if (n % 1 !== 0) {
-    n = Math.floor(n)
-  }
+  const entero = Math.floor(n)
+  const centavos = Math.round((n - entero) * 100)
 
   const unidades = [
     'cero',
@@ -99,10 +97,6 @@ export function numeroALetras(n: number): string {
     'novecientos'
   ]
 
-  /**
-   * Convierte un bloque de tres cifras (000-999) a palabras.
-   * Si needUn es true, reemplaza “uno”→“un”, “veintiuno”→“veintiun”, “y uno”→“y un”.
-   */
   const bloqueATexto = (num: number, needUn = false): string => {
     let texto = ''
 
@@ -133,9 +127,9 @@ export function numeroALetras(n: number): string {
     return texto
   }
 
-  const millones = Math.floor(n / 1_000_000)
-  const miles = Math.floor((n % 1_000_000) / 1_000)
-  const cientos = n % 1_000
+  const millones = Math.floor(entero / 1_000_000)
+  const miles = Math.floor((entero % 1_000_000) / 1_000)
+  const cientos = entero % 1_000
 
   const partes: string[] = []
 
@@ -153,7 +147,13 @@ export function numeroALetras(n: number): string {
     partes.push(bloqueATexto(cientos))
   }
 
-  const frase = partes.join(' ').replace(/\s+/g, ' ').trim()
+  let frase = partes.join(' ').replace(/\s+/g, ' ').trim()
+
+  if (centavos > 0) {
+    const centavosTexto = bloqueATexto(centavos)
+    frase += ` con ${centavosTexto} centavos`
+  }
+
   return frase.charAt(0).toUpperCase() + frase.slice(1)
 }
 
@@ -166,4 +166,29 @@ export async function getToken(): Promise<string | null> {
     : file.toString('utf8')
 
   return token
+}
+
+interface Documento {
+  tipo: 'DNI' | 'CUIL' | 'CUIT'
+  valor: string
+}
+
+export function extraerDocumento(texto: string): Documento {
+  console.log('No se encontró DNI o CUIT en el texto:', texto)
+  const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
+
+  const matchCuit = texto.match(CUIT_REGEX)
+  if (matchCuit) {
+    const clean = matchCuit[0].replace(/-/g, '')
+
+    const pref = parseInt(clean.slice(0, 2), 10)
+    const tipo = [20, 23, 24, 27].includes(pref) ? 'CUIL' : 'CUIT'
+    return { tipo, valor: clean }
+  }
+
+  const matchDni = texto.match(/\b\d{7,8}\b/)
+  if (matchDni) {
+    return { tipo: 'DNI', valor: matchDni[0] }
+  }
+  return { tipo: 'DNI', valor: '' }
 }

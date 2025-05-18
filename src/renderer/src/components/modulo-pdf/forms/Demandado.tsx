@@ -1,4 +1,3 @@
-// src/components/DemandadoSection.tsx
 import { useState, useRef, useEffect } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import {
@@ -12,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Search, CheckCircle2, AlertCircle } from 'lucide-react'
-import { validateDocument, buscarDemandado } from '@renderer/lib/documentUtils'
+import { validateDocument, buscarDemandado, DocField } from '@renderer/lib/documentUtils'
 import { cn } from '@/lib/utils'
 import { z } from 'zod'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
@@ -28,68 +27,68 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
     formState: { errors }
   } = form
 
-  const [currentField, setCurrentField] = useState<'dni' | 'cuil'>(
-    getValues('demandado.cuil') === getValues('demandado.dni') ? 'dni' : 'cuil'
-  )
+  const [currentField, setCurrentField] = useState<DocField>('dni')
   const [isSearching, setIsSearching] = useState(false)
   const [documentFound, setDocumentFound] = useState(false)
   const [showWarning, setShowWarning] = useState(false)
   const [warningMessage, setWarningMessage] = useState('')
-  const [autoCompletedFields, setAutoCompletedFields] = useState<string[]>([])
+  const [autoFields, setAutoFields] = useState<string[]>([])
   const [accordionOpen, setAccordionOpen] = useState<string>('')
   const previousValue = useRef('')
 
-  // Cuando cambian los props de DNI/CUIL reiniciamos estado
+  const tipo = watch('tipo')
+  const dni = watch('demandado.dni')
+  const cuil = watch('demandado.cuil')
+  const cuit = watch('demandado.cuit')
+
   useEffect(() => {
-    const newField = getValues('demandado.cuil') === getValues('demandado.dni') ? 'dni' : 'cuil'
-    setCurrentField(newField)
+    let field: DocField = 'dni'
+    if (cuit?.trim()) field = 'cuit'
+    else if (cuil?.trim()) field = 'cuil'
+    setCurrentField(field)
     previousValue.current = ''
     setDocumentFound(false)
-    setAutoCompletedFields([])
+    setAutoFields([])
     setShowWarning(false)
-  }, [watch('demandado.dni'), watch('demandado.cuil')])
+  }, [dni, cuil, cuit])
 
-  const handleSearchByDocumento = async () => {
-    const fieldName = currentField === 'dni' ? 'demandado.dni' : 'demandado.cuil'
-    const rawValue = getValues(fieldName)
-    const docValue = (rawValue ?? '').trim()
-    console.log('Buscando documento:', docValue)
-    // validación cliente
-    const { valid, error } = validateDocument(currentField, docValue)
+  useEffect(() => {
+    const path = `demandado.${currentField}` as const
+    const val = getValues(path)
+    setValue(path, val ?? '', { shouldDirty: false, shouldTouch: false })
+  }, [currentField, getValues, setValue])
+
+  const handleSearch = async () => {
+    const fieldName = `demandado.${currentField}` as const
+    const raw = getValues(fieldName) ?? ''
+    const value = raw.trim()
+    const { valid, error } = validateDocument(currentField, value)
     if (!valid) {
       setShowWarning(true)
       setWarningMessage(error!)
       setDocumentFound(false)
       return
     }
-    if (docValue === previousValue.current && documentFound) return
-    previousValue.current = docValue
+    if (value === previousValue.current && documentFound) return
+    previousValue.current = value
 
     setIsSearching(true)
     setShowWarning(false)
     setDocumentFound(false)
-    setAutoCompletedFields([])
+    setAutoFields([])
 
     try {
-      const data = await buscarDemandado(docValue, currentField)
+      const data = await buscarDemandado(value, currentField)
       if (data) {
         setValue('demandado.apellido', data.apellido)
         setValue('demandado.nombre', data.nombre)
         setValue('demandado.nombreCompleto', data.apellidoYNombre)
         setValue('demandado.domicilio', data.domicilio)
-        setAutoCompletedFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio'])
-        setAccordionOpen('auto-completed')
+        setAutoFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio'])
+        setAccordionOpen('auto')
         setDocumentFound(true)
       } else {
-        // si falla CUIL, cambio a DNI
-        if (currentField === 'cuil') {
-          setCurrentField('dni')
-          setWarningMessage(
-            'CUIL no encontrado. Cambié a DNI, verifica el número y vuelve a buscar.'
-          )
-        } else {
-          setWarningMessage('Documento no encontrado.')
-        }
+        setWarningMessage(`${currentField.toUpperCase()} no encontrado.`)
         setShowWarning(true)
       }
     } catch {
@@ -102,33 +101,46 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
 
   return (
     <div className="space-y-4">
+      {/* Error de búsqueda */}
       {showWarning && (
         <Alert variant="destructive" className="text-red-600 bg-red-50">
-          <AlertCircle className="h-4 w-4 text-red-600" color="#dc2626 " />
+          <AlertCircle className="h-4 w-4 text-red-600" color="#dc2626" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{warningMessage}</AlertDescription>
         </Alert>
       )}
 
+      {/* Documento dinámico */}
       <FormField
-        name={`demandado.${currentField}`}
+        name={`demandado.${currentField}` as const}
         control={control}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{currentField === 'dni' ? 'DNI' : 'CUIL / CUIT'}</FormLabel>
+            <FormLabel>
+              {currentField === 'dni' ? 'DNI' : currentField === 'cuil' ? 'CUIL' : 'CUIT'}
+            </FormLabel>
             <div className="flex items-center gap-2">
               <FormControl>
                 <Input
                   {...field}
                   value={field.value ?? ''}
-                  className={cn(documentFound && 'border-green-500 focus:ring-green-500')}
+                  className={cn(documentFound && 'border-green-500')}
                   onChange={(e) => {
                     field.onChange(e)
                     setDocumentFound(false)
                   }}
                   onBlur={() => {
                     field.onBlur()
-                    handleSearchByDocumento()
+                    handleSearch()
+                    // detectar automáticamente tipo de documento según contenido
+                    const doc = extraerDocumento(field.value)
+                    const newField = doc.tipo.toLowerCase() as DocField
+                    if (newField !== currentField) {
+                      // mover valor al campo correcto y limpiar el anterior
+                      setValue(`demandado.${newField}`, field.value, { shouldDirty: true })
+                      setValue(`demandado.${currentField}`, null)
+                      setCurrentField(newField)
+                    }
                   }}
                 />
               </FormControl>
@@ -136,9 +148,9 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={handleSearchByDocumento}
+                onClick={handleSearch}
                 disabled={
-                  isSearching || (field.value ?? '').length < (currentField === 'dni' ? 7 : 10)
+                  isSearching || (field.value ?? '').length < (currentField === 'dni' ? 7 : 11)
                 }
               >
                 {isSearching ? (
@@ -148,31 +160,46 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                 )}
               </Button>
             </div>
-            {errors[currentField] && <FormMessage>{errors[currentField]?.message}</FormMessage>}
+            <FormMessage>{errors.demandado?.[currentField]?.message}</FormMessage>
           </FormItem>
         )}
       />
 
-      {/* Auto-completados dentro de un Accordion */}
-      {autoCompletedFields.length > 0 && (
+      {tipo === 'Profesional' && (
+        <FormField
+          name="demandado.matricula"
+          control={control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Matrícula</FormLabel>
+              <FormControl>
+                <Input {...field} value={field.value ?? ''} />
+              </FormControl>
+              <FormMessage>{errors.demandado?.matricula?.message}</FormMessage>
+            </FormItem>
+          )}
+        />
+      )}
+
+      {/* Autocompletados */}
+      {autoFields.length > 0 ? (
         <Accordion
           type="single"
           collapsible
           value={accordionOpen}
           onValueChange={(v) => setAccordionOpen(v || '')}
         >
-          <AccordionItem value="auto-completed">
+          <AccordionItem value="auto">
             <AccordionTrigger>
               <div className="text-green-600 text-sm flex items-center font-semibold">
-                <CheckCircle2 className="h-4 w-4 mr-1" />
-                Datos autocompletados
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Datos autocompletados
               </div>
             </AccordionTrigger>
-            <AccordionContent className="grid grid-cols-2 md:grid-cols-2 gap-4">
+            <AccordionContent className="grid grid-cols-2 gap-4">
               {(['apellido', 'nombre', 'nombreCompleto', 'domicilio'] as const).map((key) => (
                 <FormField
                   key={key}
-                  name={`demandado.${key}`}
+                  name={`demandado.${key}` as const}
                   control={control}
                   render={({ field }) => (
                     <FormItem>
@@ -182,12 +209,7 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                           : key.charAt(0).toUpperCase() + key.slice(1)}
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className={cn(
-                            autoCompletedFields.includes(key) && 'border-green-200 bg-green-50'
-                          )}
-                        />
+                        <Input {...field} className="border-green-200 bg-green-50" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -197,15 +219,12 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      )}
-
-      {/* Si no hay autocompletados, dejo que el usuario escriba manual */}
-      {autoCompletedFields.length === 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+      ) : (
+        <div className="grid grid-cols-2 gap-4">
           {(['apellido', 'nombre', 'nombreCompleto', 'domicilio'] as const).map((key) => (
             <FormField
               key={key}
-              name={`demandado.${key}`}
+              name={`demandado.${key}` as const}
               control={control}
               render={({ field }) => (
                 <FormItem>
@@ -226,4 +245,29 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
       )}
     </div>
   )
+}
+
+interface Documento {
+  tipo: 'DNI' | 'CUIL' | 'CUIT'
+  valor: string
+}
+
+function extraerDocumento(texto: string | null): Documento {
+  if (!texto) return { tipo: 'DNI', valor: '' }
+  const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
+
+  const matchCuit = texto.match(CUIT_REGEX)
+  if (matchCuit) {
+    const clean = matchCuit[0].replace(/-/g, '')
+
+    const pref = parseInt(clean.slice(0, 2), 10)
+    const tipo = [20, 23, 24, 27].includes(pref) ? 'CUIL' : 'CUIT'
+    return { tipo, valor: clean }
+  }
+
+  const matchDni = texto.match(/\b\d{7,8}\b/)
+  if (matchDni) {
+    return { tipo: 'DNI', valor: matchDni[0] }
+  }
+  return { tipo: 'DNI', valor: '' }
 }

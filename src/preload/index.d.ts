@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ElectronAPI } from '@electron-toolkit/preload'
 
 interface Api {
@@ -12,6 +13,7 @@ interface Api {
     originalPdfPath: string
   ) => Promise<{ success: boolean; path: string }>
   getRecaudadores: () => Promise<any>
+  uploadBoleta: (data: any, tipo: string) => Promise<any>
 }
 
 declare global {

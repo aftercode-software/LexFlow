@@ -18,74 +18,84 @@ export const recaudadorSchema = z
     message: 'Debe seleccionar un recaudador'
   })
 
+const CUIT_REGEX = /^(20|23|24|27|30|33)-?\d{8}-?\d$/
+
 export const demandadoSchema = z
   .object({
     dni: z.string().nullable(),
-    cuit: z.string().nullable().optional(), //TODO: Ver que se ahce con cuil/cuit
     cuil: z.string().nullable(),
+    cuit: z.string().nullable(),
     apellido: z.string(),
     nombre: z.string(),
     nombreCompleto: z.string(),
-    domicilio: z.string()
-  })
-  .refine(
-    (d) => {
-      const hasDNI = (d.dni?.trim().length ?? 0) > 0
-      const hasCUIL = (d.cuil?.trim().length ?? 0) > 0
-      const hasCUIT = (d.cuit?.trim().length ?? 0) > 0
-      return hasDNI || hasCUIL || hasCUIT
-    },
-    {
-      message: 'Debe completar DNI o CUIL/CUIT',
-      path: ['dni']
-    }
-  )
+    domicilio: z.string(),
 
-export const baseFormSchema = z.object({
+    matricula: z.string().nullable().optional()
+  })
+  .superRefine((data, ctx) => {
+    // Debe completar exactamente uno de los documentos
+    const docs = [data.dni?.trim(), data.cuil?.trim(), data.cuit?.trim()].filter(
+      (s) => s && s.length > 0
+    )
+    if (docs.length !== 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Debe completar uno y sólo uno de: DNI, CUIL o CUIT',
+        path: ['dni']
+      })
+    }
+    // Validación de formatos de CUIL/CUIT
+    if (data.cuil && !CUIT_REGEX.test(data.cuil)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CUIL inválido',
+        path: ['cuil']
+      })
+    }
+    if (data.cuit && !CUIT_REGEX.test(data.cuit)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'CUIT inválido',
+        path: ['cuit']
+      })
+    }
+  })
+const baseFormObjectSchema = z.object({
   recaudador: recaudadorSchema,
   demandado: demandadoSchema,
   fechaEmision: z.string(),
   boleta: z.string(),
-  provincia: z.string(),
   bruto: z.number(),
-  valorEnLetras: z.string()
+  valorEnLetras: z.string(),
+  tipo: z.enum(['Tercero', 'Profesional'])
 })
 
-export const tercerosSchema = baseFormSchema.extend({
-  expediente: z.string().nullable()
+export const baseFormSchema = baseFormObjectSchema.superRefine((data, ctx) => {
+  if (data.tipo === 'Profesional') {
+    const mat = data.demandado.matricula?.trim() ?? ''
+    if (!mat) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'La matrícula es obligatoria para profesionales',
+        path: ['demandado', 'matricula']
+      })
+    }
+  }
 })
 
-export const profesionalesSchema = baseFormSchema.extend({
-  matricula: z.string().nullable()
-})
-
-// export const formularioProfesionalSchema = z.object({
-//   recaudador: recaudadorSchema,
-//   fechaEmision: z.string(),
-//   dni: z.string().nullable(),
-//   cuil: z.string().nullable(),
-//   boleta: z.string(),
-//   nombre: z.string(),
-//   // domicilioTipo: z.string(),
-//   domicilio: z.string(),
-//   provincia: z.string(),
-//   bruto: z.number(),
-//   valorEnLetras: z.string()
-// })
-
-// export const formularioTerceroSchema = z.object({
-//   recaudador: recaudadorSchema,
-//   fechaEmision: z.string(),
-//   dni: z.string().nullable(),
-//   cuil: z.string().nullable(),
-//   boleta: z.string(),
-//   nombre: z.string(),
-//   apellido: z.string(),
-//   nombreCompleto: z.string(),
-//   // domicilioTipo: z.string(),
-//   domicilio: z.string(),
-//   provincia: z.string(),
-//   expediente: z.string().nullable(),
-//   bruto: z.number(),
-//   valorEnLetras: z.string()
-// })
+export const tercerosSchema = baseFormObjectSchema
+  .extend({
+    expediente: z.string().nullable()
+  })
+  .superRefine((data, ctx) => {
+    if (data.tipo === 'Profesional') {
+      const mat = data.demandado.matricula?.trim() ?? ''
+      if (!mat) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'La matrícula es obligatoria para profesionales',
+          path: ['demandado', 'matricula']
+        })
+      }
+    }
+  })

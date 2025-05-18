@@ -159,8 +159,6 @@ app.whenReady().then(() => {
       throw new Error(`Error ${res.status}: ${text}`)
     }
 
-    console.log('Respuesta de la API:', res)
-
     return res.json()
   })
 
@@ -184,6 +182,48 @@ app.whenReady().then(() => {
     console.log('PDF final guardado en', finalPath)
     return { success: true, path: finalPath }
   })
+
+  ipcMain.handle('uploadBoleta', async (_, { data, tipo }) => {
+    console.log('Subiendo boleta', data)
+    console.log('Tipo de boleta', tipo)
+    const token: string | null = await fs
+      .readFile(tokenFile)
+      .then((data) =>
+        safeStorage.isEncryptionAvailable()
+          ? safeStorage.decryptString(data)
+          : data.toString('utf8')
+      )
+      .catch(() => null)
+    if (!token) throw new Error('No hay token de autenticación')
+
+    const boleta = {
+      recaudadorId: data.recaudador.idNombre,
+      fechaEmision: data.fechaEmision,
+      tipo,
+      boleta: data.boleta,
+      bruto: data.bruto,
+      valorEnLetras: data.valorEnLetras,
+      expediente: data.expediente,
+      demandado: data.demandado
+    }
+
+    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(boleta)
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`Error ${res.status}: ${text}`)
+    }
+
+    return res.json()
+  })
+
   createWindow()
 
   app.on('activate', function () {

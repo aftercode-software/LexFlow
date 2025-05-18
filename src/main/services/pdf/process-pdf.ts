@@ -2,16 +2,16 @@ import fs from 'fs'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
-import { DatosProfesional, DatosTercero } from '../../types'
+import { FormularioProfesionales, FormularioTerceros } from '../../types'
 import fsPromises from 'fs/promises'
 import { getTextFromImage } from './ocr'
-import { cropImage, extraerBoleta, extraerMonto, numeroALetras } from './utils'
+import { cropImage, extraerBoleta, extraerDocumento, extraerMonto, numeroALetras } from './utils'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
   pdfType: 'profesional' | 'tercero'
 ): Promise<{
-  data: DatosProfesional | DatosTercero
+  data: FormularioProfesionales | FormularioTerceros
   originalPdfPath: string
 }> {
   // 1) Asegúrate de que exista tmp/
@@ -33,16 +33,16 @@ export async function extractDataFromPdf(
 export async function processPDF(
   pdfPath: string,
   type: 'profesional' | 'tercero'
-): Promise<DatosProfesional | DatosTercero> {
+): Promise<FormularioProfesionales | FormularioTerceros> {
   const { createWorker } = Tesseract
   const worker = await createWorker('spa', OEM.DEFAULT)
 
-  let extractedData: DatosProfesional | DatosTercero | null = null
+  let extractedData: FormularioProfesionales | FormularioTerceros | null = null
 
   if (type === 'profesional') {
-    extractedData = (await processProfesionalPDF(worker, pdfPath)) as DatosProfesional
+    extractedData = (await processProfesionalPDF(worker, pdfPath)) as FormularioProfesionales
   } else if (type === 'tercero') {
-    extractedData = (await processTerceroPDF(worker, pdfPath)) as DatosTercero
+    extractedData = (await processTerceroPDF(worker, pdfPath)) as FormularioTerceros
   }
   await worker.terminate()
 
@@ -53,7 +53,10 @@ export async function processPDF(
   return extractedData
 }
 
-async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Promise<DatosTercero> {
+async function processTerceroPDF(
+  worker: Tesseract.Worker,
+  pdfPath: string
+): Promise<FormularioTerceros> {
   const options = {
     quality: 100,
     density: 300,
@@ -88,6 +91,8 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
   const datosSuperiorTxt = await getTextFromImage(worker, datosSuperiorImg)
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
+  const doc = extraerDocumento(datosSuperiorTxt)
+  console.log('Documento y yipo:', doc)
   const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
   const dni = dniMatch?.[1] ?? null
 
@@ -104,7 +109,7 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
 
   const mediaTxt = await getTextFromImage(worker, mediaImg)
 
-  const nombreCompleto =
+  const apellidoYNombre =
     mediaTxt
       .match(/EMPLAZA\s+a\s+([\s\S]+?)\s+con\s+domicilio/i)?.[1]
       .replace(/[\n\r]+/g, ' ')
@@ -127,10 +132,10 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
       .replace(/[^\p{L}]/gu, '') //   quita bytes raros
       .toUpperCase() ?? ''
 
-  const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9\/-]+)/i)?.[1] ?? ''
+  const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9/-]+)/i)?.[1] ?? ''
 
   console.log({
-    nombreCompleto,
+    nombreCompleto: apellidoYNombre,
     domicilioTipo,
     domicilio,
     provincia,
@@ -156,22 +161,21 @@ async function processTerceroPDF(worker: Tesseract.Worker, pdfPath: string): Pro
 
   return {
     fechaEmision,
-    dni,
-    cuil,
+    documento: doc?.valor,
+    tipoDocumento: doc?.tipo,
     boleta,
-    nombreCompleto,
-    domicilioTipo,
-    domicilio,
-    provincia,
+    apellidoYNombre,
+    domicilio: domicilio + ' - ' + provincia,
     expediente,
     bruto,
-    valorEnLetras
+    valorEnLetras,
+    tipo: 'Tercero'
   }
 }
 async function processProfesionalPDF(
   worker: Tesseract.Worker,
   pdfPath: string
-): Promise<DatosProfesional> {
+): Promise<FormularioProfesionales> {
   const options = {
     quality: 100,
     density: 300,
@@ -197,6 +201,8 @@ async function processProfesionalPDF(
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
+  const doc = extraerDocumento(datosSuperiorTxt)
+  console.log('Documento y yipo:', doc)
   const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
   const dni = dniMatch?.[1] ?? null
 
@@ -213,11 +219,12 @@ async function processProfesionalPDF(
 
   const mediaTxt = await getTextFromImage(worker, parteMedia)
 
-  const nombre =
+  const matricula = mediaTxt.match(/\(Mat\.\s*0*([1-9][0-9]*)\)/i)?.[1] ?? ''
+
+  const apellidoYNombre =
     mediaTxt
-      .match(/EMPLAZA\s+a\s+([\s\S]+?)\s+con\s+domicilio/i)?.[1]
-      .replace(/\(Mat.*?\)/gi, '')
-      .replace(/[\n\r]+/g, ' ')
+      .match(/EMPLAZA\s+a\s+([\s\S]+?)\s+\(Mat\./i)?.[1]
+      ?.replace(/[\n\r]+/g, ' ')
       .replace(/[.,]/g, '')
       .replace(/\s+/g, ' ')
       .trim() ?? ''
@@ -238,7 +245,7 @@ async function processProfesionalPDF(
       .toUpperCase() ?? ''
 
   console.log({
-    nombre,
+    apellidoYNombre,
     domicilioTipo,
     domicilio,
     provincia
@@ -256,14 +263,14 @@ async function processProfesionalPDF(
 
   return {
     fechaEmision,
-    dni,
-    cuil,
+    documento: doc.valor,
+    tipoDocumento: doc.tipo,
+    matricula,
     boleta,
-    nombre,
-    domicilioTipo,
-    domicilio,
-    provincia,
+    apellidoYNombre,
+    domicilio: domicilio + ' - ' + provincia,
     bruto,
-    valorEnLetras
+    valorEnLetras,
+    tipo: 'Profesional'
   }
 }

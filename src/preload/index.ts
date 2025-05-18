@@ -31,6 +31,10 @@ const api = {
   getRecaudadores: async () => {
     const response = await ipcRenderer.invoke('getRecaudadores')
     return response
+  },
+  uploadBoleta: async (data, tipo) => {
+    const response = await ipcRenderer.invoke('uploadBoleta', { data, tipo })
+    return response
   }
 }
 
