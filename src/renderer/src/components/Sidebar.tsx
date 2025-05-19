@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
-import { FileUp, ScanText } from 'lucide-react'
-import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ChevronDown, FileUp, ScanText } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import aftercodeLogo from '../assets/aftercode-logo-white.png'
 import { useLocation } from 'react-router'
 import { useState } from 'react'
@@ -65,19 +65,21 @@ export function Sidebar() {
 
             <nav className="space-y-1">
               <Collapsible defaultOpen>
-                <CollapsibleTrigger
-                  className={cn(
-                    'flex items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                    pathname.includes('/escanear') && 'bg-pink-50 text-aftercode font-medium'
-                  )}
-                >
-                  <ScanText size={18} />
-                  {isOpen && (
-                    <>
-                      <span className="flex-1 text-left">Escanear boletas</span>
-                    </>
-                  )}
-                </CollapsibleTrigger>
+                <a href="/escanear-pdf">
+                  <CollapsibleTrigger
+                    className={cn(
+                      'flex items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
+                      pathname.includes('/escanear-pdf') && 'bg-pink-50 text-aftercode font-medium'
+                    )}
+                  >
+                    <ScanText size={18} />
+                    {isOpen && (
+                      <>
+                        <span className="flex-1 text-left">Escanear boletas</span>
+                      </>
+                    )}
+                  </CollapsibleTrigger>
+                </a>
               </Collapsible>
 
               <Collapsible defaultOpen>
@@ -91,9 +93,32 @@ export function Sidebar() {
                   {isOpen && (
                     <>
                       <span className="flex-1 text-left">Escanear boletas</span>
+                      <ChevronDown className="h-4 w-4 transition-transform ui-open:rotate-180" />
                     </>
                   )}
                 </CollapsibleTrigger>
+                <CollapsibleContent className={cn(isOpen ? 'pl-9' : 'hidden')}>
+                  <div className="space-y-1 pt-1">
+                    <a
+                      href="/precarga"
+                      className={cn(
+                        'block py-1.5 px-3 text-sm rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
+                        pathname === '/precarga"' && 'bg-pink-50 text-aftercode font-medium'
+                      )}
+                    >
+                      Inicio de sesión
+                    </a>
+                    <a
+                      href="/subir-pdf"
+                      className={cn(
+                        'block py-1.5 px-3 text-sm rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
+                        pathname === '/subir-pdf' && 'bg-pink-50 text-aftercode font-medium'
+                      )}
+                    >
+                      Subir boletas
+                    </a>
+                  </div>
+                </CollapsibleContent>
               </Collapsible>
             </nav>
           </div>

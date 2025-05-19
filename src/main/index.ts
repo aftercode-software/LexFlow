@@ -5,10 +5,11 @@ import fsPromises from 'fs/promises'
 import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { extractDataFromPdf } from './services/pdf/process-pdf'
-
 import fetch from 'node-fetch'
 import { generateWrittenPdf, mergePdfs } from './docx/util'
 import { getRecaudadores } from './services/recaudador'
+import { flujoCarga } from './playwright/procesar-boletas'
+import { loginRecaudador } from './playwright/manual-login'
 
 function createWindow(): void {
   // Create the browser window.
@@ -210,7 +211,7 @@ app.whenReady().then(() => {
       estado: data.estado
     }
 
-    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -228,6 +229,9 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+  ipcMain.handle('precarga:procesar', () => flujoCarga())
+
+  ipcMain.handle('precarga:login', () => loginRecaudador())
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

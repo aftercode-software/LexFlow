@@ -14,6 +14,8 @@ interface Api {
   ) => Promise<{ success: boolean; path: string }>
   getRecaudadores: () => Promise<any>
   uploadBoleta: (data: any, tipo: string) => Promise<any>
+  iniciarPrecarga: () => Promise<void>
+  iniciarLoginManual: () => Promise<void>
 }
 
 declare global {

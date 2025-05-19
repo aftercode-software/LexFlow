@@ -35,7 +35,9 @@ const api = {
   uploadBoleta: async (data, tipo) => {
     const response = await ipcRenderer.invoke('uploadBoleta', { data, tipo })
     return response
-  }
+  },
+  iniciarPrecarga: () => ipcRenderer.invoke('precarga:procesar'),
+  iniciarLoginManual: () => ipcRenderer.invoke('precarga:login')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
