@@ -57,13 +57,24 @@ export default function FormProfesionales({
   const { handleSubmit } = form
 
   const onSubmit = async (data: FormValues) => {
+    console.log('Datos del formulario:', data)
     try {
       console.log('PDF route:', pdfRoute)
       console.log('Data a enviar:', data)
 
+      let estado: 'Generada' | 'Error' = 'Generada'
       const result = await window.api.generateDocument(data, pdfRoute)
+      estado = 'Generada'
 
-      const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
+      if (!result.success) {
+        estado = 'Error'
+      }
+
+      data = {
+        ...data,
+        estado
+      }
+      const uploadBoleta = await window.api.uploadBoleta(data, 'Profesional')
 
       console.log('Boleta subida:', uploadBoleta)
       console.log('Resultado:', result)
