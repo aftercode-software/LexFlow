@@ -29,11 +29,9 @@ export const demandadoSchema = z
     nombre: z.string(),
     nombreCompleto: z.string(),
     domicilio: z.string(),
-
     matricula: z.string().nullable().optional()
   })
   .superRefine((data, ctx) => {
-    // Debe completar exactamente uno de los documentos
     const docs = [data.dni?.trim(), data.cuil?.trim(), data.cuit?.trim()].filter(
       (s) => s && s.length > 0
     )
@@ -44,7 +42,7 @@ export const demandadoSchema = z
         path: ['dni']
       })
     }
-    // Validación de formatos de CUIL/CUIT
+
     if (data.cuil && !CUIT_REGEX.test(data.cuil)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -67,7 +65,8 @@ const baseFormObjectSchema = z.object({
   boleta: z.string(),
   bruto: z.number(),
   valorEnLetras: z.string(),
-  tipo: z.enum(['Tercero', 'Profesional'])
+  tipo: z.enum(['Tercero', 'Profesional']),
+  estado: z.enum(['Generada', 'Error', 'Subida']).optional()
 })
 
 export const baseFormSchema = baseFormObjectSchema.superRefine((data, ctx) => {

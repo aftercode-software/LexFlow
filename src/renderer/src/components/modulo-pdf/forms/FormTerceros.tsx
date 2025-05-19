@@ -33,7 +33,7 @@ export default function FormTerceros({
   expediente,
   tipo,
   pdfRoute
-}: FormularioTerceros & { pdfRoute: string }) {
+}: FormularioTerceros & { pdfRoute: string } & { estado: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(tercerosSchema),
     defaultValues: {
@@ -67,8 +67,18 @@ export default function FormTerceros({
       console.log('PDF route:', pdfRoute)
       console.log('Data a enviar:', data)
 
+      let estado: 'Generada' | 'Error' = 'Generada'
       const result = await window.api.generateDocument(data, pdfRoute)
+      estado = 'Generada'
 
+      if (!result.success) {
+        estado = 'Error'
+      }
+
+      data = {
+        ...data,
+        estado
+      }
       const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
 
       console.log('Boleta subida:', uploadBoleta)

@@ -164,6 +164,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('generateDocument', async (_, { data, originalPdfPath }) => {
     console.log('Generando documento', data)
+    console.log('tipo de documento', data.tipo)
     console.log('Generando escrito para boleta', data.boleta)
 
     // 1) Generar PDF “escrito”
@@ -173,7 +174,8 @@ app.whenReady().then(() => {
     const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
 
     // 3) Guardar en C:\boletas\{boleta}.pdf
-    const outputDir = 'C:\\boletas'
+    const outputDir =
+      data.tipo === 'Profesional' ? 'C:\\boletas\\profesionales' : 'C:\\boletas\\terceros'
     await fsPromises.mkdir(outputDir, { recursive: true })
 
     const finalPath = path.join(outputDir, `${data.boleta}.pdf`)
@@ -204,7 +206,8 @@ app.whenReady().then(() => {
       bruto: data.bruto,
       valorEnLetras: data.valorEnLetras,
       expediente: data.expediente,
-      demandado: data.demandado
+      demandado: data.demandado,
+      estado: data.estado
     }
 
     const res = await fetch(`http://localhost:3000/api/boletas/create`, {
