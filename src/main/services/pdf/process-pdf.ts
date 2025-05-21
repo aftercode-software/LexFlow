@@ -76,17 +76,10 @@ async function processTerceroPDF(
     throw new Error('Error converting PDF to image')
   }
 
-  const tempPath = path.join(process.cwd(), '/tmp/page2.jpg')
-  await fs.promises.writeFile(tempPath, convertedPDFPage2)
-
   const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 50)
   const mediaImg = await cropImage(convertedPDFPage1, 0, 165, 1200, 155)
   const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 40)
   const recaudadorImg = await cropImage(convertedPDFPage2, 0, 1010, 1200, 40)
-
-  // Save recaudador img to a temporary file
-  const tempRecaudadorPath = path.join(process.cwd(), '/tmp/recaudador.jpg')
-  await fs.promises.writeFile(tempRecaudadorPath, recaudadorImg)
 
   const datosSuperiorTxt = await getTextFromImage(worker, datosSuperiorImg)
 
