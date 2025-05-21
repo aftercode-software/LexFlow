@@ -37,7 +37,13 @@ const api = {
     return response
   },
   iniciarPrecarga: () => ipcRenderer.invoke('precarga:procesar'),
-  iniciarLoginManual: () => ipcRenderer.invoke('precarga:login')
+  iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
+  getBoletasToUpload: async (matricula: number) => {
+    console.log('getBoletasToUpload', matricula)
+    const devolucionIPC = await ipcRenderer.invoke('boletas:get-to-upload', matricula)
+    console.log('devolucionIPC', devolucionIPC)
+    return devolucionIPC
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

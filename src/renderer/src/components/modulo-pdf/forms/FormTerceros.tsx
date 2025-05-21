@@ -17,6 +17,7 @@ import Demandado from './Demandado'
 import { Button } from '@renderer/components/ui/button'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioTerceros } from '@renderer/lib/types'
+import { useNavigate } from 'react-router'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -34,6 +35,7 @@ export default function FormTerceros({
   tipo,
   pdfRoute
 }: FormularioTerceros & { pdfRoute: string } & { estado: string }) {
+  const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(tercerosSchema),
     defaultValues: {
@@ -81,8 +83,7 @@ export default function FormTerceros({
       }
       const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
 
-      console.log('Boleta subida:', uploadBoleta)
-      console.log('Resultado:', result)
+      navigate(`/escanear-pdf/${data.boleta}`)
     } catch (err) {
       console.error('Error al generar doc:', err)
     }

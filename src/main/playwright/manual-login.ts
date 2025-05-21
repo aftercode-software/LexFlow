@@ -22,7 +22,6 @@ export async function loginRecaudador(): Promise<RecaudadorData> {
     '🟡 Iniciá sesión manualmente. El navegador se cerrará cuando detecte los datos o tras 60s.'
   )
   try {
-    // Esperamos a que aparezca el campo oculto con el nombre del recaudador
     await page.waitForSelector('input.textbox-text.validatebox-text.validatebox-readonly', {
       timeout: 60000
     })
@@ -31,11 +30,9 @@ export async function loginRecaudador(): Promise<RecaudadorData> {
     throw new Error('⛔ Timeout: no se detectó un login exitoso en 60s.')
   }
 
-  // Guardamos el estado de autenticación
   await context.storageState({ path: 'auth.json' })
   console.log('✅ auth.json guardado')
 
-  // Extraemos todos los valores de los inputs hidden y de la etiqueta de fecha
   const data: RecaudadorData = {
     recaudador: await page.$eval('input[type="hidden"][name="recnombre"]', (el: HTMLInputElement) =>
       el.value.trim()

@@ -15,7 +15,8 @@ interface Api {
   getRecaudadores: () => Promise<any>
   uploadBoleta: (data: any, tipo: string) => Promise<any>
   iniciarPrecarga: () => Promise<void>
-  iniciarLoginManual: () => Promise<void>
+  iniciarLoginManual: () => Promise<UserData>
+  getBoletasToUpload: (matricula: number) => Promise<any>
 }
 
 declare global {

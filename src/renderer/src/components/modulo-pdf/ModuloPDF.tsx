@@ -49,7 +49,7 @@ export default function EscanearBoleta() {
   }
 
   return (
-    <div className="p-6 flex flex-col min-h-screen bg-pink-50/30">
+    <div className="p-6 flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col items-left">

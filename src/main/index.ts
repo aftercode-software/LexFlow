@@ -10,6 +10,7 @@ import { generateWrittenPdf, mergePdfs } from './docx/util'
 import { getRecaudadores } from './services/recaudador'
 import { flujoCarga } from './playwright/procesar-boletas'
 import { loginRecaudador } from './playwright/manual-login'
+import { scanBoletas } from './playwright/fetch-boletas'
 
 function createWindow(): void {
   // Create the browser window.
@@ -199,6 +200,7 @@ app.whenReady().then(() => {
       .catch(() => null)
     if (!token) throw new Error('No hay token de autenticación')
 
+    console.log('boleta', data.boleta)
     const boleta = {
       recaudadorId: data.recaudador.idNombre,
       fechaEmision: data.fechaEmision,
@@ -211,7 +213,7 @@ app.whenReady().then(() => {
       estado: data.estado
     }
 
-    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/filtrar', {create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -220,18 +222,78 @@ app.whenReady().then(() => {
       body: JSON.stringify(boleta)
     })
 
+    console.log('Respuesta del servidor:', res)
     if (!res.ok) {
       const text = await res.text()
       throw new Error(`Error ${res.status}: ${text}`)
     }
 
-    return res.json()
+    const contentType = res.headers.get('content-type')
+    if (contentType && contentType.includes('application/json')) {
+      return res.json()
+    } else {
+      const text = await res.text()
+      return { success: true, message: text }
+    }
   })
 
-  createWindow()
   ipcMain.handle('precarga:procesar', () => flujoCarga())
 
   ipcMain.handle('precarga:login', () => loginRecaudador())
+
+  ipcMain.handle('boletas:get-to-upload', async (_, matricula: number) => {
+    console.log('Buscando boletas para subir')
+    console.log('Llega Matrícula:', matricula)
+    if (typeof matricula !== 'number' || isNaN(matricula)) {
+      throw new Error('La matrícula debe ser un número válido')
+    }
+
+    const { profesionales, terceros, profDir, terDir } = await scanBoletas()
+
+    console.log('Profesionales:', profesionales)
+    console.log('Terceros:', terceros)
+
+    const token: string | null = await fs
+      .readFile(tokenFile)
+      .then((data) =>
+        safeStorage.isEncryptionAvailable()
+          ? safeStorage.decryptString(data)
+          : data.toString('utf8')
+      )
+      .catch(() => null)
+    if (!token) throw new Error('No hay token de autenticación')
+    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/filtrar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        boletasTerceros: terceros,
+        boletasProfesionales: profesionales,
+        matricula
+      })
+    })
+
+    if (!res.ok) {
+      throw new Error('Error al obtener las boletas desde el servidor')
+    }
+
+    const data = await res.json()
+
+    console.log('Respuesta del servidor:', data)
+
+    console.log('Boletas profesionales:', data.boletasProfesionales)
+    console.log('Boletas terceros:', data.boletasTerceros)
+    return {
+      profesionales: data.boletasProfesionales,
+      terceros: data.boletasTerceros,
+      profDir,
+      terDir
+    }
+  })
+
+  createWindow()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
