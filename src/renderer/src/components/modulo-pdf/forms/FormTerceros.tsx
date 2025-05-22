@@ -81,7 +81,7 @@ export default function FormTerceros({
         ...data,
         estado
       }
-      const uploadBoleta = await window.api.uploadBoleta(data, 'Tercero')
+      await window.api.uploadBoleta(data, 'Tercero')
 
       navigate(`/escanear-pdf/${data.boleta}`)
     } catch (err) {

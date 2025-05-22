@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // procesar-boletas.mjs
 import { chromium } from 'playwright'
 import fs from 'fs/promises'
@@ -72,8 +74,8 @@ async function procesarBoleta(page, boleta) {
 }
 
 // Flujo principal
-export async function flujoCarga() {
-  const boletas = await cargarBoletas()
+export async function subirBoletas(boletas: any) {
+  console.log('boletas en subirBoleasssss', boletas)
   const browser = await chromium.launch({ headless: false })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()

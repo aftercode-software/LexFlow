@@ -36,13 +36,3 @@ export async function fetchBoletasFromServer(profesionales, terceros, matricula)
   }
   return res.json() // { profesionales: [...], terceros: [...] }
 }
-
-/**
- * A cada item (que debe incluir .name) le añade la ruta completa al PDF.
- */
-function attachPdfPaths(items, dir) {
-  return items.map((item) => ({
-    ...item,
-    pdfPath: path.join(dir, `${item.name}.pdf`)
-  }))
-}

@@ -26,15 +26,10 @@ export function PoderJudicialProvider({ children }: { children: ReactNode }) {
 
   const login = (data: UserData) => {
     setUserData(data)
-    console.log('Usuario autenticado:', data)
     setIsAuthenticated(true)
-    console.log('Estado de autenticación:', isAuthenticated)
-    console.log('Datos de usuario:', userData)
   }
 
-  useEffect(() => {
-    console.log('🔄 Estado auth actualizado:', { isAuthenticated, userData })
-  }, [isAuthenticated, userData])
+  useEffect(() => {}, [isAuthenticated, userData])
 
   const logout = () => {
     setUserData(null)

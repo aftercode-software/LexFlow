@@ -5,3 +5,5 @@ out
 *.log*
 /tmp
 auth.json
+/out
+/release

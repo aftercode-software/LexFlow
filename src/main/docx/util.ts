@@ -11,7 +11,8 @@ import { PDFDocument } from 'pdf-lib'
 export async function compileDocument(data: any): Promise<Uint8Array<ArrayBufferLike>> {
   console.log('Compiling document with data:', data)
   try {
-    const template = fs.readFileSync('src/renderer/src/doc/escrito.docx')
+    const escritoPath = 'C:\\boletas\\escrito.docx'
+    const template = fs.readFileSync(escritoPath)
     const buffer = await createReport({
       template,
       data: {
@@ -68,7 +69,8 @@ export async function convertDocxToPdf(docxPath: string): Promise<void> {
 }
 
 export async function generateWrittenPdf(data: any): Promise<string> {
-  const template = fs.readFileSync('src/renderer/src/doc/escrito.docx')
+  const escritoPath = 'C:\\boletas\\escrito.docx'
+  const template = fs.readFileSync(escritoPath)
   const docxBuffer = await createReport({
     template,
     data,

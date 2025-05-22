@@ -1,4 +1,3 @@
-import fs from 'fs'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'

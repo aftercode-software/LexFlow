@@ -8,7 +8,7 @@ import { extractDataFromPdf } from './services/pdf/process-pdf'
 import fetch from 'node-fetch'
 import { generateWrittenPdf, mergePdfs } from './docx/util'
 import { getRecaudadores } from './services/recaudador'
-import { flujoCarga } from './playwright/procesar-boletas'
+import { subirBoletas } from './playwright/procesar-boletas'
 import { loginRecaudador } from './playwright/manual-login'
 import { scanBoletas } from './playwright/fetch-boletas'
 
@@ -34,6 +34,8 @@ function createWindow(): void {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+
+  mainWindow.webContents.openDevTools()
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -213,7 +215,7 @@ app.whenReady().then(() => {
       estado: data.estado
     }
 
-    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/filtrar', {create`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -237,7 +239,7 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('precarga:procesar', () => flujoCarga())
+  ipcMain.handle('precarga:procesar', () => subirBoletas())
 
   ipcMain.handle('precarga:login', () => loginRecaudador())
 
@@ -262,7 +264,7 @@ app.whenReady().then(() => {
       )
       .catch(() => null)
     if (!token) throw new Error('No hay token de autenticación')
-    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/filtrar', {
+    const res = await fetch('http://localhost:3000/api/boletas/filtrar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

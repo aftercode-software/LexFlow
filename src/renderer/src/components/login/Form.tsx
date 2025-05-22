@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 
 export const loginSchema = z.object({
   username: z.string().nonempty('El usuario es obligatorio'),
@@ -29,12 +30,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   const onSubmit = async ({ username, password }: LoginFormData) => {
     try {
-      console.log('Logging in with username:', username)
-      console.log('Logging in with password:', password)
       await window.api.login(username, password)
       navigate('/escanear-pdf')
-    } catch (e: any) {
-      alert(e.message || 'Error al iniciar sesión')
+    } catch {
+      toast.error('Error al iniciar sesión')
     }
   }
 

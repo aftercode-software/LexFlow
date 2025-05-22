@@ -31,7 +31,7 @@ export default function FormProfesionales({
   tipo,
   matricula,
   pdfRoute
-}: FormularioProfesionales & { pdfRoute: string }) {
+}: FormularioProfesionales & { pdfRoute: string } & { estado: string }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(baseFormSchema),
     defaultValues: {
@@ -74,10 +74,7 @@ export default function FormProfesionales({
         ...data,
         estado
       }
-      const uploadBoleta = await window.api.uploadBoleta(data, 'Profesional')
-
-      console.log('Boleta subida:', uploadBoleta)
-      console.log('Resultado:', result)
+      await window.api.uploadBoleta(data, 'Profesional')
     } catch (err) {
       console.error('Error al generar doc:', err)
     }

@@ -126,11 +126,13 @@ export default function EscanearBoleta() {
             <div className="grid gap-6">
               {typePDF === 'profesional' ? (
                 <FormProfesionales
+                  estado={''}
                   {...(extractedData as FormularioProfesionales)}
                   pdfRoute={originalPdfPath}
                 />
               ) : (
                 <FormTerceros
+                  estado={''}
                   {...(extractedData as FormularioTerceros)}
                   pdfRoute={originalPdfPath}
                 />

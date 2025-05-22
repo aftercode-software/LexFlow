@@ -14,29 +14,8 @@ import { Download, FileText, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
 
-type TipoBoleta = 'Profesional' | 'Tercero'
-
-interface Boleta {
-  id: number
-  tanda?: string
-  tipo: TipoBoleta
-  demandado: string
-  recaudador: string
-  numeroJuicio?: string
-  juzgado?: string
-  expediente?: string
-  fechaInicioDemanda: string
-  monto: number
-  montoEnLetras: string
-  fechaSentencia?: string
-  observaciones?: string
-  estado: string
-  fechaSubida: string
-  nombreArchivo: string
-}
-
 export default function BoletasTable() {
-  const { userData, logout, isAuthenticated } = useAuth()
+  const { userData, isAuthenticated } = useAuth()
   const [profesionales, setProfesionales] = useState<Boleta[]>([])
   const [terceros, setTerceros] = useState<Boleta[]>([])
 
@@ -143,36 +122,21 @@ export default function BoletasTable() {
                     <TableHead>Monto</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Archivo</TableHead>
-                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {profesionales.map((boleta) => (
                     <TableRow key={boleta.id}>
-                      <TableCell className="font-medium">{boleta.id}</TableCell>
+                      <TableCell className="font-medium">{boleta.boleta}</TableCell>
                       <TableCell>{boleta.demandado}</TableCell>
                       <TableCell>{boleta.recaudador}</TableCell>
                       <TableCell>{boleta.fechaInicioDemanda}</TableCell>
                       <TableCell>{formatearMonto(boleta.monto)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-50 text-green-700 border-green-200"
-                        >
-                          {boleta.estado}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{badgeEstado(boleta.estado)}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <FileText className="mr-2 h-4 w-4 text-gray-400" />
                           {boleta.nombreArchivo}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="icon">
-                            <Download className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -201,37 +165,22 @@ export default function BoletasTable() {
                     <TableHead>Monto</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Archivo</TableHead>
-                    <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {terceros.map((boleta) => (
                     <TableRow key={boleta.id}>
-                      <TableCell className="font-medium">{boleta.id}</TableCell>
+                      <TableCell className="font-medium">{boleta.boleta}</TableCell>
                       <TableCell>{boleta.demandado}</TableCell>
                       <TableCell>{boleta.recaudador}</TableCell>
                       <TableCell>{boleta.expediente || '-'}</TableCell>
                       <TableCell>{boleta.fechaInicioDemanda}</TableCell>
                       <TableCell>{formatearMonto(boleta.monto)}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="bg-green-50 text-green-700 border-green-200"
-                        >
-                          {boleta.estado}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{badgeEstado(boleta.estado)}</TableCell>
                       <TableCell>
                         <div className="flex items-center">
                           <FileText className="mr-2 h-4 w-4 text-gray-400" />
                           {boleta.nombreArchivo}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="icon">
-                            <Download className="h-4 w-4" />
-                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -249,5 +198,19 @@ export default function BoletasTable() {
         </Tabs>
       </div>
     </div>
+  )
+}
+
+function badgeEstado(estado: string) {
+  let colorClass = 'bg-gray-100 text-gray-600 border-gray-200'
+  if (estado === 'revisada') {
+    colorClass = 'bg-blue-50 text-blue-700 border-blue-200'
+  } else if (estado === 'subida') {
+    colorClass = 'bg-green-50 text-green-700 border-green-200'
+  }
+  return (
+    <Badge variant="outline" className={colorClass}>
+      {estado}
+    </Badge>
   )
 }
