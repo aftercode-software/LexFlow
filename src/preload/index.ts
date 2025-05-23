@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { electronAPI } from '@electron-toolkit/preload'
 import { contextBridge, ipcRenderer } from 'electron'
+import { EnrichedBoleta } from '../main/interface/boletas'
 
 // Custom APIs for renderer
 const api = {
@@ -36,7 +37,9 @@ const api = {
     const response = await ipcRenderer.invoke('uploadBoleta', { data, tipo })
     return response
   },
-  iniciarPrecarga: () => ipcRenderer.invoke('precarga:procesar'),
+  iniciarCargaJudicial: (boletas: EnrichedBoleta[]) => {
+    ipcRenderer.invoke('carga:judicial', boletas)
+  },
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: async (matricula: number) => {
     const devolucionIPC = await ipcRenderer.invoke('boletas:get-to-upload', matricula)

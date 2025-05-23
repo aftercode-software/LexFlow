@@ -14,7 +14,7 @@ interface Api {
   ) => Promise<{ success: boolean; path: string }>
   getRecaudadores: () => Promise<any>
   uploadBoleta: (data: any, tipo: string) => Promise<any>
-  iniciarPrecarga: () => Promise<void>
+  iniciarCargaJudicial: (boletas: EnrichedBoleta[]) => Promise<void>
   iniciarLoginManual: () => Promise<UserData>
   getBoletasToUpload: (matricula: number) => Promise<any>
   openPdf: (path: string) => Promise<void>

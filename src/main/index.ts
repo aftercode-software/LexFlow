@@ -11,6 +11,7 @@ import { getRecaudadores } from './services/recaudador'
 import { subirBoletas } from './playwright/procesar-boletas'
 import { loginRecaudador } from './playwright/manual-login'
 import { scanBoletas } from './playwright/fetch-boletas'
+import { EnrichedBoleta } from './interface/boletas'
 
 function createWindow(): void {
   // Create the browser window.
@@ -141,7 +142,7 @@ app.whenReady().then(() => {
   //   return JSON.parse(data)
   // })
 
-  ipcMain.handle('searchDemandado', async (_event, dni: string) => {
+  ipcMain.handle('searchDemandado', async (_, dni: string) => {
     const token: string | null = await fs
       .readFile(tokenFile)
       .then((data) =>
@@ -239,7 +240,10 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.handle('precarga:procesar', () => subirBoletas())
+  ipcMain.handle('carga:judicial', async (_, boletas: EnrichedBoleta[]) => {
+    console.log('Iniciando carga judicial', boletas)
+    subirBoletas(boletas)
+  })
 
   ipcMain.handle('precarga:login', () => loginRecaudador())
 

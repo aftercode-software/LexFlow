@@ -129,13 +129,22 @@ export default function UploadBoletas() {
     [tabActiva, profesionales, terceros]
   )
 
+  const revisadas = useMemo(
+    () => boletasActuales.filter((b) => b.estado === 'Revisada').slice(0, 25),
+    [boletasActuales]
+  )
+
   const canUpload = useMemo(
-    () => isAuthenticated && boletasActuales.some((b) => b.estado === 'Revisada'),
-    [isAuthenticated, boletasActuales]
+    () => isAuthenticated && revisadas.length > 0,
+    [isAuthenticated, revisadas]
   )
 
   const handleOpenPdf = (path: string) => {
     window.api.openPdf(path)
+  }
+
+  const handleUpload = () => {
+    window.api.iniciarCargaJudicial(revisadas)
   }
 
   return (
@@ -152,7 +161,11 @@ export default function UploadBoletas() {
               <p className="text-sm text-gray-500">Inicia sesión para ver boletas</p>
             )}
           </aside>
-          <Button disabled={!canUpload} className="bg-gray-900 hover:bg-aftercode">
+          <Button
+            disabled={!canUpload}
+            className="bg-gray-900 hover:bg-aftercode"
+            onClick={handleUpload}
+          >
             <Upload className="mr-2 h-4 w-4" /> Subir{' '}
             {tabActiva === 'Profesional' ? 'Profesionales' : 'Terceros'}
           </Button>
@@ -178,7 +191,7 @@ export default function UploadBoletas() {
         <Tabs
           value={tabActiva}
           onValueChange={(v) => setTabActiva(v as TipoBoleta)}
-          className="bg-white rounded-lg border	border-gray-200"
+          className="bg-white rounded-lg border border-gray-200"
         >
           <TabsList className="w-full border-b border-gray-200">
             <TabsTrigger value="Profesional" className="flex-1">
