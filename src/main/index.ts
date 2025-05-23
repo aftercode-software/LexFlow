@@ -74,7 +74,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('login', async (_, username: string, password: string) => {
     console.log('Login:', username, password)
-    const resp = await fetch('http://localhost:3000/api/auth/login', {
+    const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -153,7 +153,7 @@ app.whenReady().then(() => {
       .catch(() => null)
     if (!token) throw new Error('No hay token de autenticación')
 
-    const res = await fetch(`http://localhost:3000/api/demandados/${dni}`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/demandados/${dni}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -216,7 +216,7 @@ app.whenReady().then(() => {
       estado: data.estado
     }
 
-    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -268,7 +268,7 @@ app.whenReady().then(() => {
       )
       .catch(() => null)
     if (!token) throw new Error('No hay token de autenticación')
-    const res = await fetch('http://localhost:3000/api/boletas/filtrar', {
+    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/filtrar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
