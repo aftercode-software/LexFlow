@@ -8,19 +8,19 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { FileUpload } from '@renderer/components/modulo-pdf/FileUpload'
+import FormProfesionales from '@renderer/components/modulo-pdf/forms/FormProfesionales'
+import FormTerceros from '@renderer/components/modulo-pdf/forms/FormTerceros'
 import type { FormularioProfesionales, FormularioTerceros } from '@renderer/lib/types'
 import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
-import { FileUpload } from './file-upload'
-import FormProfesionales from './forms/FormProfesionales'
-import FormTerceros from './forms/FormTerceros'
 
 enum Steps {
   UPLOAD = 1,
   REVIEW = 2
 }
 
-export default function EscanearBoleta() {
+export default function ScanBoletas() {
   const [step, setStep] = useState<Steps>(Steps.UPLOAD)
   const [file, setFile] = useState<File | null>(null)
   const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>(null)

@@ -1,4 +1,3 @@
-// src/renderer/components/SuccessPage.tsx
 import { FileText } from 'lucide-react'
 import { useParams, Link } from 'react-router'
 

@@ -11,16 +11,14 @@ import {
 import { LogIn } from 'lucide-react'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
 
-export function LoginJudicial() {
+export function SignInPoderJudicial() {
   const [isLoading, setIsLoading] = useState(false)
-  const { login, userData } = useAuth()
+  const { login } = useAuth()
 
   const handleLogin = async () => {
     setIsLoading(true)
     const data = await window.api.iniciarLoginManual()
-    console.log('Datos de inicio de sesión:', data)
     login(data)
-    console.log('Usuario autenticado:', userData)
     setIsLoading(false)
   }
 

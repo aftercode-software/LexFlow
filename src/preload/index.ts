@@ -39,11 +39,10 @@ const api = {
   iniciarPrecarga: () => ipcRenderer.invoke('precarga:procesar'),
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: async (matricula: number) => {
-    console.log('getBoletasToUpload', matricula)
     const devolucionIPC = await ipcRenderer.invoke('boletas:get-to-upload', matricula)
-    console.log('devolucionIPC', devolucionIPC)
     return devolucionIPC
-  }
+  },
+  openPdf: (path: string) => ipcRenderer.invoke('open-pdf', path)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

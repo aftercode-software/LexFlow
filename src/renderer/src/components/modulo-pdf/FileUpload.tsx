@@ -1,22 +1,14 @@
-'use client'
-
 import { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { cn } from '@/lib/utils'
 import { Upload } from 'lucide-react'
-
-interface FileUploadProps {
-  onFileChange: (file: File | null) => void
-  file: File | null
-  accept?: Record<string, string[]>
-  maxSize?: number
-}
+import { FileUploadProps } from '@renderer/interface/fileUpload'
 
 export function FileUpload({
   onFileChange,
   file,
   accept = { 'application/pdf': [] },
-  maxSize = 5 * 1024 * 1024 // 5MB default
+  maxSize = 5 * 1024 * 1024
 }: FileUploadProps) {
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {

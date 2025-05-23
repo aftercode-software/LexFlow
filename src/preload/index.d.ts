@@ -17,6 +17,7 @@ interface Api {
   iniciarPrecarga: () => Promise<void>
   iniciarLoginManual: () => Promise<UserData>
   getBoletasToUpload: (matricula: number) => Promise<any>
+  openPdf: (path: string) => Promise<void>
 }
 
 declare global {

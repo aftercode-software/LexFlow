@@ -11,8 +11,8 @@ import {
 import { Input } from '@renderer/components/ui/input'
 import { useForm, UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
-import Recaudador from './Recaudador'
-import Demandado from './Demandado'
+import Recaudador from '../Recaudador'
+import Demandado from '../Demandado'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioProfesionales } from '@renderer/lib/types'
 

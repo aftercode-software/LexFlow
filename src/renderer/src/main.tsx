@@ -1,15 +1,15 @@
 import './assets/main.css'
 
 import ReactDOM from 'react-dom/client'
-import EscanearBoleta from './components/modulo-pdf/ModuloPDF'
 import { Route, Routes, Navigate, HashRouter } from 'react-router'
 import Login from './pages/Login'
 import { PdfLayout } from './layout/PDFLayout'
 import { PoderJudicialProvider } from './context/PoderJudicialContext'
-import { LoginJudicial } from './components/precarga/LoginJudicial'
-import SuccessPage from './components/success/SuccessPage'
-import BoletasTable from './components/subida/SubirBoletas'
 import { Toaster } from 'sonner'
+import ScanBoletas from './pages/ScanBoletas'
+import SuccessPage from './pages/Success'
+import { SignInPoderJudicial } from './pages/SignInPoderJudicial'
+import UploadBoletas from './pages/UploadBoletas'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <PoderJudicialProvider>
@@ -18,11 +18,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Login />} />
 
         <Route element={<PdfLayout />}>
-          <Route path="/escanear-pdf" element={<EscanearBoleta />} />
+          <Route path="/escanear-pdf" element={<ScanBoletas />} />
           <Route path="/escanear-pdf/:boleta" element={<SuccessPage />} />
 
-          <Route path="/precarga" element={<LoginJudicial />} />
-          <Route path="/subir-pdf" element={<BoletasTable />} />
+          <Route path="/precarga" element={<SignInPoderJudicial />} />
+          <Route path="/subir-pdf" element={<UploadBoletas />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
