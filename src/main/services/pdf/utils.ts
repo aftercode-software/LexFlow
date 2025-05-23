@@ -29,12 +29,12 @@ export function extraerBoleta(texto: string): string | null {
 }
 
 export function extraerMonto(texto: string): number | null {
-  const match = texto.match(/\d{1,3}(?:\.\d{3})*(?:,\d{2})?/)
-  if (!match) return null
+  const matches = texto.match(/\d{1,3}(?:\.\d{3})*(?:,\d{2})?/g)
 
-  const bruto = match[0]
+  const monto = matches ? matches[matches.length - 1] : null
+  if (!monto) return null
 
-  const normalizado = bruto.replace(/\./g, '').replace(',', '.')
+  const normalizado = monto.replace(/\./g, '').replace(',', '.')
   const valor = parseFloat(normalizado)
 
   return valor

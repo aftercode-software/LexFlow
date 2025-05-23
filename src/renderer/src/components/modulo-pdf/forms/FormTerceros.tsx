@@ -10,14 +10,16 @@ import {
 import { Input } from '@/components/ui/input'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, UseFormReturn } from 'react-hook-form'
-import { z } from 'zod'
-import Recaudador from '../Recaudador'
-import Demandado from '../Demandado'
 import { Button } from '@renderer/components/ui/button'
+import { numeroALetras } from '@renderer/lib/documentUtils'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioTerceros } from '@renderer/lib/types'
+import { useEffect } from 'react'
+import { useForm, UseFormReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router'
+import { z } from 'zod'
+import Demandado from '../Demandado'
+import Recaudador from '../Recaudador'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -61,7 +63,21 @@ export default function FormTerceros({
   console.log('defaultValues:', tipoDocumento)
   console.log('Valores por defecto:', form.getValues())
 
-  const { handleSubmit } = form
+  const { handleSubmit, watch } = form
+
+  const brutoWatch = watch('bruto')
+
+  useEffect(() => {
+    if (brutoWatch !== bruto) {
+      try {
+        const brutoNumber = Number(brutoWatch)
+        const valorEnLetras = numeroALetras(brutoNumber)
+        form.setValue('valorEnLetras', valorEnLetras.toUpperCase())
+      } catch (err) {
+        form.setValue('valorEnLetras', 'NÚMERO MUY GRANDE')
+      }
+    }
+  }, [brutoWatch])
 
   const onSubmit = async (data: FormValues) => {
     console.log('Datos del formulario:', data)

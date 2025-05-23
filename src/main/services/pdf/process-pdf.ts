@@ -1,8 +1,8 @@
+import fsPromises from 'fs/promises'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
 import { FormularioProfesionales, FormularioTerceros } from '../../types'
-import fsPromises from 'fs/promises'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerDocumento, extraerMonto, numeroALetras } from './utils'
 
@@ -78,6 +78,7 @@ async function processTerceroPDF(
   const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 50)
   const mediaImg = await cropImage(convertedPDFPage1, 0, 165, 1200, 155)
   const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 40)
+
   const recaudadorImg = await cropImage(convertedPDFPage2, 0, 1010, 1200, 40)
 
   const datosSuperiorTxt = await getTextFromImage(worker, datosSuperiorImg)
@@ -188,7 +189,10 @@ async function processProfesionalPDF(
 
   const parteSuperior = await cropImage(convertedPDF, 0, 105, 1200, 50)
   const parteMedia = await cropImage(convertedPDF, 0, 145, 1200, 145)
-  const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 30)
+  const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 35)
+
+  const tmpDir = path.join(process.cwd(), 'tmp')
+  await fsPromises.writeFile(path.join(tmpDir, 'monto.jpg'), parteMonto)
 
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 
@@ -244,6 +248,8 @@ async function processProfesionalPDF(
   })
 
   const montoTxt = await getTextFromImage(worker, parteMonto)
+
+  console.log('Monto:', montoTxt)
 
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()

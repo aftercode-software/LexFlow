@@ -9,12 +9,14 @@ import {
   FormMessage
 } from '@renderer/components/ui/form'
 import { Input } from '@renderer/components/ui/input'
-import { useForm, UseFormReturn } from 'react-hook-form'
-import { z } from 'zod'
-import Recaudador from '../Recaudador'
-import Demandado from '../Demandado'
+import { numeroALetras } from '@renderer/lib/documentUtils'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioProfesionales } from '@renderer/lib/types'
+import { useEffect } from 'react'
+import { useForm, UseFormReturn } from 'react-hook-form'
+import { z } from 'zod'
+import Demandado from '../Demandado'
+import Recaudador from '../Recaudador'
 
 type FormValues = z.infer<typeof baseFormSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -54,10 +56,23 @@ export default function FormProfesionales({
     }
   })
 
-  const { handleSubmit } = form
+  const { handleSubmit, watch } = form
+
+  const brutoWatch = watch('bruto')
+
+  useEffect(() => {
+    if (brutoWatch !== bruto) {
+      try {
+        const brutoNumber = Number(brutoWatch)
+        const valorEnLetras = numeroALetras(brutoNumber)
+        form.setValue('valorEnLetras', valorEnLetras.toUpperCase())
+      } catch (err) {
+        form.setValue('valorEnLetras', 'NÚMERO MUY GRANDE')
+      }
+    }
+  }, [brutoWatch])
 
   const onSubmit = async (data: FormValues) => {
-    console.log('Datos del formulario:', data)
     try {
       console.log('PDF route:', pdfRoute)
       console.log('Data a enviar:', data)
