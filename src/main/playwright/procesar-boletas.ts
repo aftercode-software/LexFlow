@@ -3,6 +3,8 @@
 import { chromium, Page } from 'playwright'
 import { EnrichedBoleta } from '../interface/boletas'
 
+
+
 // Procesar una sola boleta
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   await page.waitForTimeout(2000)
@@ -42,16 +44,27 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   const objetoImponible = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[20]/td[2]/div/span/input[1]'
   )
-  await objetoImponible.fill('boleta.objetoImponible')
+  if (boleta.tipo === 'Profesional') {
+    await objetoImponible.fill(`APORTES, MATRICULA:${boleta.demandado.matricula}`)
+  }else {
+      await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
+
+  }
   const oficial = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
   )
   await oficial.click()
   const stela = page.locator('#_easyui_combobox_i8_0')
   await stela.click()
-
-  const archivoPath = `C://boletas/terceros/${boleta.boleta}.pdf`
-  await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  
+  if (boleta.tipo === 'Profesional') {
+      const archivoPath = `C://boletas/profesionales/${boleta.boleta}.pdf`
+       await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  }else {
+      const archivoPath = `C://boletas/terceros/${boleta.boleta}.pdf`
+       await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  }
+ 
 
   const nombreArchivo = await page
     .locator('input#filebox_file_id_1')

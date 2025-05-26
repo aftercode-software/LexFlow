@@ -5,6 +5,7 @@ import Tesseract, { OEM } from 'tesseract.js'
 import { FormularioProfesionales, FormularioTerceros } from '../../types'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerDocumento, extraerMonto, numeroALetras } from './utils'
+import { app } from 'electron'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
@@ -14,7 +15,7 @@ export async function extractDataFromPdf(
   originalPdfPath: string
 }> {
   // 1) Asegúrate de que exista tmp/
-  const tmpDir = path.join(process.cwd(), 'tmp')
+  const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')  
   await fsPromises.mkdir(tmpDir, { recursive: true })
 
   // 2) Guarda el PDF “original” con un nombre único
@@ -191,8 +192,8 @@ async function processProfesionalPDF(
   const parteMedia = await cropImage(convertedPDF, 0, 145, 1200, 145)
   const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 35)
 
-  const tmpDir = path.join(process.cwd(), 'tmp')
-  await fsPromises.writeFile(path.join(tmpDir, 'monto.jpg'), parteMonto)
+const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')  
+await fsPromises.writeFile(path.join(tmpDir, 'monto.jpg'), parteMonto)
 
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 
