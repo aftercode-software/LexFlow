@@ -48,6 +48,13 @@ export default function ScanBoletas() {
     reader.readAsArrayBuffer(file)
   }
 
+  const handleSubmitForm = () => {
+    const formElement = document.querySelector('form#boleta-form') as HTMLFormElement
+    if (formElement) {
+      formElement.requestSubmit() // dispara el `onSubmit` real del formulario
+    }
+  }
+
   return (
     <div className="p-6 flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -114,13 +121,18 @@ export default function ScanBoletas() {
       {/* Paso 2 */}
       {step === Steps.REVIEW && extractedData && (
         <Card>
-          <CardHeader>
-            <p className="text-xl font-medium text-gray-800">
-              Boleta de {typePDF === 'profesional' ? 'Profesionales' : 'Terceros'}
-            </p>
-            <p className="text-base text-gray-500">
-              Revisá que los datos sean correctos antes de enviar
-            </p>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <aside>
+              <p className="text-xl font-medium text-gray-800">
+                Boleta de {typePDF === 'profesional' ? 'Profesionales' : 'Terceros'}
+              </p>
+              <p className="text-base text-gray-500">
+                Revisá que los datos sean correctos antes de enviar
+              </p>
+            </aside>
+            <Button size="lg" onClick={handleSubmitForm}>
+              Generar Boleta
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-6">

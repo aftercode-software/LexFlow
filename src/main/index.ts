@@ -225,19 +225,7 @@ app.whenReady().then(() => {
       body: JSON.stringify(boleta)
     })
 
-    console.log('Respuesta del servidor:', res)
-    if (!res.ok) {
-      const text = await res.text()
-      throw new Error(`Error ${res.status}: ${text}`)
-    }
-
-    const contentType = res.headers.get('content-type')
-    if (contentType && contentType.includes('application/json')) {
-      return res.json()
-    } else {
-      const text = await res.text()
-      return { success: true, message: text }
-    }
+    return res.status
   })
 
   ipcMain.handle('carga:judicial', async (_, boletas: EnrichedBoleta[]) => {

@@ -31,6 +31,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const onSubmit = async ({ username, password }: LoginFormData) => {
     try {
       await window.api.login(username, password)
+      toast.success('Inicio de sesión exitoso')
       navigate('/escanear-pdf')
     } catch {
       toast.error('Error al iniciar sesión')
@@ -69,7 +70,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </div>
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Validando...' : 'Acceder'}
+          {isSubmitting ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+          ) : (
+            'Acceder'
+          )}
         </Button>
       </div>
 
