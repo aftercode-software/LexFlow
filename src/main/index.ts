@@ -14,7 +14,6 @@ import { scanBoletas } from './playwright/fetch-boletas'
 import { EnrichedBoleta } from './interface/boletas'
 
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1600,
     height: 900,
@@ -38,8 +37,6 @@ function createWindow(): void {
 
   mainWindow.webContents.openDevTools()
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -47,16 +44,9 @@ function createWindow(): void {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -73,7 +63,6 @@ app.whenReady().then(() => {
   const tokenFile = path.join(app.getPath('userData'), 'token.enc')
 
   ipcMain.handle('login', async (_, username: string, password: string) => {
-    console.log('Login:', username, password)
     const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -82,10 +71,8 @@ app.whenReady().then(() => {
     const text = await resp.text()
     if (!resp.ok) throw new Error(text)
 
-    // extraigo el token
     const { access_token } = JSON.parse(text)
 
-    // cifro y guardo
     if (safeStorage.isEncryptionAvailable()) {
       const encrypted = safeStorage.encryptString(access_token)
       await fs.writeFile(tokenFile, encrypted)
@@ -96,7 +83,6 @@ app.whenReady().then(() => {
     return { success: true }
   })
 
-  // 2️⃣ Leer token ya descifrado
   ipcMain.handle('getToken', async () => {
     try {
       const data = await fs.readFile(tokenFile)
@@ -108,7 +94,6 @@ app.whenReady().then(() => {
     }
   })
 
-  // 3️⃣ Logout: borro token
   ipcMain.handle('logout', async () => {
     await fs.unlink(tokenFile).catch(() => {})
   })
@@ -116,31 +101,6 @@ app.whenReady().then(() => {
   ipcMain.handle('getRecaudadores', async () => {
     return getRecaudadores()
   })
-
-  // 4️⃣ Submit de forms-pdf: leo el token y hago fetch con Authorization
-  // ipcMain.handle('submit-boletas', async (_e, payload: any) => {
-  //   const token = await fs
-  //     .readFile(tokenFile)
-  //     .then((buf) =>
-  //       safeStorage.isEncryptionAvailable() ? safeStorage.decryptString(buf) : buf.toString('utf8')
-  //     )
-  //     .catch(() => null)
-
-  //   if (!token) throw new Error('No hay sesión activa')
-
-  //   const resp = await fetch('https://tuservidor.local/api/boletas', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       Authorization: `Bearer ${token}`
-  //     },
-  //     body: JSON.stringify(payload)
-  //   })
-
-  //   const data = await resp.text()
-  //   if (!resp.ok) throw new Error(data)
-  //   return JSON.parse(data)
-  // })
 
   ipcMain.handle('searchDemandado', async (_, dni: string) => {
     const token: string | null = await fs
@@ -172,13 +132,10 @@ app.whenReady().then(() => {
     console.log('tipo de documento', data.tipo)
     console.log('Generando escrito para boleta', data.boleta)
 
-    // 1) Generar PDF “escrito”
     const writtenPdfPath = await generateWrittenPdf(data)
 
-    // 2) Merge
     const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
 
-    // 3) Guardar en C:\boletas\{boleta}.pdf
     const outputDir =
       data.tipo === 'Profesional' ? 'C:\\boletas\\profesionales' : 'C:\\boletas\\terceros'
     await fsPromises.mkdir(outputDir, { recursive: true })
@@ -294,20 +251,12 @@ app.whenReady().then(() => {
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app"s specific main process
-// code. You can also put them in separate files and require them here.

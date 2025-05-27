@@ -89,7 +89,7 @@ export default function FormProfesionales({
         estado
       }
 
-      const result = await uploadBoleta(data, 'Tercero')
+      const result = await uploadBoleta(data, 'Profesional')
       if (result.success || result.updated) {
         navigate(`/escanear-pdf/${data.boleta}`)
       }

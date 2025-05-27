@@ -7,14 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
-
-export const loginSchema = z.object({
-  username: z.string().nonempty('El usuario es obligatorio'),
-  password: z
-    .string()
-    .nonempty('La contraseña es obligatoria')
-    .min(4, 'La contraseña debe tener al menos 4 caracteres')
-})
+import { loginSchema } from '@renderer/lib/schemas/login.schema'
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
@@ -45,9 +38,9 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       {...props}
     >
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Bienvenido de nuevo</h1>
+        <h1 className="text-3xl font-bold">Bienvenido de nuevo</h1>
         <p className="text-balance text-sm text-muted-foreground">
-          Ingresa tu correo y contraseña para continuar
+          Ingresá tu correo y contraseña para continuar
         </p>
       </div>
 
@@ -65,7 +58,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               ¿Olvidaste tu contraseña?
             </a>
           </div>
-          <Input id="password" type="password" {...register('password')} />
+          <Input id="password" type="password" {...register('password')} placeholder="••••" />
           {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
         </div>
 
@@ -79,7 +72,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       </div>
 
       <div className="text-center text-sm">
-        ¿Aún no tienes cuenta?{' '}
+        ¿Aún no tenés cuenta?{' '}
         <a href="#" className="underline underline-offset-4">
           Escribinos
         </a>

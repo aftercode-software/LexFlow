@@ -1,6 +1,6 @@
 import { LoginForm } from '@renderer/components/login/Form'
 import bgImg from '../assets/accountant-shortage.jpg'
-import aftercodeLogo from '../assets/aftercode-logo.png'
+import aftercodeLogo from '../assets/aftercode-logo-white.png'
 
 export default function Login() {
   return (
@@ -13,7 +13,7 @@ export default function Login() {
             rel="noopener noreferrer"
             target="_blank"
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-md text-primary-foreground">
+            <div className="flex h-8 w-8 items-center bg-aftercode p-1 justify-center rounded-md text-gray-800">
               <img src={aftercodeLogo} alt="" />
             </div>
             Aftercode

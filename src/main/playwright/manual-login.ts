@@ -33,10 +33,11 @@ export async function loginRecaudador(): Promise<RecaudadorData> {
   await context.storageState({ path: 'auth.json' })
   console.log('✅ auth.json guardado')
 
+  const recaudadorInput = await page.$('input[type="hidden"][name="recnombre"]')
   const data: RecaudadorData = {
-    recaudador: await page.$eval('input[type="hidden"][name="recnombre"]', (el: HTMLInputElement) =>
-      el.value.trim()
-    ),
+    recaudador: recaudadorInput
+      ? await recaudadorInput.evaluate((el: HTMLInputElement) => el.value.trim())
+      : '',
     matricula: await page.$eval('input[type="hidden"][name="recmat"]', (el: HTMLInputElement) =>
       el.value.trim()
     ),
