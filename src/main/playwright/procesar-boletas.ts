@@ -15,11 +15,13 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     '.window:visible label:has-text("Boleta") ~ span input.textbox-text'
   )
   await boletaInput.click()
+  console.log(`Debug: boleta.boleta =`, boleta.boleta)
   await boletaInput.fill(boleta.boleta)
 
   const apellido = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[5]/td[2]/div/span/input[1]'
   )
+  console.log(`Debug: boleta.demandado.apellido =`, boleta.demandado.apellido)
   await apellido.fill(boleta.demandado.apellido)
   await page
     .locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[6]/td[2]/div/span/span')
@@ -28,25 +30,31 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   const domicilio = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[7]/td[2]/div/p/span/input[1]'
   )
+  console.log(`Debug: boleta.demandado.domicilio =`, boleta.demandado.domicilio)
   await domicilio.fill(boleta.demandado.domicilio)
   const nombre = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[5]/td[3]/div/span/input[1]'
   )
+  console.log(`Debug: boleta.demandado.nombre =`, boleta.demandado.nombre)
   await nombre.fill(boleta.demandado.nombre)
   const dni = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[6]/td[3]/div/p/span/input[1]'
   )
+  console.log(`Debug: boleta.demandado.numeroDocumento =`, boleta.demandado.numeroDocumento)
   await dni.fill(boleta.demandado.numeroDocumento)
   const monto = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[2]/div/p/span/input[1]'
   )
+  console.log(`Debug: boleta.monto =`, boleta.monto)
   await monto.fill(boleta.monto)
   const objetoImponible = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[20]/td[2]/div/span/input[1]'
   )
   if (boleta.tipo === 'Profesional') {
+    console.log(`Debug: objetoImponible para Profesional =`, `APORTES, MATRICULA:${boleta.demandado.matricula}`)
     await objetoImponible.fill(`APORTES, MATRICULA:${boleta.demandado.matricula}`)
   }else {
+     console.log(`Debug: objetoImponible para Tercero =`, `EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado}`)
       await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
 
   }
