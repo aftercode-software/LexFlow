@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from '@renderer/components/ui/button'
 import {
   Form,
   FormControl,
@@ -13,10 +12,13 @@ import { numeroALetras } from '@renderer/lib/documentUtils'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioProfesionales } from '@renderer/lib/types'
 import { useEffect } from 'react'
-import { useForm, UseFormReturn } from 'react-hook-form'
+import { FieldErrors, useForm, UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
+import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
+import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 
 type FormValues = z.infer<typeof baseFormSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -34,6 +36,7 @@ export default function FormProfesionales({
   matricula,
   pdfRoute
 }: FormularioProfesionales & { pdfRoute: string } & { estado: string }) {
+  const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(baseFormSchema),
     defaultValues: {
@@ -64,6 +67,7 @@ export default function FormProfesionales({
     if (brutoWatch !== bruto) {
       try {
         const brutoNumber = Number(brutoWatch)
+        form.setValue('bruto', brutoNumber)
         const valorEnLetras = numeroALetras(brutoNumber)
         form.setValue('valorEnLetras', valorEnLetras.toUpperCase())
       } catch (err) {
@@ -73,32 +77,56 @@ export default function FormProfesionales({
   }, [brutoWatch])
 
   const onSubmit = async (data: FormValues) => {
+    console.log('Datos del formulario:', data)
     try {
-      console.log('PDF route:', pdfRoute)
-      console.log('Data a enviar:', data)
-
       let estado: 'Generada' | 'Error' = 'Generada'
-      const result = await window.api.generateDocument(data, pdfRoute)
-      estado = 'Generada'
+      const { success } = await generatePDF(data, pdfRoute)
 
-      if (!result.success) {
-        estado = 'Error'
-      }
+      success ? (estado = 'Generada') : (estado = 'Error')
 
       data = {
         ...data,
         estado
       }
-      await window.api.uploadBoleta(data, 'Profesional')
+
+      const result = await uploadBoleta(data, 'Tercero')
+      if (result.success || result.updated) {
+        navigate(`/escanear-pdf/${data.boleta}`)
+      }
     } catch (err) {
       console.error('Error al generar doc:', err)
     }
     console.log('Data: ', data)
   }
 
+  function getFirstErrorMessage(errors: FieldErrors): string | null {
+    for (const key in errors) {
+      const error = errors[key]
+      if (!error) continue
+
+      if (typeof error.message === 'string') return error.message
+
+      if (typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+        return error.message
+      }
+
+      if (typeof error === 'object') {
+        const nested = getFirstErrorMessage(error as FieldErrors)
+        if (nested) return nested
+      }
+    }
+
+    return null
+  }
+
+  const onError = (errors: FieldErrors<FormValues>) => {
+    const message = getFirstErrorMessage(errors) || 'Error de validación.'
+    toast.error(message)
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      <form id="boleta-form" onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
         <Recaudador />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -158,11 +186,6 @@ export default function FormProfesionales({
               </FormItem>
             )}
           />
-        </div>
-        <div className="w-full flex justify-end">
-          <Button type="submit" size="lg">
-            Generar PDF
-          </Button>
         </div>
       </form>
     </Form>

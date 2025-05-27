@@ -10,16 +10,17 @@ import {
 import { Input } from '@/components/ui/input'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from '@renderer/components/ui/button'
 import { numeroALetras } from '@renderer/lib/documentUtils'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioTerceros } from '@renderer/lib/types'
 import { useEffect } from 'react'
-import { useForm, UseFormReturn } from 'react-hook-form'
+import { FieldErrors, useForm, UseFormReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
+import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
+import { toast } from 'sonner'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -71,6 +72,7 @@ export default function FormTerceros({
     if (brutoWatch !== bruto) {
       try {
         const brutoNumber = Number(brutoWatch)
+        form.setValue('bruto', brutoNumber)
         const valorEnLetras = numeroALetras(brutoNumber)
         form.setValue('valorEnLetras', valorEnLetras.toUpperCase())
       } catch (err) {
@@ -82,39 +84,54 @@ export default function FormTerceros({
   const onSubmit = async (data: FormValues) => {
     console.log('Datos del formulario:', data)
     try {
-      console.log('PDF route:', pdfRoute)
-      console.log('Data a enviar:', data)
-
       let estado: 'Generada' | 'Error' = 'Generada'
-      const result = await window.api.generateDocument(data, pdfRoute)
-      estado = 'Generada'
+      const { success } = await generatePDF(data, pdfRoute)
 
-      if (!result.success) {
-        estado = 'Error'
-      }
+      success ? (estado = 'Generada') : (estado = 'Error')
 
       data = {
         ...data,
         estado
       }
-      await window.api.uploadBoleta(data, 'Tercero')
 
-      navigate(`/escanear-pdf/${data.boleta}`)
+      const result = await uploadBoleta(data, 'Tercero')
+      if (result.success || result.updated) {
+        navigate(`/escanear-pdf/${data.boleta}`)
+      }
     } catch (err) {
       console.error('Error al generar doc:', err)
     }
     console.log('Data: ', data)
   }
 
+  function getFirstErrorMessage(errors: FieldErrors): string | null {
+    for (const key in errors) {
+      const error = errors[key]
+      if (!error) continue
+
+      if (typeof error.message === 'string') return error.message
+
+      if (typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
+        return error.message
+      }
+
+      if (typeof error === 'object') {
+        const nested = getFirstErrorMessage(error as FieldErrors)
+        if (nested) return nested
+      }
+    }
+
+    return null
+  }
+
+  const onError = (errors: FieldErrors<FormValues>) => {
+    const message = getFirstErrorMessage(errors) || 'Error de validación.'
+    toast.error(message)
+  }
+
   return (
     <Form {...form}>
-      <form
-        onSubmit={handleSubmit(onSubmit, (errors) =>
-          console.log('Errores de validación', errors, form.getValues())
-        )}
-        className="space-y-6"
-      >
-        {/* boleta + fecha */}
+      <form id="boleta-form" onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
         <Recaudador />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -188,11 +205,6 @@ export default function FormTerceros({
               </FormItem>
             )}
           />
-        </div>
-        <div className="w-full flex justify-end">
-          <Button type="submit" size="lg">
-            Generar PDF
-          </Button>
         </div>
       </form>
     </Form>
