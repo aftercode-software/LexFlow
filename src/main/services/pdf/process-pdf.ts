@@ -16,19 +16,16 @@ export async function extractDataFromPdf(
   data: FormularioProfesionales | FormularioTerceros
   originalPdfPath: string
 }> {
-  // 1) Asegúrate de que exista tmp/
   const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')
   await fsPromises.mkdir(tmpDir, { recursive: true })
 
-  // 2) Guarda el PDF “original” con un nombre único
   const originalPdfPath = path.join(tmpDir, `original-${Date.now()}.pdf`)
   await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
   console.log('PDF original guardado en:', originalPdfPath)
 
-  // 3) Extrae los datos usando tu lógica existente
   const data = await processPDF(originalPdfPath, pdfType)
 
-  // 4) NO borramos aquí el original, lo necesitarás luego
+  fsPromises.unlink(originalPdfPath)
   return { data, originalPdfPath }
 }
 
@@ -125,7 +122,7 @@ async function processTerceroPDF(
   const provincia =
     mediaTxt
       .match(/provincia\s+de\s+([A-Z\xC0-\xFF]+)/i)?.[1]
-      .replace(/[^\p{L}]/gu, '') //   quita bytes raros
+      .replace(/[^\p{L}]/gu, '')
       .toUpperCase() ?? ''
 
   const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9/-]+)/i)?.[1] ?? ''

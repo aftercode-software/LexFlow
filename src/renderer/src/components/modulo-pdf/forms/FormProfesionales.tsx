@@ -10,7 +10,7 @@ import {
 import { Input } from '@renderer/components/ui/input'
 
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
-import { FormularioProfesionales } from '@renderer/lib/types'
+
 import { useEffect } from 'react'
 import { FieldErrors, useForm, UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
@@ -20,6 +20,7 @@ import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { numeroALetras } from '@shared/utils/document'
+import { FormularioProfesionales } from '@shared/interfaces/form'
 
 type FormValues = z.infer<typeof baseFormSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
