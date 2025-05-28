@@ -8,66 +8,6 @@ import { app } from 'electron'
 
 import { PDFDocument } from 'pdf-lib'
 
-export async function compileDocument(data: any): Promise<Uint8Array<ArrayBufferLike>> {
-  console.log('Compiling document with data:', data)
-  try {
-    const escritoPath = 'C:\\boletas\\escrito.docx'
-    const template = fs.readFileSync(escritoPath)
-    const buffer = await createReport({
-      template,
-      data: {
-        ...data
-      },
-      cmdDelimiter: ['{{', '}}'],
-      failFast: true
-    })
-
-    return buffer
-  } catch (error) {
-    console.log('error explota', error)
-    throw new Error(`Error compiling document: ${error}`)
-  }
-}
-
-export async function convertDocxToPdf(docxPath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const outputDir = path.dirname(docxPath)
-    console.log('Output directory:', outputDir)
-
-    const libreOffice = spawn('soffice', [
-      '--headless',
-      '--convert-to',
-      'pdf',
-      '--outdir',
-      outputDir,
-      docxPath
-    ])
-
-    let stdoutData = ''
-    let stderrData = ''
-    libreOffice.stdout.on('data', (data) => {
-      stdoutData += data.toString()
-    })
-    libreOffice.stderr.on('data', (data) => {
-      stderrData += data.toString()
-    })
-
-    libreOffice.on('error', (err) => {
-      console.error('Error executing LibreOffice:', err)
-      reject(err)
-    })
-    libreOffice.on('close', (code) => {
-      console.log('LibreOffice stdout:', stdoutData)
-      console.log('LibreOffice stderr:', stderrData)
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`LibreOffice exited with code ${code}: ${stderrData}`))
-      }
-    })
-  })
-}
-
 export async function generateWrittenPdf(data: any): Promise<string> {
   const escritoPath = 'C:\\boletas\\escrito.docx'
   const template = fs.readFileSync(escritoPath)

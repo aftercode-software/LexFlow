@@ -8,7 +8,7 @@ import {
   FormMessage
 } from '@renderer/components/ui/form'
 import { Input } from '@renderer/components/ui/input'
-import { numeroALetras } from '@renderer/lib/documentUtils'
+
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioProfesionales } from '@renderer/lib/types'
 import { useEffect } from 'react'
@@ -19,6 +19,7 @@ import Recaudador from '../Recaudador'
 import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
+import { numeroALetras } from '@shared/utils/document'
 
 type FormValues = z.infer<typeof baseFormSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>

@@ -24,6 +24,8 @@ export default function RecaudadoresPage() {
 
   const fetchData = async () => {
     try {
+      const data = await window.api.getRecaudadores()
+      setData(data)
       setLoading(true)
     } catch (error) {
       toast.error('No se pudieron cargar los recaudadores')

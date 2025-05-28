@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Search, CheckCircle2, AlertCircle } from 'lucide-react'
-import { validateDocument, buscarDemandado, DocField } from '@renderer/lib/documentUtils'
+import { validateDocument, buscarDemandado } from '@renderer/utils/document'
 import { cn } from '@/lib/utils'
 import { z } from 'zod'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
+import { DocField } from '@shared/interfaces/demandado'
 
 type FormValues = z.infer<typeof baseFormSchema>
 

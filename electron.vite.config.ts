@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
-import { resolve } from 'path'
+import path, { resolve } from 'path'
 
 export default defineConfig({
   main: {
@@ -13,7 +13,8 @@ export default defineConfig({
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
-        '@': resolve('src/renderer/src')
+        '@': resolve('src/renderer/src'),
+        '@shared': path.resolve(__dirname, 'src/shared')
       }
     },
     plugins: [react()]

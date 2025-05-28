@@ -2,10 +2,12 @@ import fsPromises from 'fs/promises'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
-import { FormularioProfesionales, FormularioTerceros } from '../../types'
+
 import { getTextFromImage } from './ocr'
-import { cropImage, extraerBoleta, extraerDocumento, extraerMonto, numeroALetras } from './utils'
+import { cropImage, extraerBoleta, extraerDocumento, extraerMonto } from './utils'
 import { app } from 'electron'
+import { numeroALetras } from '../../../shared/utils/document'
+import { FormularioProfesionales, FormularioTerceros } from '../../../shared/interfaces/form'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,

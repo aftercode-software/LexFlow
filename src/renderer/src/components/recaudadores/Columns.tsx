@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { RecaudadorEntity } from '@renderer/interface/recaudador'
+import { RecaudadorEntity } from '@shared/interfaces/recaudador'
 
 interface ColumnsProps {
   onEdit: (recaudador: RecaudadorEntity) => void
@@ -57,8 +57,14 @@ export const createColumns = ({
     cell: ({ row }) => {
       const sexo = row.getValue('sexo') as string
       return (
-        <Badge variant={sexo === 'M' ? 'default' : 'secondary'}>
-          {sexo === 'M' ? 'Masculino' : 'Femenino'}
+        <Badge
+          className={
+            sexo === 'M'
+              ? 'bg-blue-100 rounded-full py-1 w-full text-blue-800 hover:bg-blue-200'
+              : 'bg-red-100 rounded-full py-1 w-full text-red-800 hover:bg-red-200'
+          }
+        >
+          {sexo}
         </Badge>
       )
     }

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { getToken } from './pdf/utils'
+import { getToken } from './auth'
 
 export async function getRecaudadores() {
   const token = await getToken()

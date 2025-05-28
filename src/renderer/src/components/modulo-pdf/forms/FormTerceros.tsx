@@ -10,7 +10,6 @@ import {
 import { Input } from '@/components/ui/input'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { numeroALetras } from '@renderer/lib/documentUtils'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FormularioTerceros } from '@renderer/lib/types'
 import { useEffect } from 'react'
@@ -21,6 +20,7 @@ import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
 import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
 import { toast } from 'sonner'
+import { numeroALetras } from '@shared/utils/document'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>

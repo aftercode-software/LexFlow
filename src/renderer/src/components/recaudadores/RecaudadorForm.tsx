@@ -22,7 +22,7 @@ import {
   CreateRecaudadorDto,
   RecaudadorEntity,
   UpdateRecaudadorDto
-} from '@renderer/interface/recaudador'
+} from '@shared/interfaces/recaudador'
 
 interface RecaudadorFormProps {
   open: boolean

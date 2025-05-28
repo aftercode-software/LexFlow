@@ -7,20 +7,12 @@ module.exports = {
     '@electron-toolkit/eslint-config-prettier'
   ],
   rules: {
-    '@typescript-eslint/explicit-function-return-type': [
-      'error',
-      {
-        allowExpressions: true,
-        allowTypedFunctionExpressions: true
-      }
-    ]
+    '@typescript-eslint/explicit-function-return-type': 'off'
   },
   overrides: [
     {
       files: ['*.tsx'],
-      rules: {
-        '@typescript-eslint/explicit-function-return-type': 'off'
-      }
+      rules: {}
     }
   ]
 }

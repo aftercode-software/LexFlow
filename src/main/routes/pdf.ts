@@ -1,0 +1,34 @@
+import { ipcMain, shell } from 'electron'
+import path from 'path'
+import { generateWrittenPdf, mergePdfs } from '../docx/util'
+import { extractDataFromPdf } from '../services/pdf/process-pdf'
+import fsPromises from 'fs/promises'
+
+export function registerPdfHandlers() {
+  ipcMain.handle(
+    'pdf:extract-data',
+    async (_, arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => {
+      const { data, originalPdfPath } = await extractDataFromPdf(arrayBuffer, pdfType)
+      return { data, originalPdfPath }
+    }
+  )
+
+  ipcMain.handle('generateDocument', async (_, { data, originalPdfPath }) => {
+    const writtenPdfPath = await generateWrittenPdf(data)
+
+    const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
+
+    const outputDir =
+      data.tipo === 'Profesional' ? 'C:\\boletas\\profesionales' : 'C:\\boletas\\terceros'
+    await fsPromises.mkdir(outputDir, { recursive: true })
+
+    const finalPath = path.join(outputDir, `${data.boleta}.pdf`)
+    await fsPromises.writeFile(finalPath, mergedBytes)
+
+    return { success: true, path: finalPath }
+  })
+
+  ipcMain.handle('open-pdf', (_evt, pdfPath: string) => {
+    return shell.openPath(pdfPath)
+  })
+}
