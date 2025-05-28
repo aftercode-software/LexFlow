@@ -1,3 +1,5 @@
+import { Documento } from '../interfaces/demandado'
+
 export function numeroALetras(n: number): string {
   console.log('Numero', n, typeof n)
   if (!Number.isFinite(n) || n < 0 || n > 999_999_999) {
@@ -113,4 +115,24 @@ export function numeroALetras(n: number): string {
   }
 
   return frase.charAt(0).toUpperCase() + frase.slice(1)
+}
+
+export function extraerDocumento(texto: string | null): Documento {
+  if (!texto) return { tipo: 'DNI', valor: '' }
+  const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
+
+  const matchCuit = texto.match(CUIT_REGEX)
+  if (matchCuit) {
+    const clean = matchCuit[0].replace(/-/g, '')
+
+    const pref = parseInt(clean.slice(0, 2), 10)
+    const tipo = [20, 23, 24, 27].includes(pref) ? 'CUIL' : 'CUIT'
+    return { tipo, valor: clean }
+  }
+
+  const matchDni = texto.match(/\b\d{7,8}\b/)
+  if (matchDni) {
+    return { tipo: 'DNI', valor: matchDni[0] }
+  }
+  return { tipo: 'DNI', valor: '' }
 }

@@ -4,9 +4,9 @@ import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
 
 import { getTextFromImage } from './ocr'
-import { cropImage, extraerBoleta, extraerDocumento, extraerMonto } from './utils'
+import { cropImage, extraerBoleta, extraerMonto } from './utils'
 import { app } from 'electron'
-import { numeroALetras } from '../../../shared/utils/document'
+import { extraerDocumento, numeroALetras } from '../../../shared/utils/document'
 import { FormularioProfesionales, FormularioTerceros } from '../../../shared/interfaces/form'
 
 export async function extractDataFromPdf(
@@ -25,7 +25,6 @@ export async function extractDataFromPdf(
 
   const data = await processPDF(originalPdfPath, pdfType)
 
-  fsPromises.unlink(originalPdfPath)
   return { data, originalPdfPath }
 }
 
@@ -158,6 +157,7 @@ async function processTerceroPDF(
     tipoDocumento: doc?.tipo,
     boleta,
     apellidoYNombre,
+    domicilioTipo,
     domicilio: domicilio + ' - ' + provincia,
     expediente,
     bruto,
@@ -266,6 +266,7 @@ async function processProfesionalPDF(
     matricula,
     boleta,
     apellidoYNombre,
+    domicilioTipo,
     domicilio: domicilio + ' - ' + provincia,
     bruto,
     valorEnLetras,

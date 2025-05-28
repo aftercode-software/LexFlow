@@ -36,28 +36,3 @@ export function extraerMonto(texto: string): number | null {
 
   return valor
 }
-
-interface Documento {
-  tipo: 'DNI' | 'CUIL' | 'CUIT'
-  valor: string
-}
-
-export function extraerDocumento(texto: string): Documento {
-  console.log('No se encontró DNI o CUIT en el texto:', texto)
-  const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
-
-  const matchCuit = texto.match(CUIT_REGEX)
-  if (matchCuit) {
-    const clean = matchCuit[0].replace(/-/g, '')
-
-    const pref = parseInt(clean.slice(0, 2), 10)
-    const tipo = [20, 23, 24, 27].includes(pref) ? 'CUIL' : 'CUIT'
-    return { tipo, valor: clean }
-  }
-
-  const matchDni = texto.match(/\b\d{7,8}\b/)
-  if (matchDni) {
-    return { tipo: 'DNI', valor: matchDni[0] }
-  }
-  return { tipo: 'DNI', valor: '' }
-}

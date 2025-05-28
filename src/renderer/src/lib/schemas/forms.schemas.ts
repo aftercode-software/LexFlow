@@ -29,6 +29,7 @@ export const demandadoSchema = z
     apellido: z.string({ required_error: 'El apellido es obligatorio' }),
     nombre: z.string({ required_error: 'El nombre es obligatorio' }),
     nombreCompleto: z.string({ required_error: 'El nombre completo es obligatorio' }),
+    domicilioTipo: z.string({ required_error: 'El tipo de domicilio es obligatorio' }),
     domicilio: z.string({ required_error: 'El domicilio es obligatorio' }),
     matricula: z.string().nullable().optional()
   })

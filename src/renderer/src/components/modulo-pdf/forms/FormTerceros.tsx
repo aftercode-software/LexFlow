@@ -33,6 +33,7 @@ export default function FormTerceros({
   valorEnLetras,
   tipoDocumento,
   documento,
+  domicilioTipo,
   domicilio,
   apellidoYNombre,
   expediente,
@@ -51,6 +52,7 @@ export default function FormTerceros({
         cuit: tipoDocumento === 'CUIT' ? documento : null,
         apellido: '',
         nombre: '',
+        domicilioTipo,
         nombreCompleto: apellidoYNombre,
         domicilio
       },

@@ -59,6 +59,7 @@ export async function buscarDemandado(valor: string, field: DocField): Promise<D
     apellido: response.apellido,
     nombre: response.nombre,
     apellidoYNombre: response.apellidoYNombre,
+    domicilioTipo: response.domicilioTipo,
     domicilio: response.domicilio
   }
 }

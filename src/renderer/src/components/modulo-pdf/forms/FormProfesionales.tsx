@@ -32,6 +32,7 @@ export default function FormProfesionales({
   valorEnLetras,
   tipoDocumento,
   documento,
+  domicilioTipo,
   domicilio,
   apellidoYNombre,
   tipo,
@@ -51,6 +52,7 @@ export default function FormProfesionales({
         apellido: '',
         nombre: '',
         nombreCompleto: apellidoYNombre,
+        domicilioTipo,
         domicilio,
         matricula
       },

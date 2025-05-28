@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils'
 import { z } from 'zod'
 import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { DocField } from '@shared/interfaces/demandado'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { extraerDocumento } from '@shared/utils/document'
 
 type FormValues = z.infer<typeof baseFormSchema>
 
@@ -85,7 +87,8 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
         setValue('demandado.nombre', data.nombre)
         setValue('demandado.nombreCompleto', data.apellidoYNombre)
         setValue('demandado.domicilio', data.domicilio)
-        setAutoFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio'])
+        setValue('demandado.domicilioTipo', data.domicilioTipo ?? 'REAL')
+        setAutoFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio', 'domicilioTipo'])
         setAccordionOpen('auto')
         setDocumentFound(true)
       } else {
@@ -196,79 +199,186 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                 <CheckCircle2 className="h-4 w-4 mr-1" /> Datos autocompletados
               </div>
             </AccordionTrigger>
-            <AccordionContent className="grid grid-cols-2 gap-4">
-              {(['apellido', 'nombre', 'nombreCompleto', 'domicilio'] as const).map((key) => (
-                <FormField
-                  key={key}
-                  name={`demandado.${key}` as const}
-                  control={control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {key === 'nombreCompleto'
-                          ? 'Nombre completo'
-                          : key.charAt(0).toUpperCase() + key.slice(1)}
-                      </FormLabel>
-                      <FormControl>
-                        <Input {...field} className="border-green-200 bg-green-50" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
+            <AccordionContent>
+              <div className="grid grid-cols-4 gap-4">
+                {/* Fila 1 */}
+                <div className="col-span-1">
+                  <FormField
+                    name="demandado.apellido"
+                    control={control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Apellido</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="border-green-200 bg-green-50" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="col-span-1">
+                  <FormField
+                    name="demandado.nombre"
+                    control={control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="border-green-200 bg-green-50" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <FormField
+                    name="demandado.nombreCompleto"
+                    control={control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre completo</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="border-green-200 bg-green-50" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Fila 2 */}
+                <div className="col-span-1">
+                  <FormField
+                    name="demandado.domicilioTipo"
+                    control={control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo domicilio</FormLabel>
+                        <FormControl>
+                          <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Seleccione tipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="REAL">REAL</SelectItem>
+                              <SelectItem value="ESPECIAL">ESPECIAL</SelectItem>
+                              <SelectItem value="FISCAL">FISCAL</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="col-span-3">
+                  <FormField
+                    name="demandado.domicilio"
+                    control={control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Domicilio</FormLabel>
+                        <FormControl>
+                          <Input {...field} className="border-green-200 bg-green-50" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
-          {(['apellido', 'nombre', 'nombreCompleto', 'domicilio'] as const).map((key) => (
+        <div className="grid grid-cols-4 gap-4">
+          {/* Fila 1 */}
+          <div className="col-span-1">
             <FormField
-              key={key}
-              name={`demandado.${key}` as const}
+              name="demandado.apellido"
               control={control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {key === 'nombreCompleto'
-                      ? 'Nombre completo'
-                      : key.charAt(0).toUpperCase() + key.slice(1)}
-                  </FormLabel>
+                  <FormLabel>Apellido</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} className="" />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-          ))}
+          </div>
+
+          <div className="col-span-1">
+            <FormField
+              name="demandado.nombre"
+              control={control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-2">
+            <FormField
+              name="demandado.nombreCompleto"
+              control={control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre completo</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Fila 2 */}
+          <div className="col-span-1">
+            <FormField
+              name="demandado.domicilioTipo"
+              control={control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo domicilio</FormLabel>
+                  <FormControl>
+                    <Select value={field.value ?? ''} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Seleccione tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="REAL">REAL</SelectItem>
+                        <SelectItem value="ESPECIAL">ESPECIAL</SelectItem>
+                        <SelectItem value="FISCAL">FISCAL</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="col-span-3">
+            <FormField
+              name="demandado.domicilio"
+              control={control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Domicilio</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="" />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
       )}
     </div>
   )
-}
-
-interface Documento {
-  tipo: 'DNI' | 'CUIL' | 'CUIT'
-  valor: string
-}
-
-function extraerDocumento(texto: string | null): Documento {
-  if (!texto) return { tipo: 'DNI', valor: '' }
-  const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
-
-  const matchCuit = texto.match(CUIT_REGEX)
-  if (matchCuit) {
-    const clean = matchCuit[0].replace(/-/g, '')
-
-    const pref = parseInt(clean.slice(0, 2), 10)
-    const tipo = [20, 23, 24, 27].includes(pref) ? 'CUIL' : 'CUIT'
-    return { tipo, valor: clean }
-  }
-
-  const matchDni = texto.match(/\b\d{7,8}\b/)
-  if (matchDni) {
-    return { tipo: 'DNI', valor: matchDni[0] }
-  }
-  return { tipo: 'DNI', valor: '' }
 }

@@ -5,6 +5,7 @@ export type DatosFormulario = {
   valorEnLetras: string
   tipoDocumento: 'DNI' | 'CUIL' | 'CUIT'
   documento: string
+  domicilioTipo: string
   domicilio: string
   apellidoYNombre: string
 }
