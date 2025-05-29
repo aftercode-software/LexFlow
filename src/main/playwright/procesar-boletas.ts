@@ -15,12 +15,16 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     '.window:visible label:has-text("Boleta") ~ span input.textbox-text'
   )
   await boletaInput.click()
-  console.log(`Debug: boleta.boleta =`, boleta.boleta)
+  console.log(`Debug: completo=`, boleta)
   await boletaInput.fill(boleta.boleta)
 
   const apellido = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[5]/td[2]/div/span/input[1]'
   )
+    console.log(`Debug: NUEVO NOMBRE =`, boleta.demandado)
+    console.log(`Debug: NOMBRE COMPLETO =`, boleta.demandado.apellidoYNombre)
+
+
   console.log(`Debug: boleta.demandado.apellido =`, boleta.demandado.apellido)
   await apellido.fill(boleta.demandado.apellido)
   await page
