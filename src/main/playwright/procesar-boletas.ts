@@ -111,11 +111,10 @@ export async function subirBoletas(boletas: EnrichedBoleta[],montoThreshold: num
   await page.locator('#_easyui_combobox_i3_9').click()
   }
   await page.locator('#buttonGuardar').click()
-
-  for (const boleta of boletas.slice(0, 10)) {
+ const maxIterations = Math.min(boletas.length, 25);
+   for (const boleta of boletas.slice(0, maxIterations)) {
     await procesarBoleta(page, boleta)
   }
-
   console.log('🟢 Lote finalizado. La ventana quedará abierta para verificación.')
   await page.waitForTimeout(60000)
 }
