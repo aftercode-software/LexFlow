@@ -228,9 +228,9 @@ app.whenReady().then(() => {
     return res.status
   })
 
-  ipcMain.handle('carga:judicial', async (_, boletas: EnrichedBoleta[]) => {
+  ipcMain.handle('carga:judicial', async (_, boletas: EnrichedBoleta[],montoThreshold,modoInhibicion) => {
     console.log('Iniciando carga judicial', boletas)
-    subirBoletas(boletas)
+    subirBoletas(boletas,montoThreshold,modoInhibicion)
   })
 
   ipcMain.handle('precarga:login', () => loginRecaudador())

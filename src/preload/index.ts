@@ -37,8 +37,8 @@ const api = {
     const response = await ipcRenderer.invoke('uploadBoleta', { data, tipo })
     return response
   },
-  iniciarCargaJudicial: (boletas: EnrichedBoleta[]) => {
-    ipcRenderer.invoke('carga:judicial', boletas)
+  iniciarCargaJudicial: (boletas: EnrichedBoleta[],montoThreshold:number,modoInhibicion:string) => {
+    ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion)
   },
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: async (matricula: number) => {

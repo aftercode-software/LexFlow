@@ -86,8 +86,8 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 }
 
 // Flujo principal
-export async function subirBoletas(boletas: EnrichedBoleta[]) {
-  console.log('boletasMati!', boletas)
+export async function subirBoletas(boletas: EnrichedBoleta[],montoThreshold: number,modoInhibicion: string) {
+  console.log('boletasMati!', boletas, 'montoThreshold: correcto', montoThreshold , 'modoInhibicion:', modoInhibicion)
   const browser = await chromium.launch({ headless: false })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
@@ -105,7 +105,11 @@ export async function subirBoletas(boletas: EnrichedBoleta[]) {
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[6]/span/span')
     .click()
+  if (modoInhibicion === 'con') {
   await page.locator('#_easyui_combobox_i3_1').click()
+  }else{
+  await page.locator('#_easyui_combobox_i3_9').click()
+  }
   await page.locator('#buttonGuardar').click()
 
   for (const boleta of boletas.slice(0, 10)) {

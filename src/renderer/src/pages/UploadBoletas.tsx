@@ -135,30 +135,6 @@ export default function UploadBoletas() {
     [boletasActuales]
   )
 
- 
- const revisadasConMontoProfesional = useMemo(() => {
-    return profesionales
-      .filter(b => b.estado === 'Revisada')
-      .filter(b => {
-        const m = Number(b.monto)
-       return modoInhibicion === 'con'
-          ? m >= montoThreshold
-         : m <  montoThreshold
-      })
-      .slice(0, 25)
-  }, [profesionales, montoThreshold, modoInhibicion])
-
-   const revisadasConMontoTercero = useMemo(() => {
-    return terceros
-      .filter(b => b.estado === 'Revisada')
-      .filter(b => {
-        const m = Number(b.monto)
-        return modoInhibicion === 'con'
-          ? m >= montoThreshold
-          : m <  montoThreshold
-      })
-      .slice(0, 25)
-  }, [terceros, montoThreshold, modoInhibicion])
 
    const revisadasConMonto = useMemo(() => {
     return revisadas.filter(b => {
@@ -178,7 +154,8 @@ export default function UploadBoletas() {
   }
 
   const handleUpload = () => {
-    window.api.iniciarCargaJudicial(revisadasConMonto)
+    window.api.iniciarCargaJudicial(revisadasConMonto,montoThreshold,modoInhibicion)
+    
   }
 
   return (
