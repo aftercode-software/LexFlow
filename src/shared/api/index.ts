@@ -1,3 +1,5 @@
+import { EnrichedBoleta } from '../../main/interface/boletas'
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Api {
   login: (username: string, password: string) => Promise<any>
@@ -18,7 +20,11 @@ export interface Api {
   deleteRecaudador: (id: number) => Promise<{ success: boolean }>
 
   uploadBoleta: (data: any, tipo: string) => Promise<any>
-  iniciarCargaJudicial: (boletas: any) => Promise<void>
+  iniciarCargaJudicial: (
+    boletas: EnrichedBoleta[],
+    montoThreshold: number,
+    modoInhibicion: string
+  ) => Promise<void>
   iniciarLoginManual: () => Promise<any>
   getBoletasToUpload: (matricula: number) => Promise<any>
   openPdf: (path: string) => Promise<void>

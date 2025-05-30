@@ -71,15 +71,9 @@ export function RecaudadoresDataTable<TData, TValue>({
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center space-x-2">
           <Input
-            placeholder="Filtrar por nombre..."
+            placeholder="Buscar por nombre"
             value={(table.getColumn('nombre')?.getFilterValue() as string) ?? ''}
             onChange={(event) => table.getColumn('nombre')?.setFilterValue(event.target.value)}
-            className="max-w-sm"
-          />
-          <Input
-            placeholder="Filtrar por email..."
-            value={(table.getColumn('email')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('email')?.setFilterValue(event.target.value)}
             className="max-w-sm"
           />
         </div>
@@ -152,7 +146,7 @@ export function RecaudadoresDataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      {/* <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} de{' '}
           {table.getFilteredRowModel().rows.length} fila(s) seleccionadas.
@@ -175,7 +169,7 @@ export function RecaudadoresDataTable<TData, TValue>({
             Siguiente
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

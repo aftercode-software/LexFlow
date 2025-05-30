@@ -82,6 +82,7 @@ export default function FormProfesionales({
 
   const onSubmit = async (data: FormValues) => {
     console.log('Datos del formulario:', data)
+    console.log('Datos del formulario:', data)
     try {
       let estado: 'Generada' | 'Error' = 'Generada'
       const { success } = await generatePDF(data, pdfRoute)

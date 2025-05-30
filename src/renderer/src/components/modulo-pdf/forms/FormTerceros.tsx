@@ -8,10 +8,8 @@ import {
   FormMessage
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-
 import { zodResolver } from '@hookform/resolvers/zod'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
-
 import { useEffect } from 'react'
 import { FieldErrors, useForm, UseFormReturn } from 'react-hook-form'
 import { useNavigate } from 'react-router'
@@ -20,8 +18,8 @@ import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
 import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
 import { toast } from 'sonner'
-import { numeroALetras } from '@shared/utils/document'
 import { FormularioTerceros } from '@shared/interfaces/form'
+import { numeroALetras } from '@shared/utils/document'
 
 type FormValues = z.infer<typeof tercerosSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>

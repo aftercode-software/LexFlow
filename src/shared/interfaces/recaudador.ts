@@ -12,5 +12,5 @@ export interface RecaudadorEntity {
   idNombre: string
 }
 
-export type CreateRecaudadorDto = Omit<RecaudadorEntity, 'id'>
+export type CreateRecaudadorDto = RecaudadorEntity
 export type UpdateRecaudadorDto = Partial<CreateRecaudadorDto>

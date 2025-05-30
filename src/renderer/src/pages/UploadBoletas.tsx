@@ -106,7 +106,8 @@ export default function UploadBoletas() {
   const [profesionales, setProfesionales] = useState<EnrichedBoleta[]>([])
   const [terceros, setTerceros] = useState<EnrichedBoleta[]>([])
   const [tabActiva, setTabActiva] = useState<TipoBoleta>('Profesional')
-
+  const [montoThreshold, setMontoThreshold] = useState<number>(30000)
+  const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
   useEffect(() => {
     const fetchBoletas = async () => {
       const mat = Number(userData?.matricula)
@@ -134,9 +135,15 @@ export default function UploadBoletas() {
     [boletasActuales]
   )
 
+  const revisadasConMonto = useMemo(() => {
+    return revisadas.filter((b) => {
+      const m = Number(b.monto)
+      return modoInhibicion === 'con' ? m >= montoThreshold : m < montoThreshold
+    })
+  }, [revisadas, montoThreshold, modoInhibicion])
   const canUpload = useMemo(
-    () => isAuthenticated && revisadas.length > 0,
-    [isAuthenticated, revisadas]
+    () => isAuthenticated && revisadasConMonto.length > 0,
+    [isAuthenticated, revisadasConMonto]
   )
 
   const handleOpenPdf = (path: string) => {
@@ -144,7 +151,7 @@ export default function UploadBoletas() {
   }
 
   const handleUpload = () => {
-    window.api.iniciarCargaJudicial(revisadas)
+    window.api.iniciarCargaJudicial(revisadasConMonto, montoThreshold, modoInhibicion)
   }
 
   return (
@@ -161,6 +168,7 @@ export default function UploadBoletas() {
               <p className="text-sm text-gray-500">Inicia sesión para ver boletas</p>
             )}
           </aside>
+          <div className="flex items-center space-x-4 mb-4"></div>
           <Button
             disabled={!canUpload}
             className="bg-gray-900 hover:bg-aftercode"
@@ -170,11 +178,36 @@ export default function UploadBoletas() {
             {tabActiva === 'Profesional' ? 'Profesionales' : 'Terceros'}
           </Button>
         </div>
+        <div className="mb-6">
+          <label className="flex items-center space-x-2">
+            <span>Monto minimo para Inhibición:</span>
+            <input
+              type="number"
+              value={montoThreshold}
+              onChange={(e) => setMontoThreshold(+e.target.value)}
+              className="w-24 border rounded px-2 py-1"
+            />
+          </label>
+        </div>
+        <div className="mb-6">
+          <label className="flex items-center space-x-2">
+            <span>Filtro Inhibición:</span>
+            <select
+              value={modoInhibicion}
+              onChange={(e) => setModoInhibicion(e.target.value as any)}
+              className="border rounded px-2 py-1"
+            >
+              <option value="con">Con Inhibición</option>
+              <option value="sin">Sin Inhibición</option>
+            </select>
+          </label>
+        </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           {(['Profesional', 'Tercero'] as TipoBoleta[]).map((type) => {
-            const count = type === 'Profesional' ? profesionales.length : terceros.length
+            const count = revisadasConMonto.filter((b) => tabActiva === type).length
             const title = type === 'Profesional' ? 'Boletas Profesionales' : 'Boletas Terceros'
+
             return (
               <div key={type} className="bg-white p-4 rounded-lg border border-gray-200">
                 <div className="flex justify-between mb-2">
@@ -203,8 +236,8 @@ export default function UploadBoletas() {
           </TabsList>
 
           <TabsContent value={tabActiva} className="p-0 overflow-x-auto">
-            <BoletasTable boletas={boletasActuales} type={tabActiva} onOpenPdf={handleOpenPdf} />
-            {boletasActuales.length === 0 && (
+            <BoletasTable boletas={revisadasConMonto} type={tabActiva} onOpenPdf={handleOpenPdf} />
+            {revisadasConMonto.length === 0 && (
               <div className="py-8 text-center text-gray-500">No hay boletas</div>
             )}
           </TabsContent>

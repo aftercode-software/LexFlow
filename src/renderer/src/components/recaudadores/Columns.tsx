@@ -60,8 +60,8 @@ export const createColumns = ({
         <Badge
           className={
             sexo === 'M'
-              ? 'bg-blue-100 rounded-full py-1 w-full text-blue-800 hover:bg-blue-200'
-              : 'bg-red-100 rounded-full py-1 w-full text-red-800 hover:bg-red-200'
+              ? 'bg-blue-100 rounded-full py-1 w-full text-blue-800 hover:bg-blue-200 justify-center'
+              : 'bg-pink-100 rounded-full py-1 w-full text-pink-800 hover:bg-pink-200 justify-center'
           }
         >
           {sexo}
@@ -125,11 +125,6 @@ export const createColumns = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(recaudador.id.toString())}
-            >
-              Copiar ID
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onEdit(recaudador)}>
               <Pencil className="mr-2 h-4 w-4" />

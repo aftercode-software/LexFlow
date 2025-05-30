@@ -11,7 +11,7 @@ import {
   CreateRecaudadorDto,
   RecaudadorEntity,
   UpdateRecaudadorDto
-} from '@renderer/interface/recaudador'
+} from '@shared/interfaces/recaudador'
 
 export default function RecaudadoresPage() {
   const [data, setData] = useState<RecaudadorEntity[]>([])
@@ -57,10 +57,10 @@ export default function RecaudadoresPage() {
     try {
       setIsSubmitting(true)
       if (selectedRecaudador) {
-        // await recaudadoresApi.update(selectedRecaudador.id, formData)
+        await window.api.updateRecaudador(selectedRecaudador.id, formData)
         toast.success('Recaudador actualizado correctamente')
       } else {
-        // await recaudadoresApi.create(formData as CreateRecaudadorDto)
+        await window.api.createRecaudador(formData as CreateRecaudadorDto)
         toast.success('Recaudador creado correctamente')
       }
       await fetchData()
@@ -80,7 +80,7 @@ export default function RecaudadoresPage() {
 
     try {
       setIsSubmitting(true)
-      //   await recaudadoresApi.delete(recaudadorToDelete.id)
+      await window.api.deleteRecaudador(recaudadorToDelete.id)
       toast.success('Recaudador eliminado correctamente')
       await fetchData()
     } catch (error) {
