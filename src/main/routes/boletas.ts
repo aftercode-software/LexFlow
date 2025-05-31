@@ -19,7 +19,7 @@ export function registerBoletaHandlers() {
       estado: data.estado
     }
 
-    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
+    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
