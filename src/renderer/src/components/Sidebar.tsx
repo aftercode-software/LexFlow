@@ -143,11 +143,11 @@ export function Sidebar() {
 
             <nav className="space-y-2">
               <Collapsible defaultOpen>
-                <Link to="/escanear-pdf">
+                <Link to="/demandados">
                   <CollapsibleTrigger
                     className={cn(
                       'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                      pathname.includes('/escanear-pdf') && 'bg-pink-50 text-aftercode font-medium'
+                      pathname.includes('/demandados') && 'bg-pink-50 text-aftercode font-medium'
                     )}
                   >
                     <Users size={ICON_SIZE} />

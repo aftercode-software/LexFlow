@@ -1,5 +1,3 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 
 import { toast } from 'sonner'
@@ -107,7 +105,7 @@ export default function RecaudadoresPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="space-y-6 p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Gestión de Recaudadores</h1>
         <p className="text-muted-foreground">

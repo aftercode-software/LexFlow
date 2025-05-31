@@ -13,3 +13,16 @@ export type Demandado = {
   domicilioTipo: string
   domicilio: string
 }
+
+export interface DemandadoEntity {
+  id: number
+  apellido: string
+  nombre: string
+  apellidoYNombre: string
+  tipoDocumento: 'CUIL' | 'CUIT' | 'DNI'
+  numeroDocumento: string
+  tipo: 'Tercero' | 'Profesional'
+  matricula?: number
+  domicilio: string
+  idNombre: string
+}

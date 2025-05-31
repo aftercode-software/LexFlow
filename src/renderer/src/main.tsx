@@ -11,6 +11,7 @@ import SuccessPage from './pages/Success'
 import { SignInPoderJudicial } from './pages/SignInPoderJudicial'
 import UploadBoletas from './pages/UploadBoletas'
 import RecaudadoresPage from './pages/Recaudadores'
+import DemandadosPage from './pages/Demandados'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <PoderJudicialProvider>
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/escanear-pdf" element={<ScanBoletas />} />
           <Route path="/escanear-pdf/:boleta" element={<SuccessPage />} />
 
+          <Route path="/demandados" element={<DemandadosPage />} />
           <Route path="/recaudadores" element={<RecaudadoresPage />} />
 
           <Route path="/precarga" element={<SignInPoderJudicial />} />

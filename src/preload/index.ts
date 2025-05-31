@@ -8,7 +8,12 @@ const api: Api = {
   getToken: () => ipcRenderer.invoke('getToken'),
   logout: () => ipcRenderer.invoke('logout'),
 
-  searchDemandado: (nro) => ipcRenderer.invoke('searchDemandado', nro),
+  getDemandados: () => ipcRenderer.invoke('demandados:getAll'),
+  searchDemandado: (nro) => ipcRenderer.invoke('demandados:get', nro),
+  createDemandado: (body) => ipcRenderer.invoke('demandados:create', body),
+  updateDemandado: (id, body) => ipcRenderer.invoke('demandados:update', id, body),
+  deleteDemandado: (id) => ipcRenderer.invoke('demandados:delete', id),
+
   extractDataFromPdf: (arrayBuffer, pdfType) =>
     ipcRenderer.invoke('pdf:extract-data', arrayBuffer, pdfType),
 
@@ -27,7 +32,7 @@ const api: Api = {
     montoThreshold: number,
     modoInhibicion: string
   ) => {
-    ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion)
+    return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion)
   },
 
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),

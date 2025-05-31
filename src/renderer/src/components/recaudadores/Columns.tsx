@@ -56,17 +56,7 @@ export const createColumns = ({
     header: 'Sexo',
     cell: ({ row }) => {
       const sexo = row.getValue('sexo') as string
-      return (
-        <Badge
-          className={
-            sexo === 'M'
-              ? 'bg-blue-100 rounded-full py-1 w-full text-blue-800 hover:bg-blue-200 justify-center'
-              : 'bg-pink-100 rounded-full py-1 w-full text-pink-800 hover:bg-pink-200 justify-center'
-          }
-        >
-          {sexo}
-        </Badge>
-      )
+      return <Badge variant={sexo === 'M' ? 'default' : 'secondary'}>{sexo}</Badge>
     }
   },
   {

@@ -7,7 +7,12 @@ export interface Api {
   logout: () => Promise<any>
 
   extractDataFromPdf: (arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => Promise<any>
-  searchDemandado: (nro: string) => Promise<any>
+
+  getDemandados(): Promise<any>
+  searchDemandado(nro: string): Promise<any>
+  createDemandado(body: any): Promise<any>
+  updateDemandado(id: number, body: any): Promise<any>
+  deleteDemandado(id: number): Promise<{ success: boolean }>
 
   generateDocument: (
     data: any,
