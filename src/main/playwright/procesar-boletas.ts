@@ -7,7 +7,7 @@ import { EnrichedBoleta } from '../interface/boletas'
 
 // Procesar una sola boleta
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
-  await page.waitForTimeout(2000)
+  await page.waitForTimeout(4000)
   await page.locator('text="Nuevo Registro"').click()
   await page.waitForSelector('.window:visible', { timeout: 5000 })
 
@@ -84,6 +84,9 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 
   console.log(`📎 Archivo cargado: ${nombreArchivo}`)
   await page.locator('input[type="submit"][value="Guardar"]').click()
+  await page.waitForTimeout(4000)
+  await page.locator('xpath=/html/body/div[13]/div[3]/a/span/span').click()
+  await page.waitForTimeout(4000)
   const grabar = page.locator('xpath=/html/body/div[11]/div[3]/a[1]/span')
   await grabar.click()
   console.log(`✅ Boleta ${boleta.boleta} completada`)
@@ -98,6 +101,7 @@ export async function subirBoletas(boletas: EnrichedBoleta[],montoThreshold: num
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
 
   // Acciones iniciales del lote (solo una vez)
+  await page.locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span').click()
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[2]/span/span/a')
     .click()
