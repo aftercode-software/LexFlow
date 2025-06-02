@@ -1,7 +1,7 @@
-export type DocField = 'dni' | 'cuil' | 'cuit'
+export type DocField = 'dni' | 'cuit'
 
 export interface Documento {
-  tipo: 'DNI' | 'CUIL' | 'CUIT'
+  tipo: 'DNI' | 'CUIT'
   valor: string
 }
 
@@ -19,7 +19,7 @@ export interface DemandadoEntity {
   apellido: string
   nombre: string
   apellidoYNombre: string
-  tipoDocumento: 'CUIL' | 'CUIT' | 'DNI'
+  tipoDocumento: 'CUIT' | 'DNI'
   numeroDocumento: string
   tipo: 'Tercero' | 'Profesional'
   matricula?: number

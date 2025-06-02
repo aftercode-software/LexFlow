@@ -66,6 +66,10 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
     )
     await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
   }
+  await page
+    .locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/span/a')
+    .click()
+  await page.locator('#_easyui_combobox_i7_0').click()
   const oficial = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
   )
@@ -130,6 +134,7 @@ export async function subirBoletas(
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
 
+  await page.waitForTimeout(4000)
   // Acciones iniciales del lote (solo una vez)
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span')
