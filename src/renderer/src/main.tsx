@@ -12,12 +12,14 @@ import { SignInPoderJudicial } from './pages/SignInPoderJudicial'
 import UploadBoletas from './pages/UploadBoletas'
 import RecaudadoresPage from './pages/Recaudadores'
 import DemandadosPage from './pages/Demandados'
+import TerminosCondiciones from './pages/TerminosCondiciones'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <PoderJudicialProvider>
     <HashRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
 
         <Route element={<PdfLayout />}>
           <Route path="/escanear-pdf" element={<ScanBoletas />} />
