@@ -116,7 +116,7 @@ const BoletasTable: React.FC<BoletasTableProps> = ({ boletas, type, onOpenPdf })
 export default function UploadBoletas() {
   const { userData, isAuthenticated } = useAuth()
   const [loadingRecaudadores, setLoadingRecaudadores] = useState(false)
-  const [loadingBoletas, setLoadingBoletas] = useState(false)
+  const [, setLoadingBoletas] = useState(false)
 
   // Estados para boletas
   const [profesionales, setProfesionales] = useState<EnrichedBoleta[]>([])

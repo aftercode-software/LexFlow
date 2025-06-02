@@ -14,7 +14,7 @@ import {
 
 export default function RecaudadoresPage() {
   const [data, setData] = useState<RecaudadorEntity[]>([])
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [selectedRecaudador, setSelectedRecaudador] = useState<RecaudadorEntity | undefined>()
