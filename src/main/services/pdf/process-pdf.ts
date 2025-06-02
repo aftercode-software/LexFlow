@@ -198,6 +198,7 @@ async function processProfesionalPDF(
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
   const doc = extraerDocumento(datosSuperiorTxt)
+
   console.log('Documento y yipo:', doc)
   const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
   const dni = dniMatch?.[1] ?? null
