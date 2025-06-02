@@ -68,7 +68,7 @@ export default function ScanBoletas() {
   }
 
   return (
-    <div className="p-6 flex flex-col min-h-screen bg-gray-50">
+    <div className="p-6 flex flex-col min-h-screen ">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col items-left">

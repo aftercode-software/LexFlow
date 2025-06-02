@@ -28,9 +28,10 @@ export interface Api {
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],
     montoThreshold: number,
-    modoInhibicion: string
+    modoInhibicion: string,
+    oficial2: boolean
   ) => Promise<void>
   iniciarLoginManual: () => Promise<any>
-  getBoletasToUpload: (matricula: number) => Promise<any>
+  getBoletasToUpload: (id: number) => Promise<any>
   openPdf: (path: string) => Promise<void>
 }

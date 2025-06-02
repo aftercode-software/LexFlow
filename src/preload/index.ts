@@ -37,13 +37,15 @@ const api: Api = {
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],
     montoThreshold: number,
-    modoInhibicion: string
+    modoInhibicion: string,
+    oficial2: boolean
   ) => {
-    return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion)
+    console.log('debi de anmuerasd', oficial2)
+    return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion, oficial2)
   },
 
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
-  getBoletasToUpload: (matricula: number) => ipcRenderer.invoke('boletas:get-to-upload', matricula),
+  getBoletasToUpload: (id: number) => ipcRenderer.invoke('boletas:get-to-upload', id),
 
   openPdf: (path) => ipcRenderer.invoke('open-pdf', path)
 }

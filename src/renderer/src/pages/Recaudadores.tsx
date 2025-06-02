@@ -94,20 +94,10 @@ export default function RecaudadoresPage() {
     onDelete: handleDelete
   })
 
-  if (loading) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Cargando recaudadores...</div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6 p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Gestión de Recaudadores</h1>
+        <h1 className="text-2xl font-bold">Gestión de Recaudadores</h1>
         <p className="text-muted-foreground">
           Administra la información de los recaudadores del sistema
         </p>

@@ -14,7 +14,7 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "postinstall": "npm run playwright:install && electron-builder install-app-deps",
+    "postinstall": "electron-builder install-app-deps",
     "playwright:install": "npx playwright install --with-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
@@ -91,15 +91,6 @@
       "out/renderer/**/*",
       "node_modules/**/*",
       "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "node_modules/playwright/.local-browsers/",
-        "to": "browsers/",
-        "filter": [
-          "**/*"
-        ]
-      }
     ],
     "win": {
       "target": [

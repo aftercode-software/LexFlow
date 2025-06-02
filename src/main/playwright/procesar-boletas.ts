@@ -2,9 +2,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { chromium, Page } from 'playwright'
 import { EnrichedBoleta } from '../interface/boletas'
+import path from 'path'
+import fs from 'fs'
 
 // Procesar una sola boleta
-async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
+async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: boolean) {
   await page.waitForTimeout(4000)
   await page.locator('text="Nuevo Registro"').click()
   await page.waitForSelector('.window:visible', { timeout: 5000 })
@@ -68,8 +70,11 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
   )
   await oficial.click()
-  const stela = page.locator('#_easyui_combobox_i8_0')
-  await stela.click()
+  if (oficial2) {
+    await page.locator('#_easyui_combobox_i8_1').click()
+  } else {
+    await page.locator('#_easyui_combobox_i8_0').click()
+  }
 
   if (boleta.tipo === 'Profesional') {
     const archivoPath = `C://boletas/profesionales/${boleta.boleta}.pdf`
@@ -97,7 +102,8 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 export async function subirBoletas(
   boletas: EnrichedBoleta[],
   montoThreshold: number,
-  modoInhibicion: string
+  modoInhibicion: string,
+  oficial2: boolean
 ) {
   console.log(
     'boletasMati!',
@@ -105,9 +111,21 @@ export async function subirBoletas(
     'montoThreshold: correcto',
     montoThreshold,
     'modoInhibicion:',
-    modoInhibicion
+    modoInhibicion,
+    'oficial2:',
+    oficial2
   )
-  const browser = await chromium.launch({ headless: false })
+  const chromePath = findChromeExe()
+  if (!chromePath) {
+    console.error('No se encontró la ruta de Chrome. Asegúrate de que esté instalado.')
+    return
+  }
+
+  const browser = await chromium.launch({
+    headless: false,
+    executablePath: chromePath
+    // Si quieres que corra oculto, pon headless: true
+  })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
@@ -135,8 +153,25 @@ export async function subirBoletas(
   await page.locator('#buttonGuardar').click()
   const maxIterations = Math.min(boletas.length, 25)
   for (const boleta of boletas.slice(0, maxIterations)) {
-    await procesarBoleta(page, boleta)
+    await procesarBoleta(page, boleta, oficial2)
   }
   console.log('🟢 Lote finalizado. La ventana quedará abierta para verificación.')
   await page.waitForTimeout(60000)
+}
+
+export function findChromeExe(): string | null {
+  // Rutas típicas en Windows
+  const programFiles = process.env['PROGRAMFILES'] || 'C:\\Program Files'
+  const programFilesx86 = process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)'
+
+  const chrome64 = path.join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe')
+  const chrome32 = path.join(programFilesx86, 'Google', 'Chrome', 'Application', 'chrome.exe')
+
+  if (fs.existsSync(chrome64)) {
+    return chrome64
+  } else if (fs.existsSync(chrome32)) {
+    return chrome32
+  } else {
+    return null
+  }
 }

@@ -31,16 +31,18 @@ export function registerBoletaHandlers() {
     return res.status
   })
 
-  ipcMain.handle('boletas:get-to-upload', async (_, matricula: number) => {
-    if (typeof matricula !== 'number' || isNaN(matricula)) {
+  ipcMain.handle('boletas:get-to-upload', async (_, id: number) => {
+    if (typeof id !== 'number' || isNaN(id)) {
       throw new Error('La matrícula debe ser un número válido')
     }
+
+    console.log('ID recibido:', id)
 
     const { profesionales, terceros, profDir, terDir } = await scanBoletas()
 
     const token = await getToken()
     if (!token) throw new Error('No hay token de autenticación')
-    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/create`, {filtrar', {
+    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/filtrar', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,15 +51,18 @@ export function registerBoletaHandlers() {
       body: JSON.stringify({
         boletasTerceros: terceros,
         boletasProfesionales: profesionales,
-        matricula
+        id: id
       })
     })
+
+    console.log('Respuesta del servidor:', res.status, res.statusText)
 
     if (!res.ok) {
       throw new Error('Error al obtener las boletas desde el servidor')
     }
 
     const data = await res.json()
+    console.log('Datos obtenidos:', data)
 
     return {
       profesionales: data.boletasProfesionales,

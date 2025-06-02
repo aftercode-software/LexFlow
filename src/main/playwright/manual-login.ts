@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { chromium, BrowserContext } from 'playwright'
+import { findChromeExe } from './procesar-boletas'
 
 interface RecaudadorData {
   recaudador: string
@@ -13,7 +14,11 @@ interface RecaudadorData {
 }
 
 export async function loginRecaudador(): Promise<RecaudadorData> {
-  const browser = await chromium.launch({ headless: false })
+  const chromePath = findChromeExe()
+  if (!chromePath) {
+    throw new Error('⛔ No se encontró el ejecutable de Chrome. Asegúrate de que esté instalado.')
+  }
+  const browser = await chromium.launch({ headless: false, executablePath: chromePath })
   const context: BrowserContext = await browser.newContext()
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/users.php')
