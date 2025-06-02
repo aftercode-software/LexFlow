@@ -37,8 +37,11 @@ export default function FormProfesionales({
   apellidoYNombre,
   tipo,
   matricula,
-  pdfRoute
-}: FormularioProfesionales & { pdfRoute: string } & { estado: string }) {
+  pdfRoute,
+  onComplete
+}: FormularioProfesionales & { pdfRoute: string } & { estado: string } & {
+  onComplete: () => void
+}) {
   const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(baseFormSchema),
@@ -100,6 +103,8 @@ export default function FormProfesionales({
       }
     } catch (err) {
       console.error('Error al generar doc:', err)
+    } finally {
+      onComplete()
     }
     console.log('Data: ', data)
   }

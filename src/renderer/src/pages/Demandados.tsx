@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { useDemandados } from '@renderer/hooks/use-demandados'
 import { DemandadoEntity } from '@shared/interfaces/demandado'
 import { createColumns } from '@renderer/components/demandados/columns'

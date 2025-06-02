@@ -137,7 +137,7 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                     field.onBlur()
                     handleSearch()
                     // detectar automáticamente tipo de documento según contenido
-                    const doc = extraerDocumento(field.value)
+                    const doc = extraerDocumento(field.value ?? null)
                     const newField = doc.tipo.toLowerCase() as DocField
                     if (newField !== currentField) {
                       // mover valor al campo correcto y limpiar el anterior

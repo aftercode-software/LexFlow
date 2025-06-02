@@ -11,7 +11,8 @@ import {
 import { FileUpload } from '@renderer/components/modulo-pdf/FileUpload'
 import FormProfesionales from '@renderer/components/modulo-pdf/forms/FormProfesionales'
 import FormTerceros from '@renderer/components/modulo-pdf/forms/FormTerceros'
-import type { FormularioProfesionales, FormularioTerceros } from '@renderer/lib/types'
+import { FormularioProfesionales, FormularioTerceros } from '@shared/interfaces/form'
+
 import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 
@@ -23,6 +24,7 @@ enum Steps {
 export default function ScanBoletas() {
   const [step, setStep] = useState<Steps>(Steps.UPLOAD)
   const [file, setFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
   const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>(null)
   const [extractedData, setExtractedData] = useState<
     FormularioProfesionales | FormularioTerceros | null
@@ -35,6 +37,7 @@ export default function ScanBoletas() {
     reader.onload = async () => {
       try {
         const buffer = reader.result as ArrayBuffer
+        setLoading(true)
         const { data, originalPdfPath } = await window.api.extractDataFromPdf(buffer, typePDF)
 
         console.log('Ruta del PDF original:', originalPdfPath)
@@ -43,16 +46,25 @@ export default function ScanBoletas() {
         setStep(Steps.REVIEW)
       } catch (e) {
         alert(e)
+      } finally {
+        setLoading(false)
       }
     }
     reader.readAsArrayBuffer(file)
   }
 
   const handleSubmitForm = () => {
+    setLoading(true)
     const formElement = document.querySelector('form#boleta-form') as HTMLFormElement
     if (formElement) {
-      formElement.requestSubmit() // dispara el `onSubmit` real del formulario
+      formElement.requestSubmit()
     }
+  }
+
+  // Callback para saber cuando el form termina su proceso
+  const handleFormComplete = () => {
+    setLoading(false)
+    // Aquí puedes agregar lógica adicional, como mostrar un mensaje o avanzar de paso
   }
 
   return (
@@ -108,10 +120,14 @@ export default function ScanBoletas() {
             <div className="pt-4 flex justify-end">
               <Button
                 onClick={handleProcess}
-                disabled={!file || !typePDF}
+                disabled={!file || !typePDF || loading}
                 className="bg-pink-500 hover:bg-pink-600 text-white"
               >
-                Escanear
+                {loading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                ) : (
+                  'Escanear'
+                )}
               </Button>
             </div>
           </CardContent>
@@ -131,7 +147,11 @@ export default function ScanBoletas() {
               </p>
             </aside>
             <Button size="lg" onClick={handleSubmitForm}>
-              Generar Boleta
+              {loading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+              ) : (
+                'Generar Boleta'
+              )}
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -141,12 +161,14 @@ export default function ScanBoletas() {
                   estado={''}
                   {...(extractedData as FormularioProfesionales)}
                   pdfRoute={originalPdfPath}
+                  onComplete={handleFormComplete}
                 />
               ) : (
                 <FormTerceros
                   estado={''}
                   {...(extractedData as FormularioTerceros)}
                   pdfRoute={originalPdfPath}
+                  onComplete={handleFormComplete}
                 />
               )}
             </div>

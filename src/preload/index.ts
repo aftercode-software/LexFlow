@@ -3,6 +3,13 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { Api } from '../shared/api'
 import { EnrichedBoleta } from '../main/interface/boletas'
 
+declare global {
+  interface Window {
+    api: Api
+    electron: typeof electronAPI
+  }
+}
+
 const api: Api = {
   login: (username, password) => ipcRenderer.invoke('login', username, password),
   getToken: () => ipcRenderer.invoke('getToken'),

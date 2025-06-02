@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useMemo } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -205,7 +206,7 @@ export default function UploadBoletas() {
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           {(['Profesional', 'Tercero'] as TipoBoleta[]).map((type) => {
-            const count = revisadasConMonto.filter((b) => tabActiva === type).length
+            const count = revisadasConMonto.filter(() => tabActiva === type).length
             const title = type === 'Profesional' ? 'Boletas Profesionales' : 'Boletas Terceros'
 
             return (

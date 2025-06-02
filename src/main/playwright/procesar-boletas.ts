@@ -3,8 +3,6 @@
 import { chromium, Page } from 'playwright'
 import { EnrichedBoleta } from '../interface/boletas'
 
-
-
 // Procesar una sola boleta
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   await page.waitForTimeout(4000)
@@ -21,9 +19,8 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   const apellido = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[5]/td[2]/div/span/input[1]'
   )
-    console.log(`Debug: NUEVO NOMBRE =`, boleta.demandado)
-    console.log(`Debug: NOMBRE COMPLETO =`, boleta.demandado.apellidoYNombre)
-
+  console.log(`Debug: NUEVO NOMBRE =`, boleta.demandado)
+  console.log(`Debug: NOMBRE COMPLETO =`, boleta.demandado.apellidoYNombre)
 
   console.log(`Debug: boleta.demandado.apellido =`, boleta.demandado.apellido)
   await apellido.fill(boleta.demandado.apellido)
@@ -55,12 +52,17 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[20]/td[2]/div/span/input[1]'
   )
   if (boleta.tipo === 'Profesional') {
-    console.log(`Debug: objetoImponible para Profesional =`, `APORTES, MATRICULA:${boleta.demandado.matricula}`)
+    console.log(
+      `Debug: objetoImponible para Profesional =`,
+      `APORTES, MATRICULA:${boleta.demandado.matricula}`
+    )
     await objetoImponible.fill(`APORTES, MATRICULA:${boleta.demandado.matricula}`)
-  }else {
-     console.log(`Debug: objetoImponible para Tercero =`, `EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado}`)
-      await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
-
+  } else {
+    console.log(
+      `Debug: objetoImponible para Tercero =`,
+      `EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado}`
+    )
+    await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
   }
   const oficial = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
@@ -68,19 +70,18 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   await oficial.click()
   const stela = page.locator('#_easyui_combobox_i8_0')
   await stela.click()
-  
+
   if (boleta.tipo === 'Profesional') {
-      const archivoPath = `C://boletas/profesionales/${boleta.boleta}.pdf`
-       await page.setInputFiles('input#filebox_file_id_1', archivoPath)
-  }else {
-      const archivoPath = `C://boletas/terceros/${boleta.boleta}.pdf`
-       await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+    const archivoPath = `C://boletas/profesionales/${boleta.boleta}.pdf`
+    await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  } else {
+    const archivoPath = `C://boletas/terceros/${boleta.boleta}.pdf`
+    await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   }
- 
 
   const nombreArchivo = await page
     .locator('input#filebox_file_id_1')
-    .evaluate((input) => input.files?.[0]?.name || null)
+    .evaluate((input: any) => input.files?.[0]?.name || null)
 
   console.log(`📎 Archivo cargado: ${nombreArchivo}`)
   await page.locator('input[type="submit"][value="Guardar"]').click()
@@ -93,15 +94,28 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 }
 
 // Flujo principal
-export async function subirBoletas(boletas: EnrichedBoleta[],montoThreshold: number,modoInhibicion: string) {
-  console.log('boletasMati!', boletas, 'montoThreshold: correcto', montoThreshold , 'modoInhibicion:', modoInhibicion)
+export async function subirBoletas(
+  boletas: EnrichedBoleta[],
+  montoThreshold: number,
+  modoInhibicion: string
+) {
+  console.log(
+    'boletasMati!',
+    boletas,
+    'montoThreshold: correcto',
+    montoThreshold,
+    'modoInhibicion:',
+    modoInhibicion
+  )
   const browser = await chromium.launch({ headless: false })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
 
   // Acciones iniciales del lote (solo una vez)
-  await page.locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span').click()
+  await page
+    .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span')
+    .click()
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[2]/span/span/a')
     .click()
@@ -114,13 +128,13 @@ export async function subirBoletas(boletas: EnrichedBoleta[],montoThreshold: num
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[6]/span/span')
     .click()
   if (modoInhibicion === 'con') {
-  await page.locator('#_easyui_combobox_i3_1').click()
-  }else{
-  await page.locator('#_easyui_combobox_i3_9').click()
+    await page.locator('#_easyui_combobox_i3_1').click()
+  } else {
+    await page.locator('#_easyui_combobox_i3_9').click()
   }
   await page.locator('#buttonGuardar').click()
- const maxIterations = Math.min(boletas.length, 25);
-   for (const boleta of boletas.slice(0, maxIterations)) {
+  const maxIterations = Math.min(boletas.length, 25)
+  for (const boleta of boletas.slice(0, maxIterations)) {
     await procesarBoleta(page, boleta)
   }
   console.log('🟢 Lote finalizado. La ventana quedará abierta para verificación.')

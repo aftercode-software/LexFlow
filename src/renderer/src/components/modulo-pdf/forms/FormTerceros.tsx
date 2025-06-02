@@ -36,8 +36,11 @@ export default function FormTerceros({
   apellidoYNombre,
   expediente,
   tipo,
-  pdfRoute
-}: FormularioTerceros & { pdfRoute: string } & { estado: string }) {
+  pdfRoute,
+  onComplete
+}: FormularioTerceros & { pdfRoute: string } & { estado: string } & {
+  onComplete: () => void
+}) {
   const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(tercerosSchema),
@@ -101,6 +104,8 @@ export default function FormTerceros({
       }
     } catch (err) {
       console.error('Error al generar doc:', err)
+    } finally {
+      onComplete()
     }
     console.log('Data: ', data)
   }
