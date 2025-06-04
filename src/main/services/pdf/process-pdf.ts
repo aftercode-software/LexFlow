@@ -3,11 +3,11 @@ import path from 'path'
 import { fromPath } from 'pdf2pic'
 import Tesseract, { OEM } from 'tesseract.js'
 
+import { app } from 'electron'
+import { FormularioProfesionales, FormularioTerceros } from '../../../shared/interfaces/form'
+import { extraerDocumento, numeroALetras } from '../../../shared/utils/document'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerMonto } from './utils'
-import { app } from 'electron'
-import { extraerDocumento, numeroALetras } from '../../../shared/utils/document'
-import { FormularioProfesionales, FormularioTerceros } from '../../../shared/interfaces/form'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
@@ -76,7 +76,10 @@ async function processTerceroPDF(
 
   const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 50)
   const mediaImg = await cropImage(convertedPDFPage1, 0, 165, 1200, 155)
-  const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 40)
+  const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 230)
+
+  // save it in ./tmp folder
+  await fsPromises.writeFile(path.join('./tmp', 'monto-tercero.jpg'), montoImg)
 
   const recaudadorImg = await cropImage(convertedPDFPage2, 0, 1010, 1200, 40)
 
@@ -189,10 +192,10 @@ async function processProfesionalPDF(
 
   const parteSuperior = await cropImage(convertedPDF, 0, 105, 1200, 50)
   const parteMedia = await cropImage(convertedPDF, 0, 145, 1200, 145)
-  const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 35)
+  const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 100)
 
-  const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')
-  await fsPromises.writeFile(path.join(tmpDir, 'monto.jpg'), parteMonto)
+  // save it in ./tmp folder
+  await fsPromises.writeFile(path.join('./tmp', 'monto-profesional.jpg'), parteMonto)
 
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 

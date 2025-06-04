@@ -26,13 +26,16 @@ export function extraerBoleta(texto: string): string | null {
 }
 
 export function extraerMonto(texto: string): number | null {
-  const matches = texto.match(/\d{1,3}(?:\.\d{3})*(?:,\d{2})?/g)
+  const matches = texto.match(/\d{1,3}(?:\.\d{3})*(?:,\d{2})/g)
+  if (!matches || matches.length === 0) return null
 
-  const monto = matches ? matches[matches.length - 1] : null
-  if (!monto) return null
+  for (const monto of matches) {
+    const normalizado = monto.replace(/\./g, '').replace(',', '.')
+    const valor = parseFloat(normalizado)
+    if (!isNaN(valor) && valor > 100) {
+      return valor // Se asume que el capital adeudado es un valor mayor a 100
+    }
+  }
 
-  const normalizado = monto.replace(/\./g, '').replace(',', '.')
-  const valor = parseFloat(normalizado)
-
-  return valor
+  return null // Si no encuentra un valor razonable
 }
