@@ -21,7 +21,6 @@ export async function extractDataFromPdf(
 
   const originalPdfPath = path.join(tmpDir, `original-${Date.now()}.pdf`)
   await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
-  console.log('PDF original guardado en:', originalPdfPath)
 
   const data = await processPDF(originalPdfPath, pdfType)
 
@@ -74,12 +73,12 @@ async function processTerceroPDF(
     throw new Error('Error converting PDF to image')
   }
 
-  const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 50)
+  const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 100)
   const mediaImg = await cropImage(convertedPDFPage1, 0, 165, 1200, 155)
   const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 230)
 
   // save it in ./tmp folder
-  await fsPromises.writeFile(path.join('./tmp', 'monto-tercero.jpg'), montoImg)
+  await fsPromises.writeFile(path.join('./tmp', 'datos-superior.jpg'), datosSuperiorImg)
 
   const recaudadorImg = await cropImage(convertedPDFPage2, 0, 1010, 1200, 40)
 
@@ -87,20 +86,13 @@ async function processTerceroPDF(
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
   const doc = extraerDocumento(datosSuperiorTxt)
-  console.log('Documento y yipo:', doc)
+
   const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
   const dni = dniMatch?.[1] ?? null
 
   const cuil = dniMatch ? dniMatch[0].replace(/-/g, '') : null
 
   const boleta = extraerBoleta(datosSuperiorTxt) ?? ''
-
-  console.log({
-    fechaEmision,
-    dni,
-    cuil,
-    boleta
-  })
 
   const mediaTxt = await getTextFromImage(worker, mediaImg)
 
@@ -129,30 +121,12 @@ async function processTerceroPDF(
 
   const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9/-]+)/i)?.[1] ?? ''
 
-  console.log({
-    nombreCompleto: apellidoYNombre,
-    domicilioTipo,
-    domicilio,
-    provincia,
-    expediente
-  })
-
   const montoTxt = await getTextFromImage(worker, montoImg)
 
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()
 
-  console.log({
-    bruto,
-    valorEnLetras
-  })
-
   const recaudadorTxt = await getTextFromImage(worker, recaudadorImg)
-
-  console.log('Datos Superior:', datosSuperiorTxt)
-  console.log('Media:', mediaTxt)
-  console.log('Monto:', montoTxt)
-  console.log('Recaudador:', recaudadorTxt)
 
   return {
     fechaEmision,
@@ -190,32 +164,24 @@ async function processProfesionalPDF(
     throw new Error('Error converting PDF to image')
   }
 
-  const parteSuperior = await cropImage(convertedPDF, 0, 105, 1200, 50)
+  const parteSuperior = await cropImage(convertedPDF, 0, 105, 1200, 100)
   const parteMedia = await cropImage(convertedPDF, 0, 145, 1200, 145)
   const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 100)
 
   // save it in ./tmp folder
-  await fsPromises.writeFile(path.join('./tmp', 'monto-profesional.jpg'), parteMonto)
+  await fsPromises.writeFile(path.join('./tmp', 'datos-superior.jpg'), parteSuperior)
 
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
   const doc = extraerDocumento(datosSuperiorTxt)
 
-  console.log('Documento y yipo:', doc)
   const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
   const dni = dniMatch?.[1] ?? null
 
   const cuil = dniMatch ? dniMatch[0].replace(/-/g, '') : ''
 
   const boleta = extraerBoleta(datosSuperiorTxt) ?? ''
-
-  console.log({
-    fechaEmision,
-    dni,
-    cuil,
-    boleta
-  })
 
   const mediaTxt = await getTextFromImage(worker, parteMedia)
 
@@ -244,24 +210,10 @@ async function processProfesionalPDF(
       .replace(/[^\p{L}]/gu, '')
       .toUpperCase() ?? ''
 
-  console.log({
-    apellidoYNombre,
-    domicilioTipo,
-    domicilio,
-    provincia
-  })
-
   const montoTxt = await getTextFromImage(worker, parteMonto)
-
-  console.log('Monto:', montoTxt)
 
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()
-
-  console.log({
-    bruto,
-    valorEnLetras
-  })
 
   return {
     fechaEmision,

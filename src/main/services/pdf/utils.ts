@@ -12,17 +12,21 @@ export function cropImage(
 }
 
 export function extraerBoleta(texto: string): string | null {
-  const afterBoleta = texto.split(/Boleta/i)[1]
-  if (!afterBoleta) return null
+  const ocurrencias = texto.matchAll(/Boleta/gi)
+  const indices = Array.from(ocurrencias, (m) => m.index).filter((i) => i !== undefined)
 
-  const tokens = afterBoleta.split(/\s+/)
+  if (indices.length === 0) return null
 
-  for (const tok of tokens) {
-    const limpio = tok.replace(/[^\p{L}\p{N}]/gu, '')
-    if (limpio.length >= 4) return limpio.toUpperCase()
-  }
+  // Si hay más de una aparición, usamos la segunda. Si solo hay una, usamos esa.
+  const indexElegido = indices.length > 1 ? indices[1]! : indices[0]!
 
-  return null
+  // Tomamos un fragmento del texto a partir de la segunda aparición
+  const fragmento = texto.slice(indexElegido, indexElegido + 50)
+
+  // Buscamos un número de 7 a 9 cifras cerca de esa palabra
+  const match = fragmento.match(/\d{7,9}/)
+
+  return match ? match[0] : null
 }
 
 export function extraerMonto(texto: string): number | null {
