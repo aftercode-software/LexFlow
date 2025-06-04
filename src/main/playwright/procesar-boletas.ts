@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { chromium, Page } from 'playwright'
 import { EnrichedBoleta } from '../interface/boletas'
 import path from 'path'
@@ -15,21 +14,23 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
     '.window:visible label:has-text("Boleta") ~ span input.textbox-text'
   )
   await boletaInput.click()
-  console.log(`Debug: completo=`, boleta)
   await boletaInput.fill(boleta.boleta)
 
   const apellido = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[5]/td[2]/div/span/input[1]'
   )
-  console.log(`Debug: NUEVO NOMBRE =`, boleta.demandado)
-  console.log(`Debug: NOMBRE COMPLETO =`, boleta.demandado.apellidoYNombre)
-
-  console.log(`Debug: boleta.demandado.apellido =`, boleta.demandado.apellido)
+  
   await apellido.fill(boleta.demandado.apellido)
   await page
     .locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[6]/td[2]/div/span/span')
     .click()
-  await page.locator('#_easyui_combobox_i4_2').click()
+  if(boleta.demandado.tipoDocumento === 'CUIT') {
+    const cuitSelect= page.locator('#_easyui_combobox_i4_4')
+    await cuitSelect.click();
+  } else { 
+  const dniSelect = page.locator('#_easyui_combobox_i4_2')
+  await dniSelect.click();
+  }
   const domicilio = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[7]/td[2]/div/p/span/input[1]'
   )
@@ -40,35 +41,29 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
   )
   console.log(`Debug: boleta.demandado.nombre =`, boleta.demandado.nombre)
   await nombre.fill(boleta.demandado.nombre)
-  const dni = page.locator(
+  const documento = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[6]/td[3]/div/p/span/input[1]'
   )
   console.log(`Debug: boleta.demandado.numeroDocumento =`, boleta.demandado.numeroDocumento)
-  await dni.fill(boleta.demandado.numeroDocumento)
+  await documento.fill(boleta.demandado.numeroDocumento)
   const monto = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[2]/div/p/span/input[1]'
   )
+    await page.waitForTimeout(2500)
+
   console.log(`Debug: boleta.monto =`, boleta.monto)
   await monto.fill(boleta.monto)
   const objetoImponible = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[20]/td[2]/div/span/input[1]'
   )
   if (boleta.tipo === 'Profesional') {
-    console.log(
-      `Debug: objetoImponible para Profesional =`,
-      `APORTES, MATRICULA:${boleta.demandado.matricula}`
-    )
-    await objetoImponible.fill(`APORTES, MATRICULA:${boleta.demandado.matricula}`)
+    await objetoImponible.fill(`APORTES, MATRICULA ${boleta.demandado.matricula}`.toUpperCase())
   } else {
-    console.log(
-      `Debug: objetoImponible para Tercero =`,
-      `EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado}`
-    )
-    await objetoImponible.fill(`EXPEDIENTE: ${boleta.numeroJuicio} - ${boleta.juzgado} `)
+    await objetoImponible.fill(`APORTES EN JUICIO ${boleta.juicio} - ${boleta.juzgado} `.toUpperCase())
   }
-  await page
-    .locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/span/a')
-    .click()
+  await page.locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/span/a').click()
+  await page.waitForTimeout(2500)
+
   await page.locator('#_easyui_combobox_i7_0').click()
   const oficial = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
@@ -88,15 +83,11 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
     await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   }
 
-  const nombreArchivo = await page
-    .locator('input#filebox_file_id_1')
-    .evaluate((input: any) => input.files?.[0]?.name || null)
-
-  console.log(`📎 Archivo cargado: ${nombreArchivo}`)
+  
   await page.locator('input[type="submit"][value="Guardar"]').click()
-  await page.waitForTimeout(4000)
+  await page.waitForTimeout(1500)
   await page.locator('xpath=/html/body/div[13]/div[3]/a/span/span').click()
-  await page.waitForTimeout(4000)
+  await page.waitForTimeout(1500)
   const grabar = page.locator('xpath=/html/body/div[11]/div[3]/a[1]/span')
   await grabar.click()
   console.log(`✅ Boleta ${boleta.boleta} completada`)
@@ -109,16 +100,7 @@ export async function subirBoletas(
   modoInhibicion: string,
   oficial2: boolean
 ) {
-  console.log(
-    'boletasMati!',
-    boletas,
-    'montoThreshold: correcto',
-    montoThreshold,
-    'modoInhibicion:',
-    modoInhibicion,
-    'oficial2:',
-    oficial2
-  )
+  
   const chromePath = findChromeExe()
   if (!chromePath) {
     console.error('No se encontró la ruta de Chrome. Asegúrate de que esté instalado.')
@@ -133,9 +115,14 @@ export async function subirBoletas(
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
+  // Forzar carga de elementos con scroll
+  await page.mouse.wheel(0, 800) 
+  await page.waitForTimeout(1000)
 
-  await page.waitForTimeout(4000)
-  // Acciones iniciales del lote (solo una vez)
+  // Forzar interacción con click invisible (en un lugar seguro)
+  await page.mouse.click(10, 10)
+  await page.waitForTimeout(500)
+  await page.waitForTimeout(1000)
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span')
     .click()
@@ -160,7 +147,6 @@ export async function subirBoletas(
   for (const boleta of boletas.slice(0, maxIterations)) {
     await procesarBoleta(page, boleta, oficial2)
   }
-  console.log('🟢 Lote finalizado. La ventana quedará abierta para verificación.')
   await page.waitForTimeout(60000)
 }
 
