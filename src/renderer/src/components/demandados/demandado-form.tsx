@@ -79,8 +79,6 @@ export function DemandadoForm({
       // Detectamos según tipoDocumento del demandado
       if (demandado.tipoDocumento === 'DNI') {
         initialField = 'dni'
-      } else if (demandado.tipoDocumento === 'CUIL') {
-        initialField = 'cuil'
       } else if (demandado.tipoDocumento === 'CUIT') {
         initialField = 'cuit'
       }
@@ -91,7 +89,6 @@ export function DemandadoForm({
         nombre: demandado.nombre || '',
         domicilio: demandado.domicilio || '',
         dni: initialField === 'dni' ? docValue : '',
-        cuil: initialField === 'cuil' ? docValue : '',
         cuit: initialField === 'cuit' ? docValue : '',
         tipo: demandado.tipo || 'Tercero',
         matricula: demandado.matricula?.toString() || ''
@@ -356,9 +353,7 @@ export function DemandadoForm({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={currentField}>
-                      {currentField === 'dni' ? 'DNI' : currentField === 'cuil' ? 'CUIL' : 'CUIT'}
-                    </Label>
+                    <Label htmlFor={currentField}>{currentField === 'dni' ? 'DNI' : 'CUIT'}</Label>
                     <Input
                       id={currentField}
                       value={formData[currentField] || ''}
@@ -366,25 +361,16 @@ export function DemandadoForm({
                       onBlur={handleBlurDocumento}
                       className={
                         (currentField === 'dni' && errors.dni) ||
-                        (currentField === 'cuil' && errors.cuil) ||
                         (currentField === 'cuit' && errors.cuit)
                           ? 'border-destructive'
                           : ''
                       }
-                      placeholder={
-                        currentField === 'dni'
-                          ? '12345678'
-                          : currentField === 'cuil'
-                            ? '20123456789'
-                            : '30123456789'
-                      }
+                      placeholder={currentField === 'dni' ? '12345678' : '30123456789'}
                     />
                     {currentField === 'dni' && errors.dni && (
                       <p className="text-xs text-destructive">{errors.dni}</p>
                     )}
-                    {currentField === 'cuil' && errors.cuil && (
-                      <p className="text-xs text-destructive">{errors.cuil}</p>
-                    )}
+
                     {currentField === 'cuit' && errors.cuit && (
                       <p className="text-xs text-destructive">{errors.cuit}</p>
                     )}

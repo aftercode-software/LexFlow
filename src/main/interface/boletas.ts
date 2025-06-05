@@ -34,7 +34,7 @@ export interface EnrichedBoleta {
     oficial: string
     idNombre: string
   }
-  numeroJuicio?: string
+  juicio?: string
   juzgado?: string
   expediente?: string
   fechaInicioDemanda: string
