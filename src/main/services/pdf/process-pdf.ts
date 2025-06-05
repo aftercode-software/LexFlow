@@ -16,13 +16,19 @@ export async function extractDataFromPdf(
   data: FormularioProfesionales | FormularioTerceros
   originalPdfPath: string
 }> {
+  // 1) Creamos carpeta temporal en <SO-temp>/scrapper-tmp
   const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')
   await fsPromises.mkdir(tmpDir, { recursive: true })
 
+  // 2) Guardamos el PDF en esa carpeta (para que pdf2pic pueda leerlo)
   const originalPdfPath = path.join(tmpDir, `original-${Date.now()}.pdf`)
   await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
 
+  // 3) Procesamos el PDF a JSON
   const data = await processPDF(originalPdfPath, pdfType)
+
+  // 4) Borramos el PDF temporal (ya no lo necesitamos)
+  await fsPromises.unlink(originalPdfPath)
 
   return { data, originalPdfPath }
 }
@@ -54,6 +60,7 @@ async function processTerceroPDF(
   worker: Tesseract.Worker,
   pdfPath: string
 ): Promise<FormularioTerceros> {
+  // Opciones para convertir página 1 y 2 a buffer JPEG en memoria
   const options = {
     quality: 100,
     density: 300,
@@ -62,35 +69,26 @@ async function processTerceroPDF(
     height: 1600
   }
   const storeAsImage = fromPath(pdfPath, options)
-  const { buffer: convertedPDFPage1 } = await storeAsImage(1, {
-    responseType: 'buffer'
-  })
-  const { buffer: convertedPDFPage2 } = await storeAsImage(2, {
-    responseType: 'buffer'
-  })
 
-  if (!convertedPDFPage1 || !convertedPDFPage2) {
-    throw new Error('Error converting PDF to image')
+  // Convertimos página 1
+  const { buffer: convertedPage1 } = await storeAsImage(1, { responseType: 'buffer' })
+  // Convertimos página 2
+  const { buffer: convertedPage2 } = await storeAsImage(2, { responseType: 'buffer' })
+
+  if (!convertedPage1 || !convertedPage2) {
+    throw new Error('Error convirtiendo PDF a imagen (Tercero).')
   }
 
-  const datosSuperiorImg = await cropImage(convertedPDFPage1, 0, 125, 1200, 100)
-  const mediaImg = await cropImage(convertedPDFPage1, 0, 165, 1200, 155)
-  const montoImg = await cropImage(convertedPDFPage1, 20, 320, 1180, 230)
+  // 1) Cortamos regiones de la página 1 (cada crop retorna un Buffer)
+  const datosSuperiorImg = await cropImage(convertedPage1, 0, 125, 1200, 100)
+  const mediaImg = await cropImage(convertedPage1, 0, 165, 1200, 155)
+  const montoImg = await cropImage(convertedPage1, 20, 320, 1180, 230)
 
-  // save it in ./tmp folder
-  await fsPromises.writeFile(path.join('./tmp', 'datos-superior.jpg'), datosSuperiorImg)
-
-  const recaudadorImg = await cropImage(convertedPDFPage2, 0, 1010, 1200, 40)
-
+  // 3) Extraemos texto de cada parte usando Tesseract directamente sobre el Buffer
   const datosSuperiorTxt = await getTextFromImage(worker, datosSuperiorImg)
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
   const doc = extraerDocumento(datosSuperiorTxt)
-
-  const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
-  const dni = dniMatch?.[1] ?? null
-
-  const cuil = dniMatch ? dniMatch[0].replace(/-/g, '') : null
 
   const boleta = extraerBoleta(datosSuperiorTxt) ?? ''
 
@@ -122,11 +120,8 @@ async function processTerceroPDF(
   const expediente = mediaTxt.match(/Exp[:.]?\s*([0-9/-]+)/i)?.[1] ?? ''
 
   const montoTxt = await getTextFromImage(worker, montoImg)
-
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()
-
-  const recaudadorTxt = await getTextFromImage(worker, recaudadorImg)
 
   return {
     fechaEmision,
@@ -142,49 +137,41 @@ async function processTerceroPDF(
     tipo: 'Tercero'
   }
 }
+
 async function processProfesionalPDF(
   worker: Tesseract.Worker,
   pdfPath: string
 ): Promise<FormularioProfesionales> {
+  // Opciones para convertir página 1 a buffer JPEG en memoria
   const options = {
     quality: 100,
     density: 300,
-    saveFilename: 'temp',
     format: 'jpg',
     width: 1200,
     height: 1600,
     responseType: 'buffer'
   }
   const storeAsImage = fromPath(pdfPath, options)
-  const { buffer: convertedPDF } = await storeAsImage(1, {
-    responseType: 'buffer'
-  })
 
-  if (!convertedPDF) {
-    throw new Error('Error converting PDF to image')
+  const { buffer: convertedPage } = await storeAsImage(1, { responseType: 'buffer' })
+  if (!convertedPage) {
+    throw new Error('Error convirtiendo PDF a imagen (Profesional).')
   }
 
-  const parteSuperior = await cropImage(convertedPDF, 0, 105, 1200, 100)
-  const parteMedia = await cropImage(convertedPDF, 0, 145, 1200, 145)
-  const parteMonto = await cropImage(convertedPDF, 600, 440, 480, 100)
+  // Cortamos las regiones necesarias
+  const parteSuperior = await cropImage(convertedPage, 0, 105, 1200, 100)
+  const parteMedia = await cropImage(convertedPage, 0, 145, 1200, 145)
+  const parteMonto = await cropImage(convertedPage, 600, 440, 480, 100)
 
-  // save it in ./tmp folder
-  await fsPromises.writeFile(path.join('./tmp', 'datos-superior.jpg'), parteSuperior)
-
+  // Extraemos texto usando Tesseract sobre Buffer
   const datosSuperiorTxt = await getTextFromImage(worker, parteSuperior)
 
   const fechaEmision = datosSuperiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''
   const doc = extraerDocumento(datosSuperiorTxt)
 
-  const dniMatch = datosSuperiorTxt.match(/\b(?:\d{2}-?)?(\d{8})(?:-?\d)?\b/)
-  const dni = dniMatch?.[1] ?? null
-
-  const cuil = dniMatch ? dniMatch[0].replace(/-/g, '') : ''
-
   const boleta = extraerBoleta(datosSuperiorTxt) ?? ''
 
   const mediaTxt = await getTextFromImage(worker, parteMedia)
-
   const matricula = mediaTxt.match(/\(Mat\.\s*0*([1-9][0-9]*)\)/i)?.[1] ?? ''
 
   const apellidoYNombre =
@@ -211,7 +198,6 @@ async function processProfesionalPDF(
       .toUpperCase() ?? ''
 
   const montoTxt = await getTextFromImage(worker, parteMonto)
-
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()
 

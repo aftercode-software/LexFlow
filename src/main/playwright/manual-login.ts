@@ -18,60 +18,87 @@ export async function loginRecaudador(): Promise<RecaudadorData> {
   if (!chromePath) {
     throw new Error('⛔ No se encontró el ejecutable de Chrome. Asegúrate de que esté instalado.')
   }
-  const browser = await chromium.launch({ headless: false, executablePath: chromePath })
+
+  const browser = await chromium.launch({
+    headless: false,
+    executablePath: chromePath
+  })
   const context: BrowserContext = await browser.newContext()
   const page = await context.newPage()
+
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/users.php')
 
-  console.log(
-    '🟡 Iniciá sesión manualmente. El navegador se cerrará cuando detecte los datos o tras 60s.'
-  )
   try {
     await page.waitForSelector('input.textbox-text.validatebox-text.validatebox-readonly', {
       timeout: 60000
     })
   } catch {
     await browser.close()
-    throw new Error('⛔ Timeout: no se detectó un login exitoso en 60s.')
+    throw new Error('⛔ Timeout: no se detectó un login exitoso en 60 segundos.')
   }
 
-  await context.storageState({ path: 'auth.json' })
-  console.log('✅ auth.json guardado')
-
-  const recaudadorInput = await page.$('input[type="hidden"][name="recnombre"]')
-  const data: RecaudadorData = {
-    recaudador: recaudadorInput
-      ? await recaudadorInput.evaluate((el: HTMLInputElement) => el.value.trim())
-      : '',
-    matricula: await page.$eval('input[type="hidden"][name="recmat"]', (el: HTMLInputElement) =>
-      el.value.trim()
-    ),
-    telefonoFijo: await page.$eval('input[type="hidden"][name="rectelf"]', (el: HTMLInputElement) =>
-      el.value.trim()
-    ),
-    telefonoMovil: await page.$eval(
-      'input[type="hidden"][name="rectelm"]',
-      (el: HTMLInputElement) => el.value.trim()
-    ),
-    organismo: await page.$eval(
-      'input[type="hidden"][name="recorganismo"]',
-      (el: HTMLInputElement) => el.value.trim()
-    ),
-    descripcion: await page.$eval('input[type="hidden"][name="descorto"]', (el: HTMLInputElement) =>
-      el.value.trim()
-    ),
-    correo: await page.$eval('input[type="hidden"][name="reccorreo"]', (el: HTMLInputElement) =>
-      el.value.trim()
-    ),
-    fechaReporte: await page.$eval(
-      '#fechareporte',
-      (el: HTMLElement) => el.textContent?.trim() || ''
+  try {
+    await page.waitForFunction(
+      () => {
+        const hidden = document.querySelector<HTMLInputElement>(
+          'input[type="hidden"][name="recnombre"]'
+        )
+        return hidden !== null && hidden.value.trim().length > 0
+      },
+      { timeout: 10000 }
+    )
+  } catch {
+    console.warn(
+      '⚠️ El campo recnombre tardó más de 10s en llenarse. Intento continuar de todas formas.'
     )
   }
 
-  console.log('Datos extraídos:', data)
+  const recaudadorInput = await page.$('input[type="hidden"][name="recnombre"]')
+  const recaudador = recaudadorInput
+    ? await recaudadorInput.evaluate((el: HTMLInputElement) => el.value.trim())
+    : ''
+
+  const matricula = await page.$eval(
+    'input[type="hidden"][name="recmat"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+  const telefonoFijo = await page.$eval(
+    'input[type="hidden"][name="rectelf"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+  const telefonoMovil = await page.$eval(
+    'input[type="hidden"][name="rectelm"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+  const organismo = await page.$eval(
+    'input[type="hidden"][name="recorganismo"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+  const descripcion = await page.$eval(
+    'input[type="hidden"][name="descorto"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+  const correo = await page.$eval(
+    'input[type="hidden"][name="reccorreo"]',
+    (el: HTMLInputElement) => el.value.trim()
+  )
+
+  const fechaReporte = await page.$eval(
+    'label#fechareporte',
+    (el: HTMLElement) => el.textContent?.trim() || ''
+  )
+
+  const data: RecaudadorData = {
+    recaudador,
+    matricula,
+    telefonoFijo,
+    telefonoMovil,
+    organismo,
+    descripcion,
+    correo,
+    fechaReporte
+  }
 
   await browser.close()
-  console.log('✅ Datos extraídos y navegador cerrado')
   return data
 }

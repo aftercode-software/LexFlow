@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -15,6 +16,7 @@ import { FormularioProfesionales, FormularioTerceros } from '@shared/interfaces/
 
 import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 enum Steps {
   UPLOAD = 1,
@@ -45,7 +47,20 @@ export default function ScanBoletas() {
         setOriginalPdfPath(originalPdfPath)
         setStep(Steps.REVIEW)
       } catch (e) {
-        alert(e)
+        if (
+          typeof e === 'object' &&
+          e &&
+          'message' in e &&
+          typeof (e as any).message === 'string' &&
+          (e as any).message.includes(
+            "Error invoking remote method 'pdf:extract-data': Error: Input Buffer is empty"
+          )
+        ) {
+          toast.error('Error al escanear la boleta, verifica que el tipo sea el correcto')
+        } else {
+          console.error('Error al procesar el PDF:', e)
+          alert(e)
+        }
       } finally {
         setLoading(false)
       }

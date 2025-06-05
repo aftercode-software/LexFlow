@@ -11,20 +11,6 @@ import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { z } from 'zod'
 
-/* 
-{
-        "id": 1,
-        "nombre": "Gomez Torre Rodrigo",
-        "matricula": 7714,
-        "telefono": "2616521150",
-        "celular": "2616521150",
-        "organismo": "CAJA FORENSE",
-        "descripcion": "CAP",
-        "email": "ragomeztorre@gmail.com",
-        "oficial": "BENINGAZA ESTELA"
-    },
-
-*/
 type Recaudador = z.infer<typeof recaudadorSchema>
 
 interface FormValues {

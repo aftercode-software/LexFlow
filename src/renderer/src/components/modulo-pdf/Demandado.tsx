@@ -47,7 +47,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
   useEffect(() => {
     let field: DocField = 'dni'
     if (cuit?.trim()) field = 'cuit'
-    else if (cuil?.trim()) field = 'cuil'
     setCurrentField(field)
     previousValue.current = ''
     setDocumentFound(false)
@@ -120,9 +119,7 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
         control={control}
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              {currentField === 'dni' ? 'DNI' : currentField === 'cuil' ? 'CUIL' : 'CUIT'}
-            </FormLabel>
+            <FormLabel>{currentField === 'dni' ? 'DNI' : 'CUIT'}</FormLabel>
             <div className="flex items-center gap-2">
               <FormControl>
                 <Input
