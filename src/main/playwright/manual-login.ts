@@ -32,6 +32,7 @@ export async function loginRecaudador(): Promise<RecaudadorData> {
     await page.waitForSelector('input.textbox-text.validatebox-text.validatebox-readonly', {
       timeout: 60000
     })
+    await context.storageState({ path: 'auth.json' })
   } catch {
     await browser.close()
     throw new Error('⛔ Timeout: no se detectó un login exitoso en 60 segundos.')
