@@ -27,8 +27,8 @@ export async function extractDataFromPdf(
   // 3) Procesamos el PDF a JSON
   const data = await processPDF(originalPdfPath, pdfType)
 
-  // 4) Borramos el PDF temporal (ya no lo necesitamos)
-  await fsPromises.unlink(originalPdfPath)
+  // No borramos el PDF temporal aquí, para que otros procesos puedan accederlo
+  // El consumidor debe encargarse de borrar el archivo cuando ya no lo necesite
 
   return { data, originalPdfPath }
 }
