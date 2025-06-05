@@ -56,10 +56,10 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[20]/td[2]/div/span/input[1]'
   )
   if (boleta.tipo === 'Profesional') {
-    await objetoImponible.fill(`APORTES, MATRICULA ${boleta.demandado.matricula}`.toUpperCase())
+    await objetoImponible.fill(`APORTES MATRICULA N° ${boleta.demandado.matricula}`.toUpperCase())
   } else {
     await objetoImponible.fill(
-      `APORTES EN JUICIO ${boleta.juicio} - ${boleta.juzgado} `.toUpperCase()
+      `APORTES EN JUICIO ${boleta.expediente} - ${boleta.juzgado} `.toUpperCase()
     )
   }
   await page
@@ -118,33 +118,39 @@ export async function subirBoletas(
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
   // Forzar carga de elementos con scroll
-  await page.mouse.wheel(0, 800)
-  await page.waitForTimeout(1000)
+  await page.mouse.wheel(0, 50)
+  await page.waitForTimeout(4000)
 
-  // Forzar interacción con click invisible (en un lugar seguro)
-  await page.mouse.click(10, 10)
-  await page.waitForTimeout(500)
+  // Forzar interacción con click invisible (en un lugar seguro
+
   await page.waitForTimeout(1000)
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[7]/a[2]/span/span')
     .click()
+  await page.waitForTimeout(2000)
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[2]/span/span/a')
     .click()
+  await page.waitForTimeout(2000)
   await page.locator('#_easyui_combobox_i1_1').click()
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[4]/span/span')
     .click()
+  await page.waitForTimeout(2000)
   await page.locator('#_easyui_combobox_i2_1').click()
+  await page.waitForTimeout(2000)
   await page
     .locator('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[6]/span/span')
     .click()
+  await page.waitForTimeout(1000)
   if (modoInhibicion === 'con') {
     await page.locator('#_easyui_combobox_i3_1').click()
   } else {
     await page.locator('#_easyui_combobox_i3_9').click()
   }
+  await page.waitForTimeout(4000)
   await page.locator('#buttonGuardar').click()
+  await page.waitForTimeout(3000)
   const maxIterations = Math.min(boletas.length, 25)
   for (const boleta of boletas.slice(0, maxIterations)) {
     await procesarBoleta(page, boleta, oficial2)
