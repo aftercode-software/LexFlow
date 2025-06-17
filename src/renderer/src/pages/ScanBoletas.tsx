@@ -92,9 +92,9 @@ export default function ScanBoletas() {
               <Button
                 variant="ghost"
                 onClick={() => setStep(Steps.UPLOAD)}
-                className="hover:bg-pink-50 hover:text-pink-500 text-left"
+                className="hover:bg-pink-50 hover:text-gray-500 text-left"
               >
-                <ChevronLeft className="w-4 h-4 text-pink-500" />
+                <ChevronLeft className="w-4 h-4 text-[#4285f4]" />
                 Volver
               </Button>
             </section>
@@ -136,7 +136,7 @@ export default function ScanBoletas() {
               <Button
                 onClick={handleProcess}
                 disabled={!file || !typePDF || loading}
-                className="bg-pink-500 hover:bg-pink-600 text-white"
+                className="bg-[#4285f4] hover:bg-gray-600 text-white"
               >
                 {loading ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
@@ -205,12 +205,12 @@ function StepIndicator({ number, label, active }: StepIndicatorProps) {
     <div className={`flex items-center whitespace-nowrap ${active ? '' : 'opacity-70'}`}>
       <div
         className={`flex items-center justify-center w-6 h-6 rounded-full transition-colors ${
-          active ? 'bg-pink-500 text-white' : 'border border-gray text-gray-500'
+          active ? 'bg-[#4285f4] text-white' : 'border border-gray text-gray-500'
         }`}
       >
         {number}
       </div>
-      <span className={`ml-2 font-medium ${active ? 'text-pink-500' : 'text-gray-500'}`}>
+      <span className={`ml-2 font-medium ${active ? 'text-[#4285f4]' : 'text-gray-500'}`}>
         {label}
       </span>
     </div>

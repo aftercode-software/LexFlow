@@ -64,7 +64,7 @@ export function FileUpload({
                 e.stopPropagation()
                 onFileChange(null)
               }}
-              className="mt-2 text-xs text-pink-500 hover:text-pink-700 font-medium"
+              className="mt-2 text-xs text-[#4285f4] hover:text-gray-700 font-medium"
             >
               Cambiar archivo
             </button>
@@ -80,7 +80,7 @@ export function FileUpload({
             <p className="text-xs text-gray-500 mt-1">o arrastra y suelta tu PDF aquí</p>
             <p className="text-xs text-gray-400 mt-2">PDF (Máx. {maxSize / 1024 / 1024} MB)</p>
             {hasError && (
-              <p className="text-xs text-red-500 mt-2">
+              <p className="text-xs text-[#4285f4] mt-2">
                 {fileRejections[0]?.errors[0]?.message || 'Archivo no válido'}
               </p>
             )}

@@ -16,7 +16,7 @@ export default function Login() {
             <div className="flex h-8 w-8 items-center bg-aftercode p-1 justify-center rounded-md text-gray-800">
               <img src={aftercodeLogo} alt="" />
             </div>
-            Aftercode
+            LexFlow
           </a>
         </div>
         <div className="flex flex-1 items-center justify-center">

@@ -30,7 +30,7 @@ export function Sidebar() {
             </div>
             {isOpen && (
               <div>
-                <h1 className="text-xl font-bold text-black">Aftercode</h1>
+                <h1 className="text-xl font-bold text-black">LexFlow</h1>
                 <p className="text-xs text-gray-500">Gestor de boletas</p>
               </div>
             )}
@@ -76,7 +76,7 @@ export function Sidebar() {
                   variant="ghost"
                   onClick={logout}
                   size="sm"
-                  className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-7 w-7 p-0"
+                  className="text-xs text-[#4285f4] hover:text-gray-600 hover:bg-gray-50 h-7 w-7 p-0"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                 </Button>
@@ -90,7 +90,7 @@ export function Sidebar() {
                   variant="ghost"
                   onClick={logout}
                   size="sm"
-                  className="text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-50 h-6 w-6 p-0 mt-1"
+                  className="text-xs text-[#4285f4] hover:text-gray-600 hover:bg-gray-50 h-6 w-6 p-0 mt-1"
                 >
                   <LogOut className="h-3 w-3" />
                 </Button>
@@ -116,8 +116,8 @@ export function Sidebar() {
                 <Link to="/escanear-pdf">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                      pathname.includes('/escanear-pdf') && 'bg-pink-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
+                      pathname.includes('/escanear-pdf') && 'bg-gray-50 text-aftercode font-medium'
                     )}
                   >
                     <ScanText size={ICON_SIZE} />
@@ -146,8 +146,8 @@ export function Sidebar() {
                 <Link to="/demandados">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                      pathname.includes('/demandados') && 'bg-pink-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
+                      pathname.includes('/demandados') && 'bg-gray-50 text-aftercode font-medium'
                     )}
                   >
                     <Users size={ICON_SIZE} />
@@ -164,8 +164,8 @@ export function Sidebar() {
                 <Link to="/recaudadores">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                      pathname.includes('/recaudadores') && 'bg-pink-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
+                      pathname.includes('/recaudadores') && 'bg-gray-50 text-aftercode font-medium'
                     )}
                   >
                     <CircleUser size={ICON_SIZE} />
@@ -194,8 +194,8 @@ export function Sidebar() {
                 <Link to="/precarga">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-pink-50 hover:text-aftercode',
-                      pathname.includes('/precarga') && 'bg-pink-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
+                      pathname.includes('/precarga') && 'bg-gray-50 text-aftercode font-medium'
                     )}
                   >
                     <LogIn size={ICON_SIZE} />
@@ -211,13 +211,13 @@ export function Sidebar() {
                 <Link to="/subir-pdf" aria-disabled={!isAuthenticated}>
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md rounded-md',
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md',
                       isAuthenticated
-                        ? 'text-gray-700 hover:bg-pink-50 hover:text-aftercode'
+                        ? 'text-gray-700 hover:bg-gray-50 hover:text-aftercode'
                         : 'text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:text-gray-400',
                       pathname.includes('/subir-pdf') &&
                         isAuthenticated &&
-                        'bg-pink-50 text-aftercode font-medium'
+                        'bg-gray-50 text-aftercode font-medium'
                     )}
                     disabled={!isAuthenticated}
                   >
