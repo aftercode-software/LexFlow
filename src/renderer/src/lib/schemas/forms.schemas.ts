@@ -111,3 +111,10 @@ export const tercerosSchema = baseFormObjectSchema
       }
     }
   })
+
+export const csmSchema = z.object({
+  cuij: z.string({ required_error: 'El CUIJ es obligatorio' }).min(1, 'El CUIJ es obligatorio'),
+  numeroJuicio: z
+    .string({ required_error: 'El número de juicio es obligatorio' })
+    .min(1, 'El número de juicio es obligatorio')
+})

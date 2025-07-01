@@ -79,7 +79,7 @@ export default function DemandadosPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <CardTitle className="text-2xl font-bold">Gestión de Demandados</CardTitle>
+          <h1 className="text-2xl font-semibold">Gestión de Demandados</h1>
           <p className="text-muted-foreground">
             Administra la información de los demandados del sistema
             {allDemandados.length > 0 && (

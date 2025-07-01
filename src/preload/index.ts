@@ -24,6 +24,8 @@ const api: Api = {
   extractDataFromPdf: (arrayBuffer, pdfType) =>
     ipcRenderer.invoke('pdf:extract-data', arrayBuffer, pdfType),
 
+  extractDataFromCSMPdf: (arrayBuffer) => ipcRenderer.invoke('pdf:csm:extract-data', arrayBuffer),
+
   generateDocument: (data, originalPdfPath) =>
     ipcRenderer.invoke('generateDocument', { data, originalPdfPath }),
 

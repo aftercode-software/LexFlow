@@ -7,6 +7,7 @@ export interface Api {
   logout: () => Promise<any>
 
   extractDataFromPdf: (arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => Promise<any>
+  extractDataFromCSMPdf: (arrayBuffer: ArrayBuffer) => Promise<any>
 
   getDemandados(): Promise<any>
   searchDemandado(nro: string): Promise<any>

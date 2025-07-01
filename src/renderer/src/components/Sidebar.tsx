@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { CircleUser, FileUp, LogIn, LogOut, ScanText, Users } from 'lucide-react'
+import { CircleUser, FileUp, Inbox, LogIn, LogOut, ScanEye, ScanText, Users } from 'lucide-react'
 import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Button } from '@/components/ui/button'
 import { Link, useLocation } from 'react-router'
@@ -25,19 +25,19 @@ export function Sidebar() {
       >
         <div className="p-4 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-aftercode text-white">
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-lex text-white">
               <img src={aftercodeLogo} alt="Aftercode Logo" className="size-5" />
             </div>
             {isOpen && (
               <div>
-                <h1 className="text-xl font-bold text-black">LexFlow</h1>
-                <p className="text-xs text-gray-500">Gestor de boletas</p>
+                <p className="font-semibold text-black">LexFlow</p>
+                <p className="text-sm text-zinc-600">Tu gestor de boletas</p>
               </div>
             )}
           </div>
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="p-1 rounded-md hover:bg-gray-100"
+            className=" rounded-md hover:bg-gray-100"
             aria-label={isOpen ? 'Colapsar sidebar' : 'Expandir sidebar'}
           >
             <svg
@@ -108,7 +108,7 @@ export function Sidebar() {
                 isOpen ? 'justify-between' : 'justify-center'
               )}
             >
-              <span className={cn(!isOpen && 'sr-only')}>BOLETAS</span>
+              <span className={cn(!isOpen && 'sr-only')}>ESCANEAR</span>
             </div>
 
             <nav className="space-y-2">
@@ -116,14 +116,31 @@ export function Sidebar() {
                 <Link to="/escanear-pdf">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
-                      pathname.includes('/escanear-pdf') && 'bg-gray-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lex',
+                      pathname.includes('/escanear-pdf') && 'bg-gray-50 text-lex font-medium'
                     )}
                   >
-                    <ScanText size={ICON_SIZE} />
+                    <ScanEye size={ICON_SIZE} />
                     {isOpen && (
                       <>
-                        <span className="flex-1 text-left">Escanear boletas</span>
+                        <span className="flex-1 text-left">Boletas</span>
+                      </>
+                    )}
+                  </CollapsibleTrigger>
+                </Link>
+              </Collapsible>
+              <Collapsible defaultOpen>
+                <Link to="/csm">
+                  <CollapsibleTrigger
+                    className={cn(
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lex',
+                      pathname.includes('/csm') && 'bg-gray-50 text-lex font-medium'
+                    )}
+                  >
+                    <Inbox size={ICON_SIZE} />
+                    {isOpen && (
+                      <>
+                        <span className="flex-1 text-left">Cédulas</span>
                       </>
                     )}
                   </CollapsibleTrigger>
@@ -146,8 +163,8 @@ export function Sidebar() {
                 <Link to="/demandados">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
-                      pathname.includes('/demandados') && 'bg-gray-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lex',
+                      pathname.includes('/demandados') && 'bg-gray-50 text-lex font-medium'
                     )}
                   >
                     <Users size={ICON_SIZE} />
@@ -164,8 +181,8 @@ export function Sidebar() {
                 <Link to="/recaudadores">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
-                      pathname.includes('/recaudadores') && 'bg-gray-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lex',
+                      pathname.includes('/recaudadores') && 'bg-gray-50 text-lex font-medium'
                     )}
                   >
                     <CircleUser size={ICON_SIZE} />
@@ -194,8 +211,8 @@ export function Sidebar() {
                 <Link to="/precarga">
                   <CollapsibleTrigger
                     className={cn(
-                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-aftercode',
-                      pathname.includes('/precarga') && 'bg-gray-50 text-aftercode font-medium'
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md text-gray-700 hover:bg-gray-50 hover:text-lex',
+                      pathname.includes('/precarga') && 'bg-gray-50 text-lex font-medium'
                     )}
                   >
                     <LogIn size={ICON_SIZE} />
@@ -213,11 +230,11 @@ export function Sidebar() {
                     className={cn(
                       'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md',
                       isAuthenticated
-                        ? 'text-gray-700 hover:bg-gray-50 hover:text-aftercode'
+                        ? 'text-gray-700 hover:bg-gray-50 hover:text-lex'
                         : 'text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:text-gray-400',
                       pathname.includes('/subir-pdf') &&
                         isAuthenticated &&
-                        'bg-gray-50 text-aftercode font-medium'
+                        'bg-gray-50 text-lex font-medium'
                     )}
                     disabled={!isAuthenticated}
                   >
@@ -225,6 +242,29 @@ export function Sidebar() {
                     {isOpen && (
                       <>
                         <span className="flex-1 text-left">Subir boletas</span>
+                      </>
+                    )}
+                  </CollapsibleTrigger>
+                </Link>
+              </Collapsible>
+              <Collapsible defaultOpen disabled={!isAuthenticated}>
+                <Link to="/csm" aria-disabled={!isAuthenticated}>
+                  <CollapsibleTrigger
+                    className={cn(
+                      'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md',
+                      isAuthenticated
+                        ? 'text-gray-700 hover:bg-gray-50 hover:text-lex'
+                        : 'text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:text-gray-400',
+                      pathname.includes('/csm') &&
+                        isAuthenticated &&
+                        'bg-gray-50 text-lex font-medium'
+                    )}
+                    disabled={!isAuthenticated}
+                  >
+                    <FileUp size={ICON_SIZE} />
+                    {isOpen && (
+                      <>
+                        <span className="flex-1 text-left">CSM</span>
                       </>
                     )}
                   </CollapsibleTrigger>

@@ -36,7 +36,7 @@ export function SignInPoderJudicial() {
             onClick={handleLogin}
             disabled={isLoading}
             size="lg"
-            className="w-full max-w-xs hover:bg-aftercode"
+            className="w-full max-w-xs hover:bg-lex"
           >
             <LogIn className="mr-2 h-5 w-5" />
             {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}

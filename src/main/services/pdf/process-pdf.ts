@@ -1,13 +1,13 @@
 import fsPromises from 'fs/promises'
 import path from 'path'
 import { fromPath } from 'pdf2pic'
-import Tesseract, { OEM } from 'tesseract.js'
 
 import { app } from 'electron'
 import { FormularioProfesionales, FormularioTerceros } from '../../../shared/interfaces/form'
 import { extraerDocumento, numeroALetras } from '../../../shared/utils/document'
 import { getTextFromImage } from './ocr'
 import { cropImage, extraerBoleta, extraerMonto } from './utils'
+import { createWorker, options } from '../tesseract'
 
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
@@ -16,19 +16,13 @@ export async function extractDataFromPdf(
   data: FormularioProfesionales | FormularioTerceros
   originalPdfPath: string
 }> {
-  // 1) Creamos carpeta temporal en <SO-temp>/scrapper-tmp
   const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')
   await fsPromises.mkdir(tmpDir, { recursive: true })
 
-  // 2) Guardamos el PDF en esa carpeta (para que pdf2pic pueda leerlo)
   const originalPdfPath = path.join(tmpDir, `original-${Date.now()}.pdf`)
   await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
 
-  // 3) Procesamos el PDF a JSON
   const data = await processPDF(originalPdfPath, pdfType)
-
-  // No borramos el PDF temporal aquí, para que otros procesos puedan accederlo
-  // El consumidor debe encargarse de borrar el archivo cuando ya no lo necesite
 
   return { data, originalPdfPath }
 }
@@ -37,9 +31,7 @@ export async function processPDF(
   pdfPath: string,
   type: 'profesional' | 'tercero'
 ): Promise<FormularioProfesionales | FormularioTerceros> {
-  const { createWorker } = Tesseract
-  const worker = await createWorker('spa', OEM.DEFAULT)
-
+  const worker = await createWorker()
   let extractedData: FormularioProfesionales | FormularioTerceros | null = null
 
   if (type === 'profesional') {
@@ -60,19 +52,9 @@ async function processTerceroPDF(
   worker: Tesseract.Worker,
   pdfPath: string
 ): Promise<FormularioTerceros> {
-  // Opciones para convertir página 1 y 2 a buffer JPEG en memoria
-  const options = {
-    quality: 100,
-    density: 300,
-    format: 'jpg',
-    width: 1200,
-    height: 1600
-  }
   const storeAsImage = fromPath(pdfPath, options)
 
-  // Convertimos página 1
   const { buffer: convertedPage1 } = await storeAsImage(1, { responseType: 'buffer' })
-  // Convertimos página 2
   const { buffer: convertedPage2 } = await storeAsImage(2, { responseType: 'buffer' })
 
   if (!convertedPage1 || !convertedPage2) {

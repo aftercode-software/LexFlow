@@ -13,6 +13,7 @@ import UploadBoletas from './pages/UploadBoletas'
 import RecaudadoresPage from './pages/Recaudadores'
 import DemandadosPage from './pages/Demandados'
 import TerminosCondiciones from './pages/TerminosCondiciones'
+import ScanCedulas from './pages/ScanCSM'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <PoderJudicialProvider>
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
         <Route element={<PdfLayout />}>
           <Route path="/escanear-pdf" element={<ScanBoletas />} />
+          <Route path="/csm" element={<ScanCedulas />} />
           <Route path="/escanear-pdf/:boleta" element={<SuccessPage />} />
 
           <Route path="/demandados" element={<DemandadosPage />} />

@@ -34,11 +34,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={cn('flex flex-col gap-6', className)}
+      className={cn('flex flex-col gap-6 font-poppins', className)}
       {...props}
     >
       <div className="flex flex-col items-center gap-2 mb-6 text-center">
-        <h1 className="text-3xl font-bold">Bienvenido de nuevo</h1>
+        <h1 className="text-3xl font-bold font-poppins">Bienvenido de nuevo</h1>
         <p className="text-balance text-sm text-muted-foreground">
           Ingresá tu usuario y contraseña para continuar
         </p>
@@ -67,7 +67,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          className="w-full hover:bg-lex transition-colors duration-200"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
           ) : (
@@ -76,10 +80,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </Button>
         <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t flex justify-center after:content-['']">
           <span className="bg-background text-muted-foreground relative z-10 px-2">
-            Al usar el software aceptas los{' '}
+            Al usar el LexFlow aceptas los{' '}
             <Link
               to="/terminos-condiciones"
-              className="underline-offset-4 text-aftercode hover:underline font-semibold"
+              className="underline-offset-4 text-lex hover:underline font-semibold"
             >
               términos
             </Link>
@@ -87,13 +91,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </div>
       </div>
 
-      <div className="text-center text-sm">
-        ¿Aún no tenés cuenta?{' '}
+      <div className="text-center text-sm  text-lex">
         <a
           href="https://api.whatsapp.com/send/?phone=542617256216&text=Hola%20chicos%20de%20aftercode%2C%20me%20interesa%20usar%20el%20programa&type=phone_number&app_absent=0"
-          className="underline underline-offset-4"
+          className=" underline-offset-4 font-medium"
         >
-          Escribinos
+          ¿Aún no tenés usuario?
         </a>
       </div>
     </form>

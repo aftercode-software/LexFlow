@@ -12,7 +12,8 @@ export default {
     },
     extend: {
       colors: {
-        aftercode: '#4285f4',
+        lex: '#006BFF',
+        aftercode: '#f30c70',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

@@ -98,7 +98,7 @@ export default function RecaudadoresPage() {
   return (
     <div className="space-y-6 p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Gestión de Recaudadores</h1>
+        <h1 className="text-2xl font-semibold">Gestión de Recaudadores</h1>
         <p className="text-muted-foreground">
           Administra la información de los recaudadores del sistema
         </p>

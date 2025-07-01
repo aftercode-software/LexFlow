@@ -1,6 +1,6 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, shell } from 'electron'
-import { join } from 'path'
+import path, { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { registerAuthHandlers } from './routes/auth'
 import { registerPdfHandlers } from './routes/pdf'
@@ -14,6 +14,13 @@ function createWindow(): void {
     width: 1600,
     height: 900,
     show: false,
+    title: 'LexFlow',
+    titleBarOverlay: {
+      color: '#ffffff', // fondo de la barra
+      symbolColor: '#000000', // color de los botones
+      height: 30 // opcional, para ajustar la altura
+    },
+    icon: path.join(__dirname, '../../resources/icon.png'),
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {

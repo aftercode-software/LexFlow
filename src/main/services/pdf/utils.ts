@@ -17,14 +17,9 @@ export function extraerBoleta(texto: string): string | null {
 
   if (indices.length === 0) return null
 
-  // Si hay más de una aparición, usamos la segunda. Si solo hay una, usamos esa.
   const indexElegido = indices.length > 1 ? indices[1]! : indices[0]!
-
-  // Tomamos un fragmento del texto a partir de la segunda aparición
   const fragmento = texto.slice(indexElegido, indexElegido + 50)
-
-  // Buscamos un número de 7 a 9 cifras cerca de esa palabra
-  const match = fragmento.match(/\d{7,9}/)
+  const match = fragmento.match(/[A-Z]?\d{7,9}/i)
 
   return match ? match[0] : null
 }
@@ -37,9 +32,27 @@ export function extraerMonto(texto: string): number | null {
     const normalizado = monto.replace(/\./g, '').replace(',', '.')
     const valor = parseFloat(normalizado)
     if (!isNaN(valor) && valor > 100) {
-      return valor // Se asume que el capital adeudado es un valor mayor a 100
+      return valor
     }
   }
 
-  return null // Si no encuentra un valor razonable
+  return null
+}
+
+export function extraerCUIJ(texto: string): string | null {
+  const regex = /CUIJ\s*[^0-9]*([0-9]{1,2}-[0-9]{6,8}-[0-9])/i
+  const match = texto.match(regex)
+  return match ? match[1].trim() : null
+}
+
+export function extraerNumeroJuicio(texto: string): string | null {
+  const regex = /Expte\.?\s*[^0-9]*\(?\s*([0-9]+-[0-9]+)\)?/i
+  const match = texto.match(regex)
+  if (match?.[1]) {
+    const [, numero] = match[1].split('-')
+    if (numero) {
+      match[1] = numero
+    }
+  }
+  return match ? match[1].trim() : null
 }

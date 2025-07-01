@@ -3,6 +3,7 @@ import path from 'path'
 import { generateWrittenPdf, mergePdfs } from '../docx/util'
 import { extractDataFromPdf } from '../services/pdf/process-pdf'
 import fsPromises from 'fs/promises'
+import { extractDataFromCsm } from '../services/pdf/process-csm'
 
 export function registerPdfHandlers() {
   ipcMain.handle(
@@ -30,5 +31,11 @@ export function registerPdfHandlers() {
 
   ipcMain.handle('open-pdf', (_evt, pdfPath: string) => {
     return shell.openPath(pdfPath)
+  })
+
+  ipcMain.handle('pdf:csm:extract-data', async (_, arrayBuffer: ArrayBuffer) => {
+    console.log('Procesando PDF CSM...')
+    const { data, originalPdfPath } = await extractDataFromCsm(arrayBuffer)
+    return { data, originalPdfPath }
   })
 }

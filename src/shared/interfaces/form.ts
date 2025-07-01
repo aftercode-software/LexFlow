@@ -19,3 +19,8 @@ export type FormularioProfesionales = DatosFormulario & {
   matricula: string
   tipo: 'Profesional'
 }
+
+export type FormularioCSM = {
+  cuij: string
+  numeroJuicio: string
+}
