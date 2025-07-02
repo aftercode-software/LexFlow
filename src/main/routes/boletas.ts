@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import { scanBoletas } from '../playwright/fetch-boletas'
 import { getToken } from '../services/auth'
+import { FormularioCSM } from '../../shared/interfaces/form'
 
 export function registerBoletaHandlers() {
   ipcMain.handle('uploadBoleta', async (_, { data, tipo }) => {
@@ -19,7 +20,7 @@ export function registerBoletaHandlers() {
       estado: data.estado
     }
 
-    const res = await fetch(`https://scrapper-back-two.vercel.app/api/boletas/create`, {
+    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,5 +71,21 @@ export function registerBoletaHandlers() {
       profDir,
       terDir
     }
+  })
+
+  ipcMain.handle('uploadCSM', async (_, csm: FormularioCSM) => {
+    const token = await getToken()
+    if (!token) throw new Error('No hay token de autenticación')
+
+    const res = await fetch(`http://localhost:3000/api/boletas/csm`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(csm)
+    })
+
+    return res.status
   })
 }

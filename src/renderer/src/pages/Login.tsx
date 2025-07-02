@@ -1,6 +1,6 @@
 import { LoginForm } from '@renderer/components/login/Form'
 import bgImg from '../assets/accountant-shortage.jpg'
-import aftercodeLogo from '../assets/ -white.png'
+import aftercodeLogo from '../assets/aftercode-logo-white.png'
 
 export default function Login() {
   return (

@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { Api } from '../shared/api'
 import { EnrichedBoleta } from '../main/interface/boletas'
+import { FormularioCSM } from '../shared/interfaces/form'
 
 declare global {
   interface Window {
@@ -35,6 +36,7 @@ const api: Api = {
   deleteRecaudador: (id) => ipcRenderer.invoke('recaudadores:delete', id),
 
   uploadBoleta: (data, tipo) => ipcRenderer.invoke('uploadBoleta', { data, tipo }),
+  uploadCSM: (data: FormularioCSM) => ipcRenderer.invoke('uploadCSM', data),
 
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],

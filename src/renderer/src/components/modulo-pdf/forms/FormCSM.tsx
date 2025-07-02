@@ -44,9 +44,7 @@ export default function FormCSM({
   const onSubmit = async (data: FormValues) => {
     console.log('Datos del formulario:', data)
     try {
-      data = {
-        ...data
-      }
+      await window.api.uploadCSM(data)
     } catch (err) {
       console.error('Error al generar doc:', err)
     } finally {

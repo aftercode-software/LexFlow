@@ -1,4 +1,5 @@
 import { EnrichedBoleta } from '../../main/interface/boletas'
+import { FormularioCSM } from '../interfaces/form'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Api {
@@ -26,6 +27,8 @@ export interface Api {
   deleteRecaudador: (id: number) => Promise<{ success: boolean }>
 
   uploadBoleta: (data: any, tipo: string) => Promise<any>
+  uploadCSM: (data: FormularioCSM) => Promise<any>
+
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],
     montoThreshold: number,
