@@ -35,6 +35,9 @@ export interface Api {
     modoInhibicion: string,
     oficial2: boolean
   ) => Promise<void>
+  getCedulasFiltradas: () => Promise<EnrichedBoleta[]>
+
+
   iniciarLoginManual: () => Promise<any>
   getBoletasToUpload: (id: number) => Promise<any>
   openPdf: (path: string) => Promise<void>

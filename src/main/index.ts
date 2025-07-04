@@ -8,6 +8,7 @@ import { registerBoletaHandlers } from './routes/boletas'
 import { registerPoderJudicialHandlers } from './routes/poderJudicial'
 import { registerDemandadoHandlers } from './routes/demandados'
 import { registerRecaudadorHandlers } from './routes/recaudadores'
+import { registerCedulaHandlers } from './routes/cedulas'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -51,7 +52,7 @@ app.on('window-all-closed', () => {
 
 app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.electron')
-
+  
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
@@ -62,6 +63,7 @@ app.whenReady().then(async () => {
   registerPoderJudicialHandlers()
   registerDemandadoHandlers()
   registerRecaudadorHandlers()
+  registerCedulaHandlers()
 
   createWindow()
 
