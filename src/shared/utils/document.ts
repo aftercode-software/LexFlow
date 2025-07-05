@@ -1,7 +1,6 @@
 import { Documento } from '../interfaces/demandado'
 
 export function numeroALetras(n: number): string {
-  console.log('Numero', n, typeof n)
   if (!Number.isFinite(n) || n < 0 || n > 999_999_999) {
     throw new RangeError('El número debe ser un entero positivo menor que 1 000 000 000')
   }
@@ -118,7 +117,6 @@ export function numeroALetras(n: number): string {
 }
 
 export function extraerDocumento(texto: string | null): Documento {
-  console.log('Extraer documento de:', texto)
   if (!texto) return { tipo: 'DNI', valor: '' }
   const CUIT_REGEX = /(20|23|24|27|30|33)-?\d{8}-?\d/
 

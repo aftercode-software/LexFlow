@@ -15,6 +15,7 @@ import DemandadosPage from './pages/Demandados'
 import TerminosCondiciones from './pages/TerminosCondiciones'
 import ScanCedulas from './pages/ScanCSM'
 import Dashboard from './pages/Dashboard'
+import UploadCedulas from './pages/UploadCedulas'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <PoderJudicialProvider>
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/escanear-pdf" element={<ScanBoletas />} />
           <Route path="/csm" element={<ScanCedulas />} />
+          <Route path="/lotes" element={<UploadCedulas />} />
           <Route path="/escanear-pdf/:boleta" element={<SuccessPage />} />
 
           <Route path="/demandados" element={<DemandadosPage />} />

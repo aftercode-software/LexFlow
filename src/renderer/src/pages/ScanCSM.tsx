@@ -111,7 +111,7 @@ export default function ScanCedulas() {
             <div>
               <Label className="text-base font-medium mb-2 block">Número de tribunal</Label>
 
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {TRIBUNALES.map((tribunal) => {
                   return (
                     <CardSelector

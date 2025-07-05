@@ -1,5 +1,6 @@
 import { EnrichedBoleta } from '../../main/interface/boletas'
 import { FormularioCSM } from '../interfaces/form'
+import { RecaudadorEntity } from '../interfaces/recaudador'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Api {
@@ -21,7 +22,7 @@ export interface Api {
     originalPdfPath: string
   ) => Promise<{ success: boolean; path: string }>
 
-  getRecaudadores: () => Promise<any>
+  getRecaudadores: () => Promise<RecaudadorEntity[]>
   createRecaudador: (body: any) => Promise<any>
   updateRecaudador: (id: number, body: any) => Promise<any>
   deleteRecaudador: (id: number) => Promise<{ success: boolean }>
@@ -35,6 +36,8 @@ export interface Api {
     modoInhibicion: string,
     oficial2: boolean
   ) => Promise<void>
+  getCedulasFiltradas: () => Promise<EnrichedBoleta[]>
+
   iniciarLoginManual: () => Promise<any>
   getBoletasToUpload: (id: number) => Promise<any>
   openPdf: (path: string) => Promise<void>

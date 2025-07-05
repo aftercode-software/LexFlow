@@ -288,14 +288,14 @@ export function Sidebar() {
                     <FileUp size={ICON_SIZE} />
                     {isOpen && (
                       <>
-                        <span className="flex-1 text-left">Subir boletas</span>
+                        <span className="flex-1 text-left">Subir Precarga</span>
                       </>
                     )}
                   </CollapsibleTrigger>
                 </Link>
               </Collapsible>
               <Collapsible defaultOpen disabled={!isAuthenticated}>
-                <Link to="/csm" aria-disabled={!isAuthenticated}>
+                <Link to="/lotes" aria-disabled={!isAuthenticated}>
                   <CollapsibleTrigger
                     className={cn(
                       'flex justify-center items-center w-full gap-2 px-3 py-2 rounded-md',
@@ -311,7 +311,7 @@ export function Sidebar() {
                     <FileUp size={ICON_SIZE} />
                     {isOpen && (
                       <>
-                        <span className="flex-1 text-left">CSM</span>
+                        <span className="flex-1 text-left">Subir Lote</span>
                       </>
                     )}
                   </CollapsibleTrigger>

@@ -8,6 +8,7 @@ import { registerBoletaHandlers } from './routes/boletas'
 import { registerPoderJudicialHandlers } from './routes/poderJudicial'
 import { registerDemandadoHandlers } from './routes/demandados'
 import { registerRecaudadorHandlers } from './routes/recaudadores'
+import 'dotenv/'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -16,9 +17,9 @@ function createWindow(): void {
     show: false,
     title: 'LexFlow',
     titleBarOverlay: {
-      color: '#ffffff', // fondo de la barra
-      symbolColor: '#000000', // color de los botones
-      height: 30 // opcional, para ajustar la altura
+      color: '#ffffff',
+      symbolColor: '#000000',
+      height: 30
     },
     icon: path.join(__dirname, '../../resources/icon.png'),
     autoHideMenuBar: true,

@@ -47,6 +47,8 @@ const api: Api = {
     console.log('debi de anmuerasd', oficial2)
     return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion, oficial2)
   },
+  iniciarCargaCedulas: (cedulas, tribunal) =>
+    ipcRenderer.invoke('cedulas:cargar', { cedulas, tribunal }),
 
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: (id: number) => ipcRenderer.invoke('boletas:get-to-upload', id),

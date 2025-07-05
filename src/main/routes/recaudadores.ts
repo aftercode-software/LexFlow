@@ -2,6 +2,7 @@
 import { ipcMain } from 'electron'
 import { getToken } from '../services/auth'
 import { RecaudadorEntity } from '../../shared/interfaces/recaudador'
+import { backend } from '../utils/backend-fetch'
 
 const cache = new Map<string, { data: any; expiresAt: number }>()
 
@@ -16,17 +17,12 @@ export function registerRecaudadorHandlers() {
     }
 
     try {
-      const token = await getToken()
-      const res = await fetch('https://scrapper-back-two.vercel.app/api/recaudadores', {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      const res = await backend.get<RecaudadorEntity[]>('/recaudadores')
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text)
+        throw new Error(`Error ${res.status}: ${res.statusText}`)
       }
 
-      const data: RecaudadorEntity[] = await res.json()
+      const data: RecaudadorEntity[] = res.data
 
       cache.set(cacheKey, {
         data,
@@ -40,40 +36,20 @@ export function registerRecaudadorHandlers() {
     }
   })
   ipcMain.handle('recaudadores:create', async (_evt, body: RecaudadorEntity) => {
-    const token = await getToken()
-    const res = await fetch('https://scrapper-back-two.vercel.app/api/recaudadores', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
-    })
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
+    const res = await backend.post<RecaudadorEntity>('/recaudadores', body)
+    if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`)
+    return res.data
   })
 
   ipcMain.handle('recaudadores:update', async (_evt, id: number, body: RecaudadorEntity) => {
-    const token = await getToken()
-    const res = await fetch(`https://scrapper-back-two.vercel.app/api/recaudadores/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
-    })
-    if (!res.ok) throw new Error(await res.text())
-    return res.json()
+    const res = await backend.patch<RecaudadorEntity>(`/recaudadores/${id}`, body)
+    if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`)
+    return res.data
   })
 
   ipcMain.handle('recaudadores:delete', async (_evt, id: number) => {
-    const token = await getToken()
-    const res = await fetch(`https://scrapper-back-two.vercel.app/api/recaudadores/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    if (!res.ok) throw new Error(await res.text())
+    const res = await backend.delete(`/recaudadores/${id}`)
+    if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`)
     return { success: true }
   })
 }

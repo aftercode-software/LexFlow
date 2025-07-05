@@ -1,13 +1,10 @@
 import { ipcMain } from 'electron'
 import { scanBoletas } from '../playwright/fetch-boletas'
-import { getToken } from '../services/auth'
 import { FormularioCSM } from '../../shared/interfaces/form'
+import { backend } from '../utils/backend-fetch'
 
 export function registerBoletaHandlers() {
   ipcMain.handle('uploadBoleta', async (_, { data, tipo }) => {
-    const token = await getToken()
-    if (!token) throw new Error('No hay token de autenticación')
-
     const boleta = {
       recaudadorId: data.recaudador.idNombre,
       fechaEmision: data.fechaEmision,
@@ -20,72 +17,34 @@ export function registerBoletaHandlers() {
       estado: data.estado
     }
 
-    const res = await fetch(`http://localhost:3000/api/boletas/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(boleta)
-    })
+    const res = await backend.post('/boletas/create', boleta)
 
     return res.status
   })
 
   ipcMain.handle('boletas:get-to-upload', async (_, id: number) => {
-    if (typeof id !== 'number' || isNaN(id)) {
-      throw new Error('La matrícula debe ser un número válido')
-    }
-
-    console.log('ID recibido:', id)
-
     const { profesionales, terceros, profDir, terDir } = await scanBoletas()
 
-    const token = await getToken()
-    if (!token) throw new Error('No hay token de autenticación')
-    const res = await fetch('https://scrapper-back-two.vercel.app/api/boletas/filtrar', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        boletasTerceros: terceros,
-        boletasProfesionales: profesionales,
-        id: id
-      })
+    const res = await backend.post('/boletas/filtrar', {
+      boletasTerceros: terceros,
+      boletasProfesionales: profesionales,
+      id: id
     })
-
-    console.log('Respuesta del servidor:', res.status, res.statusText)
 
     if (!res.ok) {
       throw new Error('Error al obtener las boletas desde el servidor')
     }
 
-    const data = await res.json()
-    console.log('Datos obtenidos:', data)
-
     return {
-      profesionales: data.boletasProfesionales,
-      terceros: data.boletasTerceros,
+      profesionales: res.data.boletasProfesionales,
+      terceros: res.data.boletasTerceros,
       profDir,
       terDir
     }
   })
 
   ipcMain.handle('uploadCSM', async (_, csm: FormularioCSM) => {
-    const token = await getToken()
-    if (!token) throw new Error('No hay token de autenticación')
-
-    const res = await fetch(`http://localhost:3000/api/boletas/csm`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(csm)
-    })
-
+    const res = await backend.post('/boletas/csm', csm)
     return res.status
   })
 }

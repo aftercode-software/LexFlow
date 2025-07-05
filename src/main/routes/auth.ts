@@ -1,22 +1,17 @@
 import { ipcMain, safeStorage, app } from 'electron'
 import path from 'path'
 import fs from 'fs/promises'
-import fetch from 'node-fetch'
+import { backend } from '../utils/backend-fetch'
 import { getToken } from '../services/auth'
 
 const tokenFile = path.join(app.getPath('userData'), 'token.enc')
 
 export function registerAuthHandlers() {
   ipcMain.handle('login', async (_, username: string, password: string) => {
-    const resp = await fetch('https://scrapper-back-two.vercel.app/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    })
-    const text = await resp.text()
-    if (!resp.ok) throw new Error(text)
+    const res = await backend.post('/auth/login', { username, password })
+    if (!res.ok) throw new Error(res.statusText)
 
-    const { access_token } = JSON.parse(text)
+    const { access_token } = res.data
 
     const encrypted = safeStorage.isEncryptionAvailable()
       ? safeStorage.encryptString(access_token)
@@ -27,7 +22,7 @@ export function registerAuthHandlers() {
   })
 
   ipcMain.handle('getToken', async () => {
-    return getToken()
+    return await getToken()
   })
 
   ipcMain.handle('logout', async () => {
