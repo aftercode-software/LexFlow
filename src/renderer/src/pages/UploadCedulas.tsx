@@ -23,11 +23,11 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
 import { toast } from 'sonner'
-import { Cedula, TipoEscrito, TipoTribunal } from '@shared/interfaces/cedulas'
+import { CedulaFiltrada, TipoEscrito, TipoTribunal } from '@shared/interfaces/cedulas'
 import { Upload } from 'lucide-react'
 
 interface CedulasTableProps {
-  cedulas: Cedula[]
+  cedulas: CedulaFiltrada[]
 }
 
 const CedulasTable: React.FC<CedulasTableProps> = ({ cedulas }) => (
@@ -53,17 +53,19 @@ const CedulasTable: React.FC<CedulasTableProps> = ({ cedulas }) => (
 
 export default function UploadCedulas() {
   const { userData, isAuthenticated } = useAuth()
-  const [cedulas, setCedulas] = useState<Cedula[]>([])
+  const [cedulas, setCedulas] = useState<CedulaFiltrada[]>([])
   const [tipoEscrito, setTipoEscrito] = useState<TipoEscrito>('CSM')
 
   // 🔄 Traer cédulas desde el backend al montar
   useEffect(() => {
+    console.log(isAuthenticated, 'isAuthenticated')
     if (!isAuthenticated) return
 
     const fetchCedulas = async () => {
       try {
-        const data = await window.api.getCedulasFiltradas()
-        setCedulas(data || [])
+        const lista = (await window.api.getCedulasFiltradas()) as CedulaFiltrada[]
+        setCedulas(lista)
+        console.log('Cédulas obtenidas:', lista)
       } catch (error) {
         console.error('Error al obtener cédulas:', error)
         toast.error('Error al obtener cédulas')

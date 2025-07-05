@@ -1,4 +1,5 @@
 import { EnrichedBoleta } from '../../main/interface/boletas'
+import { CedulaFiltrada } from '../interfaces/cedulas'
 import { FormularioCSM } from '../interfaces/form'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -35,7 +36,7 @@ export interface Api {
     modoInhibicion: string,
     oficial2: boolean
   ) => Promise<void>
-  getCedulasFiltradas: () => Promise<EnrichedBoleta[]>
+getCedulasFiltradas: () => Promise<CedulaFiltrada[]>
 
 
   iniciarLoginManual: () => Promise<any>
