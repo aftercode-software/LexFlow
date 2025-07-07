@@ -1,9 +1,9 @@
 import { chromium, Page } from 'playwright'
-import { Cedula, TipoEscrito, TipoTribunal } from '../interface/cedulas'
 import fs from 'fs'
 import path from 'path'
+import { CedulaFiltrada, TipoEscrito, TipoTribunal } from '../../shared/interfaces/cedulas'
 
-export async function subirCedulas(cedulas: Cedula[]) {
+export async function subirCedulas(cedulas: CedulaFiltrada[]) {
   const chromePath = findChromeExe()
   if (!chromePath) {
     console.error('Chrome no encontrado.')
@@ -40,7 +40,7 @@ export async function subirCedulas(cedulas: Cedula[]) {
   await page.waitForTimeout(30000)
 }
 
-async function procesarCedula(page: Page, cedula: Cedula) {
+async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   console.log(`Procesando CUIJ: ${cedula.cuij}`)
 
   await page.click('/html/body/center[3]/div[3]/div[2]/div[1]/a[1]/span/span[1]')

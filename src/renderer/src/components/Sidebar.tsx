@@ -302,7 +302,7 @@ export function Sidebar() {
                       isAuthenticated
                         ? 'text-gray-700 hover:bg-gray-50 hover:text-lex'
                         : 'text-gray-400 cursor-not-allowed hover:bg-gray-100 hover:text-gray-400',
-                      pathname.includes('/csm') &&
+                      pathname.includes('/lotes') &&
                         isAuthenticated &&
                         'bg-gray-50 text-lex font-medium'
                     )}

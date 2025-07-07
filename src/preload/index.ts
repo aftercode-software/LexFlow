@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { Api } from '../shared/api'
-import { EnrichedBoleta } from '../main/interface/boletas'
+import { EnrichedBoleta } from '../shared/interfaces/boletas'
 import { FormularioCSM } from '../shared/interfaces/form'
 
 declare global {
@@ -37,6 +37,8 @@ const api: Api = {
 
   uploadBoleta: (data, tipo) => ipcRenderer.invoke('uploadBoleta', { data, tipo }),
   uploadCSM: (data: FormularioCSM) => ipcRenderer.invoke('uploadCSM', data),
+  saveCSMPDF: (pdfPath: string, cuij: string, tribunal: string) =>
+    ipcRenderer.invoke('pdf:save-csm', { pdfPath, cuij, tribunal }),
 
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],
@@ -47,9 +49,7 @@ const api: Api = {
     console.log('debi de anmuerasd', oficial2)
     return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion, oficial2)
   },
-  iniciarCargaCedulas: (cedulas, tribunal) =>
-    ipcRenderer.invoke('cedulas:cargar', { cedulas, tribunal }),
-
+  getCedulasFiltradas: () => ipcRenderer.invoke('cedulas:get-filtradas'),
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: (id: number) => ipcRenderer.invoke('boletas:get-to-upload', id),
 

@@ -1,5 +1,5 @@
 import { chromium, Page } from 'playwright'
-import { EnrichedBoleta } from '../interface/boletas'
+import { EnrichedBoleta } from '../../shared/interfaces/boletas'
 import path from 'path'
 import fs from 'fs'
 

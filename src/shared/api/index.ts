@@ -1,4 +1,6 @@
-import { EnrichedBoleta } from '../../main/interface/boletas'
+import { APIResponse } from 'playwright'
+import { EnrichedBoleta } from '../interfaces/boletas'
+import { CedulaFiltrada } from '../interfaces/cedulas'
 import { FormularioCSM } from '../interfaces/form'
 import { RecaudadorEntity } from '../interfaces/recaudador'
 
@@ -28,15 +30,19 @@ export interface Api {
   deleteRecaudador: (id: number) => Promise<{ success: boolean }>
 
   uploadBoleta: (data: any, tipo: string) => Promise<any>
-  uploadCSM: (data: FormularioCSM) => Promise<any>
-
+  uploadCSM: (data: FormularioCSM) => Promise<APIResponse>
+  saveCSMPDF: (
+    pdfRoute: string,
+    cuij: string,
+    tribunal: string
+  ) => Promise<{ success: boolean; path: string; error?: any }>
   iniciarCargaJudicial: (
     boletas: EnrichedBoleta[],
     montoThreshold: number,
     modoInhibicion: string,
     oficial2: boolean
   ) => Promise<void>
-  getCedulasFiltradas: () => Promise<EnrichedBoleta[]>
+  getCedulasFiltradas: () => Promise<CedulaFiltrada[]>
 
   iniciarLoginManual: () => Promise<any>
   getBoletasToUpload: (id: number) => Promise<any>

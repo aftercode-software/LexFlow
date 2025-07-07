@@ -1,4 +1,5 @@
 import { Demandado, DocField } from '@shared/interfaces/demandado'
+import { toast } from 'sonner'
 
 const specialCharsRegex = /[|°&?!@#$%^*()_+\-=[\]{};':"\\,.<>/?]/
 
@@ -48,18 +49,30 @@ export async function buscarDemandado(valor: string, field: DocField): Promise<D
     throw new Error(error)
   }
 
-  const response = await window.api.searchDemandado(doc)
-  console.log('Response from searchDemandado:', response)
-  if (!response?.id) {
-    return null
-  }
+  try {
+    const response = await window.api.searchDemandado(doc)
+    console.log('Response from searchDemandado:', response)
 
-  return {
-    id: response.id,
-    apellido: response.apellido,
-    nombre: response.nombre,
-    apellidoYNombre: response.apellidoYNombre,
-    domicilioTipo: response.domicilioTipo,
-    domicilio: response.domicilio
+    if (response?.status === 404) {
+      toast.warning('Demandado no encontrado')
+      return null
+    }
+
+    if (response.ok) {
+      toast.success('Demandado encontrado')
+      return {
+        id: response.data.id,
+        apellido: response.data.apellido,
+        nombre: response.data.nombre,
+        apellidoYNombre: response.data.apellidoYNombre,
+        domicilioTipo: response.data.domicilioTipo,
+        domicilio: response.data.domicilio
+      }
+    }
+
+    return null
+  } catch {
+    toast.error('Error al buscar demandado')
+    return null
   }
 }

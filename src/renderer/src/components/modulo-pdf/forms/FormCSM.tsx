@@ -16,6 +16,7 @@ import { z } from 'zod'
 
 import { toast } from 'sonner'
 import { FormularioCSM } from '@shared/interfaces/form'
+import { uploadBoletaCSM } from '@renderer/utils/csm'
 
 type FormValues = z.infer<typeof csmSchema>
 export type BaseFormValues = z.infer<typeof baseFormSchema>
@@ -24,10 +25,11 @@ export default function FormCSM({
   cuij,
   numeroJuicio,
   pdfRoute,
+  tribunal,
   onComplete
 }: FormularioCSM & { pdfRoute: string } & {
   onComplete: () => void
-}) {
+} & { tribunal: string }) {
   const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(csmSchema),
@@ -37,20 +39,16 @@ export default function FormCSM({
     }
   })
 
-  console.log('Valores por defecto:', form.getValues())
-
   const { handleSubmit } = form
 
   const onSubmit = async (data: FormValues) => {
-    console.log('Datos del formulario:', data)
     try {
-      await window.api.uploadCSM(data)
+      const res = await uploadBoletaCSM(data, pdfRoute, tribunal)
     } catch (err) {
       console.error('Error al generar doc:', err)
     } finally {
       onComplete()
     }
-    console.log('Data: ', data)
   }
 
   function getFirstErrorMessage(errors: FieldErrors): string | null {

@@ -171,6 +171,7 @@ export default function ScanCedulas() {
                 cuij={extractedData.cuij}
                 numeroJuicio={extractedData.numeroJuicio}
                 pdfRoute={originalPdfPath}
+                tribunal={typePDF}
                 onComplete={handleFormComplete}
               />
             </div>

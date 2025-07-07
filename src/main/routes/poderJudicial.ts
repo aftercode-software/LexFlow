@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
 import { loginRecaudador } from '../playwright/manual-login'
 import { subirBoletas } from '../playwright/procesar-boletas'
-import { EnrichedBoleta } from '../interface/boletas'
+import { EnrichedBoleta } from '../../shared/interfaces/boletas'
 
 export function registerPoderJudicialHandlers() {
   ipcMain.handle(

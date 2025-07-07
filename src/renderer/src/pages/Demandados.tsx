@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react'
-import { Card, CardContent, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { useDemandados } from '@renderer/hooks/use-demandados'
 import { DemandadoEntity } from '@shared/interfaces/demandado'
 import { createColumns } from '@renderer/components/demandados/columns'

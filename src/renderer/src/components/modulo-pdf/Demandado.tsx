@@ -6,11 +6,11 @@ import {
   AccordionTrigger,
   AccordionContent
 } from '@/components/ui/accordion'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+
 import { Button } from '@/components/ui/button'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Search, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Search, CheckCircle2 } from 'lucide-react'
 import { validateDocument, buscarDemandado } from '@renderer/utils/document'
 import { cn } from '@/lib/utils'
 import { z } from 'zod'
@@ -18,6 +18,7 @@ import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { DocField } from '@shared/interfaces/demandado'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { extraerDocumento } from '@shared/utils/document'
+import { toast } from 'sonner'
 
 type FormValues = z.infer<typeof baseFormSchema>
 
@@ -33,8 +34,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
   const [currentField, setCurrentField] = useState<DocField>('dni')
   const [isSearching, setIsSearching] = useState(false)
   const [documentFound, setDocumentFound] = useState(false)
-  const [showWarning, setShowWarning] = useState(false)
-  const [warningMessage, setWarningMessage] = useState('')
   const [autoFields, setAutoFields] = useState<string[]>([])
   const [accordionOpen, setAccordionOpen] = useState<string>('')
   const previousValue = useRef('')
@@ -51,7 +50,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
     previousValue.current = ''
     setDocumentFound(false)
     setAutoFields([])
-    setShowWarning(false)
   }, [dni, cuil, cuit])
 
   useEffect(() => {
@@ -65,9 +63,9 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
     const raw = getValues(fieldName) ?? ''
     const value = raw.trim()
     const { valid, error } = validateDocument(currentField, value)
+    console.log('VALIDADOR:', valid, error)
     if (!valid) {
-      setShowWarning(true)
-      setWarningMessage(error!)
+      toast.warning('Número de documento no válido')
       setDocumentFound(false)
       return
     }
@@ -75,13 +73,13 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
     previousValue.current = value
 
     setIsSearching(true)
-    setShowWarning(false)
     setDocumentFound(false)
     setAutoFields([])
 
     try {
       const data = await buscarDemandado(value, currentField)
-      if (data) {
+      console.log('Datos encontrados:', data)
+      if (data !== null) {
         setValue('demandado.apellido', data.apellido)
         setValue('demandado.nombre', data.nombre)
         setValue('demandado.nombreCompleto', data.apellidoYNombre)
@@ -90,13 +88,9 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
         setAutoFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio', 'domicilioTipo'])
         setAccordionOpen('auto')
         setDocumentFound(true)
-      } else {
-        setWarningMessage(`${currentField.toUpperCase()} no encontrado.`)
-        setShowWarning(true)
       }
     } catch {
-      setWarningMessage('Error al buscar demandado.')
-      setShowWarning(true)
+      console.error('Error al buscar demandado:', error)
     } finally {
       setIsSearching(false)
     }
@@ -104,15 +98,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
 
   return (
     <div className="space-y-4">
-      {/* Error de búsqueda */}
-      {showWarning && (
-        <Alert variant="destructive" className="text-red-600 bg-red-50">
-          <AlertCircle className="h-4 w-4 text-red-600" color="#dc2626" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{warningMessage}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Documento dinámico */}
       <FormField
         name={`demandado.${currentField}` as const}

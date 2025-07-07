@@ -27,6 +27,7 @@ import {
   SelectValue
 } from '@renderer/components/ui/select'
 import { Input } from '@renderer/components/ui/input'
+import { BASE_OUTPUT_DIR } from '@shared/constants/output-dir'
 
 type BoletaRowProps = {
   boleta: EnrichedBoleta
@@ -62,7 +63,7 @@ const BoletaRow: React.FC<BoletaRowProps> = ({ boleta, type, onOpenPdf }) => {
       <TableCell>
         <a
           className="flex items-center hover:underline cursor-pointer"
-          onClick={() => onOpenPdf(`C:\\boletas\\${folder}\\${boleta.boleta}.pdf`)}
+          onClick={() => onOpenPdf(`${BASE_OUTPUT_DIR}\\boletas\\${folder}\\${boleta.boleta}.pdf`)}
         >
           <FileText className="mr-2 h-4 w-4 text-gray-400" />
           {boleta.boleta}

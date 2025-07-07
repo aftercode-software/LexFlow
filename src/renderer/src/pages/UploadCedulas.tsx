@@ -1,6 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-
-// Componentes de UI
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,27 +21,53 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
 import { toast } from 'sonner'
-import { Cedula, TipoEscrito, TipoTribunal } from '@shared/interfaces/cedulas'
-import { Upload } from 'lucide-react'
+import { CedulaFiltrada, TipoEscrito } from '@shared/interfaces/cedulas'
+import { FileText, Upload } from 'lucide-react'
+import { TribunalKey } from '@shared/interfaces/boletas'
+import { getCedulasToUpload } from '@renderer/utils/csm'
+import { BASE_OUTPUT_DIR } from '@shared/constants/output-dir'
 
 interface CedulasTableProps {
-  cedulas: Cedula[]
+  cedulas: CedulaFiltrada[]
+  tribunal: TribunalKey
+  onOpenPdf: (path: string) => void
 }
+const tribunales: { key: TribunalKey; label: string }[] = [
+  { key: 'primer', label: 'Primero' },
+  { key: 'segundo', label: 'Segundo' },
+  { key: 'tercer', label: 'Tercero' }
+]
 
-const CedulasTable: React.FC<CedulasTableProps> = ({ cedulas }) => (
+const CedulasTable: React.FC<CedulasTableProps> = ({ cedulas, tribunal, onOpenPdf }) => (
   <Table>
     <TableHeader>
       <TableRow>
+        <TableHead>Demandado</TableHead>
+        <TableHead>Boleta</TableHead>
         <TableHead>CUIJ</TableHead>
+        <TableHead>Juicio</TableHead>
         <TableHead>Estado</TableHead>
       </TableRow>
     </TableHeader>
     <TableBody>
       {cedulas.map((cedula) => (
         <TableRow key={cedula.cuij}>
-          <TableCell className="font-medium">{cedula.cuij}</TableCell>
+          <TableCell className="font-medium">{cedula.demandado}</TableCell>
+          <TableCell className="font-medium">{cedula.boleta}</TableCell>
           <TableCell>
-            <Badge>{cedula.estado}</Badge>
+            <a
+              className="flex items-center hover:underline cursor-pointer"
+              onClick={() =>
+                onOpenPdf(`${BASE_OUTPUT_DIR}\\cedulas\\${tribunal}\\${cedula.cuij}.pdf`)
+              }
+            >
+              <FileText className="mr-2 h-4 w-4 text-gray-400" />
+              {cedula.cuij}
+            </a>
+          </TableCell>
+          <TableCell className="font-medium">{cedula.juicio}</TableCell>
+          <TableCell>
+            <Badge className="bg-lex/30 text-blue-800">{cedula.estado}</Badge>
           </TableCell>
         </TableRow>
       ))}
@@ -53,17 +77,17 @@ const CedulasTable: React.FC<CedulasTableProps> = ({ cedulas }) => (
 
 export default function UploadCedulas() {
   const { userData, isAuthenticated } = useAuth()
-  const [cedulas, setCedulas] = useState<Cedula[]>([])
+  const [cedulas, setCedulas] = useState<CedulaFiltrada[]>([])
   const [tipoEscrito, setTipoEscrito] = useState<TipoEscrito>('CSM')
+  const [activeTribunal, setActiveTribunal] = useState<TribunalKey>(tribunales[0].key)
 
-  // 🔄 Traer cédulas desde el backend al montar
   useEffect(() => {
     if (!isAuthenticated) return
 
     const fetchCedulas = async () => {
+      const listas = await getCedulasToUpload()
       try {
-        const data = await window.api.getCedulasFiltradas()
-        setCedulas(data || [])
+        setCedulas(listas)
       } catch (error) {
         console.error('Error al obtener cédulas:', error)
         toast.error('Error al obtener cédulas')
@@ -74,17 +98,23 @@ export default function UploadCedulas() {
     fetchCedulas()
   }, [isAuthenticated])
 
-  const cedulasFiltradas = useMemo(
-    () => cedulas.filter((c) => c.tipoEscrito === tipoEscrito),
-    [cedulas, tipoEscrito]
-  )
+  const handleOpenPdf = (path: string) => {
+    window.api.openPdf(path)
+  }
+
+  const cedulasFiltradas = useMemo(() => {
+    console.log('cedukas', cedulas)
+    return cedulas.filter((c) => c.tipoEscrito === tipoEscrito)
+  }, [cedulas, tipoEscrito])
 
   const cedulasPorTribunal = useMemo(() => {
-    return {
-      Primero: cedulasFiltradas.filter((c) => c.tipoTribunal === 'Primero').slice(0, 50),
-      Segundo: cedulasFiltradas.filter((c) => c.tipoTribunal === 'Segundo').slice(0, 50),
-      Tercero: cedulasFiltradas.filter((c) => c.tipoTribunal === 'Tercero').slice(0, 50)
-    }
+    return tribunales.reduce(
+      (acc, { key }) => {
+        acc[key] = cedulasFiltradas.filter((c) => c.tipoTribunal === key).slice(0, 50)
+        return acc
+      },
+      {} as Record<TribunalKey, CedulaFiltrada[]>
+    )
   }, [cedulasFiltradas])
 
   const handleUpload = () => {
@@ -107,7 +137,7 @@ export default function UploadCedulas() {
           </aside>
           <Button
             disabled={cedulasFiltradas.length === 0}
-            className="bg-gray-900 hover:bg-aftercode"
+            className="bg-gray-900 hover:bg-lex-700"
             onClick={handleUpload}
           >
             <Upload className="mr-2 h-4 w-4" /> Subir Cédulas
@@ -135,35 +165,50 @@ export default function UploadCedulas() {
         </div>
 
         <div className="grid grid-cols-3 gap-6 mb-6">
-          {(['Primero', 'Segundo', 'Tercero'] as TipoTribunal[]).map((tribunal) => (
-            <div key={tribunal} className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="flex justify-between mb-2">
-                <h3 className="font-medium">{tribunal} Tribunal</h3>
-                <span className="text-sm font-medium">
-                  {cedulasPorTribunal[tribunal].length}
-                </span>
+          {tribunales.map(({ key }) => {
+            const list = cedulasPorTribunal[key]
+            return (
+              <div key={key} className="bg-white p-4 rounded-lg border">
+                <div className="flex justify-between mb-2">
+                  <h3 className="font-medium">
+                    {key.charAt(0).toUpperCase() + key.slice(1)} Tribunal
+                  </h3>
+                  <span className="text-sm font-medium">{list.length}</span>
+                </div>
+                <Progress value={list.length} max={50} className="h-2" />
+                <p className="text-sm text-gray-500 mt-2">{list.length} de 50 disponibles</p>
               </div>
-              <Progress value={(cedulasPorTribunal[tribunal].length / 50) * 100} className="h-2" />
-              <p className="text-sm text-gray-500 mt-2">
-                {cedulasPorTribunal[tribunal].length} disponibles
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        <Tabs defaultValue="Primero" className="bg-white rounded-lg border border-gray-200">
+        <Tabs
+          value={activeTribunal}
+          onValueChange={(val) => setActiveTribunal(val as TribunalKey)}
+          className="bg-white rounded-lg border"
+        >
           <TabsList className="w-full border-b border-gray-200">
-            {(['Primero', 'Segundo', 'Tercero'] as TipoTribunal[]).map((t) => (
-              <TabsTrigger key={t} value={t} className="flex-1">
-                {t} Tribunal
+            <TabsContent key="raw" value="raw" className="p-0 overflow-x-auto">
+              <CedulasTable cedulas={cedulas} tribunal={activeTribunal} onOpenPdf={handleOpenPdf} />
+              {cedulas.length === 0 && (
+                <div className="py-8 text-center text-gray-500">No hay cédulas</div>
+              )}
+            </TabsContent>
+            {tribunales.map(({ key }) => (
+              <TabsTrigger key={key} value={key} className="flex-1">
+                {key.charAt(0).toUpperCase() + key.slice(1)} Tribunal
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {(['Primero', 'Segundo', 'Tercero'] as TipoTribunal[]).map((t) => (
-            <TabsContent key={t} value={t} className="p-0 overflow-x-auto">
-              <CedulasTable cedulas={cedulasPorTribunal[t]} />
-              {cedulasPorTribunal[t].length === 0 && (
+          {tribunales.map(({ key }) => (
+            <TabsContent key={key} value={key} className="p-0 overflow-x-auto">
+              <CedulasTable
+                cedulas={cedulasPorTribunal[key]}
+                tribunal={activeTribunal}
+                onOpenPdf={handleOpenPdf}
+              />
+              {cedulasPorTribunal[key].length === 0 && (
                 <div className="py-8 text-center text-gray-500">No hay cédulas</div>
               )}
             </TabsContent>

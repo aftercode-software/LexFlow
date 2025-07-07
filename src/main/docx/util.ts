@@ -5,7 +5,6 @@ import fsPromises from 'fs/promises'
 import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
-
 import { PDFDocument } from 'pdf-lib'
 
 export async function generateWrittenPdf(data: any): Promise<string> {

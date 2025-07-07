@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron'
-import { scanBoletas } from '../playwright/fetch-boletas'
 import { FormularioCSM } from '../../shared/interfaces/form'
 import { backend } from '../utils/backend-fetch'
+import { getBoletas } from '../utils/getBoletas'
 
 export function registerBoletaHandlers() {
   ipcMain.handle('uploadBoleta', async (_, { data, tipo }) => {
@@ -23,7 +23,7 @@ export function registerBoletaHandlers() {
   })
 
   ipcMain.handle('boletas:get-to-upload', async (_, id: number) => {
-    const { profesionales, terceros, profDir, terDir } = await scanBoletas()
+    const { profesionales, terceros, profDir, terDir } = await getBoletas()
 
     const res = await backend.post('/boletas/filtrar', {
       boletasTerceros: terceros,
@@ -45,6 +45,6 @@ export function registerBoletaHandlers() {
 
   ipcMain.handle('uploadCSM', async (_, csm: FormularioCSM) => {
     const res = await backend.post('/boletas/csm', csm)
-    return res.status
+    return res
   })
 }

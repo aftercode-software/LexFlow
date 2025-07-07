@@ -8,7 +8,8 @@ import { registerBoletaHandlers } from './routes/boletas'
 import { registerPoderJudicialHandlers } from './routes/poderJudicial'
 import { registerDemandadoHandlers } from './routes/demandados'
 import { registerRecaudadorHandlers } from './routes/recaudadores'
-import 'dotenv/'
+import 'dotenv/config'
+import { registerCedulaHandlers } from './routes/cedulas'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -62,6 +63,7 @@ app.whenReady().then(async () => {
   registerBoletaHandlers()
   registerPoderJudicialHandlers()
   registerDemandadoHandlers()
+  registerCedulaHandlers()
   registerRecaudadorHandlers()
 
   createWindow()

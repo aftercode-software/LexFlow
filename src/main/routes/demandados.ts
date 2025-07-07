@@ -11,8 +11,7 @@ export function registerDemandadoHandlers() {
 
   ipcMain.handle('demandados:get', async (_evt, documento: string) => {
     const res = await backend.get(`/demandados/${documento}`)
-    if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`)
-    return res.data
+    return res
   })
 
   ipcMain.handle('demandados:create', async (_evt, body: DemandadoEntity) => {
