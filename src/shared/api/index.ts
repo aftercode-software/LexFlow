@@ -42,6 +42,12 @@ export interface Api {
     modoInhibicion: string,
     oficial2: boolean
   ) => Promise<void>
+  iniciarCargaCedulas: (
+    cedulas: CedulaFiltrada[],
+    tipoEscrito: 'CSM' | 'JMI',
+    tribunal: 'primer' | 'segundo' | 'tercer'
+  ) => Promise<{ success: boolean; error?: any }>
+
   getCedulasFiltradas: () => Promise<CedulaFiltrada[]>
 
   iniciarLoginManual: () => Promise<any>

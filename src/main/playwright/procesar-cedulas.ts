@@ -3,7 +3,9 @@ import fs from 'fs'
 import path from 'path'
 import { CedulaFiltrada, TipoEscrito, TipoTribunal } from '../../shared/interfaces/cedulas'
 
-export async function subirCedulas(cedulas: CedulaFiltrada[]) {
+export async function subirCedulas(cedulas: CedulaFiltrada[], tipoEscrito: TipoEscrito,
+  tribunal: 'primer' | 'segundo' | 'tercer'
+) {
   const chromePath = findChromeExe()
   if (!chromePath) {
     console.error('Chrome no encontrado.')
@@ -14,21 +16,22 @@ export async function subirCedulas(cedulas: CedulaFiltrada[]) {
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
 
-  await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
+  await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/lotes.php')
   await page.waitForTimeout(2000)
 
-  const tribunalIndex = mapTribunalToIndex(cedulas[0].tipoTribunal)
+  const tribunalIndex = mapTribunalToIndex(tribunal)
+
   const tipoEscritoIndex = mapTipoEscritoToIndex(cedulas[0].tipoEscrito)
 
-  await page.click('/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[2]/span/span/a')
+  await page.click('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[2]/span/span')
   await page.waitForTimeout(1000)
   await page.click(`#_easyui_combobox_i1_${tribunalIndex}`)
 
-  await page.click('/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[4]/span/span/a')
+  await page.click('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[4]/span/span/a')
   await page.waitForTimeout(1000)
   await page.click(`#_easyui_combobox_i2_${tipoEscritoIndex}`)
 
-  await page.click('/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[5]/a[1]/span/span')
+  await page.click('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[5]/a[1]/span/span')
   await page.waitForTimeout(3000)
 
   const cantidad = Math.min(cedulas.length, 50)
@@ -43,25 +46,25 @@ export async function subirCedulas(cedulas: CedulaFiltrada[]) {
 async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   console.log(`Procesando CUIJ: ${cedula.cuij}`)
 
-  await page.click('/html/body/center[3]/div[3]/div[2]/div[1]/a[1]/span/span[1]')
+  await page.click('xpath=/html/body/center[3]/div[3]/div[2]/div[1]/a[1]/span/span[1]')
   await page.waitForTimeout(1500)
 
-  await page.locator('/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]')
+  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]')
     .fill(cedula.cuij)
 
-  await page.locator('/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/span[1]/input[1]')
+  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/span[1]/input[1]')
     .setInputFiles(cedula.filePath)
 
-  await page.click('/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
+  await page.click('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
   console.log(`✅ Cédula ${cedula.cuij} subida correctamente`)
 }
 
 
-function mapTribunalToIndex(tribunal: TipoTribunal): number {
+function mapTribunalToIndex(tribunal: 'primer' | 'segundo' | 'tercer'): number {
   switch (tribunal) {
-    case 'Primero': return 1
-    case 'Segundo': return 2
-    case 'Tercero': return 3
+    case 'primer': return 1
+    case 'segundo': return 2
+    case 'tercer': return 3
   }
 }
 

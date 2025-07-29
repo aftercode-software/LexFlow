@@ -3,6 +3,7 @@ import { electronAPI } from '@electron-toolkit/preload'
 import { Api } from '../shared/api'
 import { EnrichedBoleta } from '../shared/interfaces/boletas'
 import { FormularioCSM } from '../shared/interfaces/form'
+import { CedulaFiltrada } from '../shared/interfaces/cedulas'
 
 declare global {
   interface Window {
@@ -49,6 +50,13 @@ const api: Api = {
     console.log('debi de anmuerasd', oficial2)
     return ipcRenderer.invoke('carga:judicial', boletas, montoThreshold, modoInhibicion, oficial2)
   },
+  iniciarCargaCedulas: (
+  cedulas: CedulaFiltrada[],
+  tipoEscrito: 'CSM' | 'JMI',
+  tribunal: 'primer' | 'segundo' | 'tercer'
+) => {
+  return ipcRenderer.invoke('carga:cedulas', cedulas, tipoEscrito, tribunal)
+},
   getCedulasFiltradas: () => ipcRenderer.invoke('cedulas:get-filtradas'),
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: (id: number) => ipcRenderer.invoke('boletas:get-to-upload', id),

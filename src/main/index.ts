@@ -10,6 +10,7 @@ import { registerDemandadoHandlers } from './routes/demandados'
 import { registerRecaudadorHandlers } from './routes/recaudadores'
 import 'dotenv/config'
 import { registerCedulaHandlers } from './routes/cedulas'
+import { registerPoderJudicialCedulasHandlers } from './routes/poderJudicialCedulas'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -62,6 +63,7 @@ app.whenReady().then(async () => {
   registerPdfHandlers()
   registerBoletaHandlers()
   registerPoderJudicialHandlers()
+  registerPoderJudicialCedulasHandlers()
   registerDemandadoHandlers()
   registerCedulaHandlers()
   registerRecaudadorHandlers()

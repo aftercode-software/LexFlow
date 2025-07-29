@@ -117,9 +117,24 @@ export default function UploadCedulas() {
     )
   }, [cedulasFiltradas])
 
-  const handleUpload = () => {
-    toast.info('La subida de cédulas aún no está habilitada.')
+  const handleUpload = async () => {
+  const cedulasFiltradasPorTipo = cedulas.filter((c) => c.tipoEscrito === tipoEscrito)
+
+  if (cedulasFiltradasPorTipo.length === 0) {
+    toast.warning('No hay cédulas para subir.')
+    return
   }
+
+  try {
+    toast.info(`Subiendo ${cedulasFiltradasPorTipo.length} cédulas tipo ${tipoEscrito}...`)
+    await window.api.iniciarCargaCedulas(cedulasFiltradasPorTipo, tipoEscrito,activeTribunal)
+    toast.success('Carga de cédulas finalizada.')
+  } catch (err) {
+    console.error('❌ Error al subir cédulas:', err)
+    toast.error('Error durante la carga de cédulas.')
+  }
+}
+
 
   return (
     <div className="flex min-h-screen p-6">
