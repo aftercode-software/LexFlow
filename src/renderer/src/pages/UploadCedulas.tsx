@@ -117,16 +117,18 @@ useEffect(() => {
   }, [cedulasFiltradas])
 
   const handleUpload = async () => {
-  const cedulasFiltradasPorTipo = cedulas.filter((c) => c.tipoEscrito === tipoEscrito)
+  const cedulasFiltradasPorTipoYTribunal = cedulas.filter(
+  (c) => c.tipoEscrito === tipoEscrito && c.tipoTribunal === activeTribunal
+)
 
-  if (cedulasFiltradasPorTipo.length === 0) {
+  if (cedulasFiltradasPorTipoYTribunal.length === 0) {
     toast.warning('No hay cédulas para subir.')
     return
   }
 
   try {
-    toast.info(`Subiendo ${cedulasFiltradasPorTipo.length} cédulas tipo ${tipoEscrito}...`)
-    await window.api.iniciarCargaCedulas(cedulasFiltradasPorTipo, tipoEscrito,activeTribunal)
+    toast.info(`Subiendo ${cedulasFiltradasPorTipoYTribunal.length} cédulas tipo ${tipoEscrito}...`)
+    await window.api.iniciarCargaCedulas(cedulasFiltradasPorTipoYTribunal, tipoEscrito, activeTribunal)
     toast.success('Carga de cédulas finalizada.')
   } catch (err) {
     console.error('❌ Error al subir cédulas:', err)
@@ -150,7 +152,7 @@ useEffect(() => {
             )}
           </aside>
           <Button
-            disabled={cedulasFiltradas.length === 0}
+            disabled={cedulasPorTribunal[activeTribunal].length === 0}
             className="bg-gray-900 hover:bg-lex-700"
             onClick={handleUpload}
           >

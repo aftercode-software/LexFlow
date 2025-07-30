@@ -33,12 +33,13 @@ export async function subirCedulas(cedulas: CedulaFiltrada[], tipoEscrito: TipoE
 
   await page.click('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[5]/a[1]/span/span')
   await page.waitForTimeout(3000)
+const cedulasFiltradas = cedulas.filter(c => c.tipoTribunal === tribunal)
 
-  const cantidad = Math.min(cedulas.length, 50)
-  for (const cedula of cedulas.slice(0, cantidad)) {
-    await procesarCedula(page, cedula)
-    await page.waitForTimeout(1000)
-  }
+const cantidad = Math.min(cedulasFiltradas.length, 50)
+for (const cedula of cedulasFiltradas.slice(0, cantidad)) {
+  await procesarCedula(page, cedula)
+  await page.waitForTimeout(1000)
+}
 
   await page.waitForTimeout(30000)
 }
@@ -49,14 +50,19 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   await page.click('xpath=/html/body/center[3]/div[3]/div[2]/div[1]/a[1]/span/span[1]')
   await page.waitForTimeout(1500)
 
-  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]')
-    .fill(cedula.cuij)
-
-  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/span[1]/input[1]')
-    .setInputFiles(cedula.filePath)
-
-  await page.click('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
-  console.log(`✅ Cédula ${cedula.cuij} subida correctamente`)
+  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]').fill(cedula.cuij)
+  await page.locator('xpath=/html/body/div[5]/div[2]/form/div[1]/span/input[1]').click()
+  await page.waitForTimeout(1000)
+  const archivoPath = `C://LexFlow/cedulas/${cedula.tipoTribunal}/${cedula.cuij}.pdf`
+  await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  await page.waitForTimeout(2000)
+  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]').click()
+  await page.waitForTimeout(1000)
+  await page.locator('xpath=/html/body/div[7]/div[3]/a/span').click()
+  await page.waitForTimeout(1000)
+  const grabar = page.locator('xpath=/html/body/div[5]/div[3]/a[1]/span/span[1]')
+  await grabar.click()
+  await page.waitForTimeout(1000)
 }
 
 function mapTribunalToIndex(tribunal: 'primer' | 'segundo' | 'tercer'): number {
