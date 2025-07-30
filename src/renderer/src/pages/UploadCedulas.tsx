@@ -24,7 +24,6 @@ import { toast } from 'sonner'
 import { CedulaFiltrada, TipoEscrito } from '@shared/interfaces/cedulas'
 import { FileText, Upload } from 'lucide-react'
 import { TribunalKey } from '@shared/interfaces/boletas'
-import { getCedulasToUpload } from '@renderer/utils/csm'
 import { BASE_OUTPUT_DIR } from '@shared/constants/output-dir'
 
 interface CedulasTableProps {
@@ -81,22 +80,22 @@ export default function UploadCedulas() {
   const [tipoEscrito, setTipoEscrito] = useState<TipoEscrito>('CSM')
   const [activeTribunal, setActiveTribunal] = useState<TribunalKey>(tribunales[0].key)
 
-  useEffect(() => {
-    if (!isAuthenticated) return
+useEffect(() => {
+  if (!isAuthenticated || !userData?.matricula) return
 
-    const fetchCedulas = async () => {
-      const listas = await getCedulasToUpload()
-      try {
-        setCedulas(listas)
-      } catch (error) {
-        console.error('Error al obtener cédulas:', error)
-        toast.error('Error al obtener cédulas')
-        setCedulas([])
-      }
+  const fetchCedulas = async () => {
+    try {
+      const listas = await window.api.getCedulasFiltradas(Number(userData.matricula))
+      setCedulas(listas)
+    } catch (error) {
+      console.error('Error al obtener cédulas:', error)
+      toast.error('Error al obtener cédulas')
+      setCedulas([])
     }
+  }
 
-    fetchCedulas()
-  }, [isAuthenticated])
+  fetchCedulas()
+}, [isAuthenticated, userData?.matricula])
 
   const handleOpenPdf = (path: string) => {
     window.api.openPdf(path)
@@ -230,6 +229,6 @@ export default function UploadCedulas() {
           ))}
         </Tabs>
       </div>
-    </div>
-  )
+</div>
+)
 }

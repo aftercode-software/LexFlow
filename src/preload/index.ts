@@ -57,7 +57,7 @@ const api: Api = {
 ) => {
   return ipcRenderer.invoke('carga:cedulas', cedulas, tipoEscrito, tribunal)
 },
-  getCedulasFiltradas: () => ipcRenderer.invoke('cedulas:get-filtradas'),
+  getCedulasFiltradas: (matricula: number) => ipcRenderer.invoke('cedulas:get-filtradas', matricula),
   iniciarLoginManual: () => ipcRenderer.invoke('precarga:login'),
   getBoletasToUpload: (id: number) => ipcRenderer.invoke('boletas:get-to-upload', id),
 

@@ -48,7 +48,7 @@ export interface Api {
     tribunal: 'primer' | 'segundo' | 'tercer'
   ) => Promise<{ success: boolean; error?: any }>
 
-  getCedulasFiltradas: () => Promise<CedulaFiltrada[]>
+  getCedulasFiltradas: (matricula: number) => Promise<CedulaFiltrada[]>
 
   iniciarLoginManual: () => Promise<any>
   getBoletasToUpload: (id: number) => Promise<any>

@@ -59,7 +59,6 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   console.log(`✅ Cédula ${cedula.cuij} subida correctamente`)
 }
 
-
 function mapTribunalToIndex(tribunal: 'primer' | 'segundo' | 'tercer'): number {
   switch (tribunal) {
     case 'primer': return 1

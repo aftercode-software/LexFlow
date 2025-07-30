@@ -11,6 +11,13 @@ export interface CedulaFiltrada {
   tipoEscrito: TipoEscrito
   tipoTribunal: string
   filePath: string
+  recaudador?: {
+    id: number
+    nombre: string
+    matricula: number
+    idNombre: string
+    [key: string]: any
+  }
 }
 export function mapCedulaFiltrada(
   boletas: {
@@ -19,6 +26,13 @@ export function mapCedulaFiltrada(
     boleta: string
     demandado: string
     juicio: string
+    recaudador?: {
+      id: number
+      nombre: string
+      matricula: number
+      idNombre: string
+      [key: string]: any
+    }
   }[],
   tribunal: string
 ): CedulaFiltrada[] {
@@ -30,6 +44,7 @@ export function mapCedulaFiltrada(
     estado: cedula.cedula,
     tipoEscrito: 'CSM',
     tipoTribunal: tribunal,
-    filePath: `C:\\cedulas\\CSM\\${tribunal}\\${cedula.cuij}.pdf`
+    filePath: `C:\\cedulas\\CSM\\${tribunal}\\${cedula.cuij}.pdf`,
+    recaudador: cedula.recaudador 
   }))
 }
