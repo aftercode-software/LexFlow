@@ -1,9 +1,11 @@
 import { chromium, Page } from 'playwright'
 import fs from 'fs'
 import path from 'path'
-import { CedulaFiltrada, TipoEscrito, TipoTribunal } from '../../shared/interfaces/cedulas'
+import { CedulaFiltrada, TipoEscrito } from '../../shared/interfaces/cedulas'
 
-export async function subirCedulas(cedulas: CedulaFiltrada[], tipoEscrito: TipoEscrito,
+export async function subirCedulas(
+  cedulas: CedulaFiltrada[],
+  tipoEscrito: TipoEscrito,
   tribunal: 'primer' | 'segundo' | 'tercer'
 ) {
   const chromePath = findChromeExe()
@@ -12,6 +14,7 @@ export async function subirCedulas(cedulas: CedulaFiltrada[], tipoEscrito: TipoE
     return
   }
 
+  console.log(`Subiendo cédulas de tipo ${tipoEscrito} al tribunal ${tribunal}`)
   const browser = await chromium.launch({ headless: false, executablePath: chromePath })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
@@ -33,13 +36,13 @@ export async function subirCedulas(cedulas: CedulaFiltrada[], tipoEscrito: TipoE
 
   await page.click('xpath=/html/body/center[3]/div[2]/div[2]/table/tbody/tr/td[5]/a[1]/span/span')
   await page.waitForTimeout(3000)
-const cedulasFiltradas = cedulas.filter(c => c.tipoTribunal === tribunal)
+  const cedulasFiltradas = cedulas.filter((c) => c.tipoTribunal === tribunal)
 
-const cantidad = Math.min(cedulasFiltradas.length, 50)
-for (const cedula of cedulasFiltradas.slice(0, cantidad)) {
-  await procesarCedula(page, cedula)
-  await page.waitForTimeout(1000)
-}
+  const cantidad = Math.min(cedulasFiltradas.length, 50)
+  for (const cedula of cedulasFiltradas.slice(0, cantidad)) {
+    await procesarCedula(page, cedula)
+    await page.waitForTimeout(1000)
+  }
 
   await page.waitForTimeout(30000)
 }
@@ -50,13 +53,17 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   await page.click('xpath=/html/body/center[3]/div[3]/div[2]/div[1]/a[1]/span/span[1]')
   await page.waitForTimeout(1500)
 
-  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]').fill(cedula.cuij)
+  await page
+    .locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[2]/td/span/input[1]')
+    .fill(cedula.cuij)
   await page.locator('xpath=/html/body/div[5]/div[2]/form/div[1]/span/input[1]').click()
   await page.waitForTimeout(1000)
   const archivoPath = `C://LexFlow/cedulas/${cedula.tipoTribunal}/${cedula.cuij}.pdf`
   await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   await page.waitForTimeout(2000)
-  await page.locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]').click()
+  await page
+    .locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
+    .click()
   await page.waitForTimeout(1000)
   await page.locator('xpath=/html/body/div[7]/div[3]/a/span').click()
   await page.waitForTimeout(1000)
@@ -67,16 +74,21 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
 
 function mapTribunalToIndex(tribunal: 'primer' | 'segundo' | 'tercer'): number {
   switch (tribunal) {
-    case 'primer': return 1
-    case 'segundo': return 2
-    case 'tercer': return 3
+    case 'primer':
+      return 1
+    case 'segundo':
+      return 2
+    case 'tercer':
+      return 3
   }
 }
 
 function mapTipoEscritoToIndex(tipo: TipoEscrito): number {
   switch (tipo) {
-    case 'CSM': return 14
-    case 'JMI': return 15 
+    case 'CSM':
+      return 14
+    case 'JMI':
+      return 15
   }
 }
 

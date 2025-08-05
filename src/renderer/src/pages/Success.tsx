@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle } from 'lucide-react'
 import { useParams, Link } from 'react-router'
 
 export default function SuccessPage() {
-  const { boleta } = useParams<{ boleta: string }>()
+  const { boleta, type } = useParams<{ boleta: string; type: string }>()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -15,8 +15,17 @@ export default function SuccessPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-3">¡Procesamiento exitoso!</h2>
 
           <p className="text-gray-600 mb-8 leading-relaxed">
-            La boleta <span className="font-medium text-gray-900">{boleta}</span> fue escaneada,
-            procesada y subida a Google Sheets correctamente.
+            {type === 'boleta' ? (
+              <>
+                La boleta <span className="font-medium text-gray-900">{boleta}</span> fue escaneada,
+                procesada y subida a Google Sheets correctamente.
+              </>
+            ) : (
+              <>
+                La cédula <span className="font-medium text-gray-900">{boleta}</span> (número de
+                CUIJ) fue escaneada, procesada y subida a Google Sheets correctamente.
+              </>
+            )}
           </p>
 
           <Link

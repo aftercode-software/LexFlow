@@ -70,10 +70,9 @@ export default function ScanBoletas() {
     }
   }
 
-  // Callback para saber cuando el form termina su proceso
   const handleFormComplete = () => {
     setLoading(false)
-    // Aquí puedes agregar lógica adicional, como mostrar un mensaje o avanzar de paso
+    setStep(Steps.UPLOAD)
   }
 
   return (

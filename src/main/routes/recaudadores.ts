@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ipcMain } from 'electron'
-import { getToken } from '../services/auth'
 import { RecaudadorEntity } from '../../shared/interfaces/recaudador'
 import { backend } from '../utils/backend-fetch'
 

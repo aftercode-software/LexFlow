@@ -80,22 +80,22 @@ export default function UploadCedulas() {
   const [tipoEscrito, setTipoEscrito] = useState<TipoEscrito>('CSM')
   const [activeTribunal, setActiveTribunal] = useState<TribunalKey>(tribunales[0].key)
 
-useEffect(() => {
-  if (!isAuthenticated || !userData?.matricula) return
+  useEffect(() => {
+    if (!isAuthenticated || !userData?.matricula) return
 
-  const fetchCedulas = async () => {
-    try {
-      const listas = await window.api.getCedulasFiltradas(Number(userData.matricula))
-      setCedulas(listas)
-    } catch (error) {
-      console.error('Error al obtener cédulas:', error)
-      toast.error('Error al obtener cédulas')
-      setCedulas([])
+    const fetchCedulas = async () => {
+      try {
+        const listas = await window.api.getCedulasFiltradas(Number(userData.matricula))
+        setCedulas(listas)
+      } catch (error) {
+        console.error('Error al obtener cédulas:', error)
+        toast.error('Error al obtener cédulas')
+        setCedulas([])
+      }
     }
-  }
 
-  fetchCedulas()
-}, [isAuthenticated, userData?.matricula])
+    fetchCedulas()
+  }, [isAuthenticated, userData?.matricula])
 
   const handleOpenPdf = (path: string) => {
     window.api.openPdf(path)
@@ -117,25 +117,29 @@ useEffect(() => {
   }, [cedulasFiltradas])
 
   const handleUpload = async () => {
-  const cedulasFiltradasPorTipoYTribunal = cedulas.filter(
-  (c) => c.tipoEscrito === tipoEscrito && c.tipoTribunal === activeTribunal
-)
+    const cedulasFiltradasPorTipoYTribunal = cedulas.filter(
+      (c) => c.tipoEscrito === tipoEscrito && c.tipoTribunal === activeTribunal
+    )
 
-  if (cedulasFiltradasPorTipoYTribunal.length === 0) {
-    toast.warning('No hay cédulas para subir.')
-    return
+    if (cedulasFiltradasPorTipoYTribunal.length === 0) {
+      toast.warning('No hay cédulas para subir.')
+      return
+    }
+
+    try {
+      toast.info(
+        `Subiendo ${cedulasFiltradasPorTipoYTribunal.length} cédulas tipo ${tipoEscrito}...`
+      )
+      await window.api.iniciarCargaCedulas(
+        cedulasFiltradasPorTipoYTribunal,
+        tipoEscrito,
+        activeTribunal
+      )
+    } catch (err) {
+      console.error('❌ Error al subir cédulas:', err)
+      toast.error('Error durante la carga de cédulas.')
+    }
   }
-
-  try {
-    toast.info(`Subiendo ${cedulasFiltradasPorTipoYTribunal.length} cédulas tipo ${tipoEscrito}...`)
-    await window.api.iniciarCargaCedulas(cedulasFiltradasPorTipoYTribunal, tipoEscrito, activeTribunal)
-    toast.success('Carga de cédulas finalizada.')
-  } catch (err) {
-    console.error('❌ Error al subir cédulas:', err)
-    toast.error('Error durante la carga de cédulas.')
-  }
-}
-
 
   return (
     <div className="flex min-h-screen p-6">
@@ -231,6 +235,6 @@ useEffect(() => {
           ))}
         </Tabs>
       </div>
-</div>
-)
+    </div>
+  )
 }

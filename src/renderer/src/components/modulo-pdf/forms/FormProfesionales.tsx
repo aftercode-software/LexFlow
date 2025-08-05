@@ -17,7 +17,6 @@ import { z } from 'zod'
 import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
 import { generatePDF, uploadBoleta } from '@renderer/utils/forms'
-import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { numeroALetras } from '@shared/utils/document'
 import { FormularioProfesionales } from '@shared/interfaces/form'
@@ -42,7 +41,6 @@ export default function FormProfesionales({
 }: FormularioProfesionales & { pdfRoute: string } & { estado: string } & {
   onComplete: () => void
 }) {
-  const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(baseFormSchema),
     defaultValues: {
@@ -99,7 +97,8 @@ export default function FormProfesionales({
 
       const result = await uploadBoleta(data, 'Profesional')
       if (result.success || result.updated) {
-        navigate(`/escanear-pdf/${data.boleta}`)
+        toast.success('Boleta subida correctamente')
+        onComplete()
       }
     } catch (err) {
       console.error('Error al generar doc:', err)

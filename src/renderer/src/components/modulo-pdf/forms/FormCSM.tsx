@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { baseFormSchema, csmSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FieldErrors, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router'
 import { z } from 'zod'
 
 import { toast } from 'sonner'
@@ -30,7 +29,6 @@ export default function FormCSM({
 }: FormularioCSM & { pdfRoute: string } & {
   onComplete: () => void
 } & { tribunal: string }) {
-  const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(csmSchema),
     defaultValues: {
@@ -44,10 +42,14 @@ export default function FormCSM({
   const onSubmit = async (data: FormValues) => {
     try {
       const res = await uploadBoletaCSM(data, pdfRoute, tribunal)
+      if (res.success || res.updated) {
+        toast.success(
+          res.updated ? 'Cédula actualizada correctamente' : 'Cédula subida correctamente'
+        )
+        onComplete()
+      }
     } catch (err) {
-      console.error('Error al generar doc:', err)
-    } finally {
-      onComplete()
+      toast.error('Error al generar el documento')
     }
   }
 

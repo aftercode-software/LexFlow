@@ -36,7 +36,6 @@ export async function apiRequest<T = any>(
   }
 
   const url = `${baseUrl}${endpoint}`
-  console.debug(`Haciendo petición a ${url} con método ${method}`)
 
   try {
     const response = await fetch(url, {

@@ -14,7 +14,7 @@ export default function Dashboard() {
   return (
     <div className="p-6 flex flex-col min-h-screen">
       <Title title="Dashboard" subtitle="Bienvenido al panel de control de LexFlow" />
-      <div className="grid grid-cols-1 my-10 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 my-10 md:grid-cols-2 lg:grid-cols-5 gap-4 blur-sm">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Boletas</CardTitle>
@@ -70,7 +70,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 my-4 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 my-4 lg:grid-cols-4 gap-4 blur-sm">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monto Promedio</CardTitle>
@@ -121,7 +121,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-      <p className="text-center text-2xl text-muted-foreground mt-40">Proximamente más métricas</p>
+      <p className="text-center text-2xl text-muted-foreground mt-40">Próximamente métricas...</p>
     </div>
   )
 }

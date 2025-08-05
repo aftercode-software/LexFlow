@@ -70,15 +70,13 @@ export default function ScanCedulas() {
     }
   }
 
-  // Callback para saber cuando el form termina su proceso
   const handleFormComplete = () => {
+    setLoading(false)
     setStep(Steps.UPLOAD)
     setFile(null)
     setExtractedData(null)
     setOriginalPdfPath('')
     setTypePDF('')
-    setLoading(false)
-    // Aquí puedes agregar lógica adicional, como mostrar un mensaje o avanzar de paso
   }
 
   return (

@@ -1,10 +1,11 @@
 {
-  "name": "scrapper-app",
+  "name": "lex-flow",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "Lexflow es un asistente para la generacion y gestion de documentos",
   "main": "./out/main/index.js",
   "author": "example.com",
   "homepage": "https://electron-vite.org",
+  "productName": "LexFlow",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
@@ -81,8 +82,8 @@
     "vite": "^5.3.1"
   },
   "build": {
-    "appId": "com.example.scrapper",
-    "productName": "Scrapper App",
+    "appId": "com.example.lexflow",
+    "productName": "LexFlow",
     "directories": {
       "buildResources": "assets",
       "output": "release"
@@ -94,6 +95,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "resources/icon.ico",
       "target": [
         "nsis",
         "zip"

@@ -12,7 +12,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { baseFormSchema, tercerosSchema } from '@renderer/lib/schemas/forms.schemas'
 import { useEffect } from 'react'
 import { FieldErrors, useForm, UseFormReturn } from 'react-hook-form'
-import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import Demandado from '../Demandado'
 import Recaudador from '../Recaudador'
@@ -41,7 +40,6 @@ export default function FormTerceros({
 }: FormularioTerceros & { pdfRoute: string } & { estado: string } & {
   onComplete: () => void
 }) {
-  const navigate = useNavigate()
   const form = useForm<FormValues>({
     resolver: zodResolver(tercerosSchema),
     defaultValues: {
@@ -100,7 +98,8 @@ export default function FormTerceros({
 
       const result = await uploadBoleta(data, 'Tercero')
       if (result.success || result.updated) {
-        navigate(`/escanear-pdf/${data.boleta}`)
+        toast.success('Boleta subida correctamente')
+        onComplete()
       }
     } catch (err) {
       console.error('Error al generar doc:', err)

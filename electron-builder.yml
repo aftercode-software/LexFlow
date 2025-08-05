@@ -1,5 +1,6 @@
 appId: com.electron.app
-productName: scrapper-app
+productName: LexFlow
+copyright: Copyright © 2025 Aftercode
 directories:
   buildResources: build
 files:
@@ -12,7 +13,8 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: scrapper-app
+  executableName: LexFlow
+  icon: resources/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
