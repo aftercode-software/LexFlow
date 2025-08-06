@@ -4,6 +4,7 @@ import { generateWrittenPdf, mergePdfs } from '../docx/util'
 import { extractDataFromPdf } from '../services/pdf/process-pdf'
 import fsPromises from 'fs/promises'
 import { extractDataFromCsm } from '../services/pdf/process-csm'
+import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 export function registerPdfHandlers() {
   ipcMain.handle(
@@ -20,7 +21,9 @@ export function registerPdfHandlers() {
     const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
 
     const outputDir =
-      data.tipo === 'Profesional' ? 'C:\\boletas\\profesionales' : 'C:\\boletas\\terceros'
+      data.tipo === 'Profesional'
+        ? `${BASE_OUTPUT_DIR}\\boletas\\profesionales`
+        : `${BASE_OUTPUT_DIR}\\boletas\\terceros`
     await fsPromises.mkdir(outputDir, { recursive: true })
 
     const finalPath = path.join(outputDir, `${data.boleta}.pdf`)

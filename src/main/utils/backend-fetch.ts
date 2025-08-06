@@ -22,10 +22,11 @@ export async function apiRequest<T = any>(
   const { method = 'GET', body, headers = {}, baseUrl = process.env.PUBLIC_BACKEND_URL } = options
 
   const token = await getToken()
-  if (!token) {
+  if (!token && endpoint !== '/auth/login') {
     throw new Error('No hay token de autenticación')
   }
 
+  console.log(`baseUrl: ${baseUrl}`)
   const defaultHeaders: Record<string, string> = {
     Authorization: `Bearer ${token}`,
     ...headers
@@ -35,7 +36,7 @@ export async function apiRequest<T = any>(
     defaultHeaders['Content-Type'] = 'application/json'
   }
 
-  const url = `${baseUrl}${endpoint}`
+  const url = `https://scrapper-back-two.vercel.app/api${endpoint}`
 
   try {
     const response = await fetch(url, {

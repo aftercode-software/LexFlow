@@ -9,38 +9,37 @@ import { backend } from '../utils/backend-fetch'
 
 export function registerCedulaHandlers() {
   ipcMain.handle('cedulas:get-filtradas', async (_, matricula: number) => {
-  try {
-    const { primer, segundo, tercer } = await getCSMBoletas()
-    const res = await backend.post('/boletas/filtrar/csm', {
-      cuijs: [...primer, ...segundo, ...tercer]
-    })
+    try {
+      const { primer, segundo, tercer } = await getCSMBoletas()
+      const res = await backend.post('/boletas/filtrar/csm', {
+        cuijs: [...primer, ...segundo, ...tercer]
+      })
 
-    const filtradasPrimer = mapCedulaFiltrada(
-      res.data.filter((cedula: any) => primer.includes(cedula.cuij)),
-      'primer'
-    )
-    const filtradasSegundo = mapCedulaFiltrada(
-      res.data.filter((cedula: any) => segundo.includes(cedula.cuij)),
-      'segundo'
-    )
-    const filtradasTercer = mapCedulaFiltrada(
-      res.data.filter((cedula: any) => tercer.includes(cedula.cuij)),
-      'tercer'
-    )
+      const filtradasPrimer = mapCedulaFiltrada(
+        res.data.filter((cedula: any) => primer.includes(cedula.cuij)),
+        'primer'
+      )
+      const filtradasSegundo = mapCedulaFiltrada(
+        res.data.filter((cedula: any) => segundo.includes(cedula.cuij)),
+        'segundo'
+      )
+      const filtradasTercer = mapCedulaFiltrada(
+        res.data.filter((cedula: any) => tercer.includes(cedula.cuij)),
+        'tercer'
+      )
 
-    const todas = [...filtradasPrimer, ...filtradasSegundo, ...filtradasTercer]
+      const todas = [...filtradasPrimer, ...filtradasSegundo, ...filtradasTercer]
 
-    const filtradasPorMatricula = todas.filter(
-      (cedula) => Number(cedula.recaudador?.matricula) === Number(matricula)
-    )
+      const filtradasPorMatricula = todas.filter(
+        (cedula) => Number(cedula.recaudador?.matricula) === Number(matricula)
+      )
 
-    return filtradasPorMatricula
-  } catch (err) {
-    console.error('❌ Error al traer cédulas filtradas:', err)
-    return []
-  }
-})
-
+      return filtradasPorMatricula
+    } catch (err) {
+      console.error('❌ Error al traer cédulas filtradas:', err)
+      return []
+    }
+  })
 
   ipcMain.handle('pdf:save-csm', async (_, { pdfPath, cuij, tribunal }) => {
     try {
