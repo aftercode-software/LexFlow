@@ -34,9 +34,19 @@ type BoletaRowProps = {
   type: TipoBoleta
   onOpenPdf: (path: string) => void
 }
+function parseMonto(montoStr: string): number {
+  const normalized = montoStr.replace(/\s|\./g, '').replace(',', '.')
+  return parseFloat(normalized) || 0
+}
+
 const BoletaRow: React.FC<BoletaRowProps> = ({ boleta, type, onOpenPdf }) => {
-  const formatMonto = (monto: string) =>
-    new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(Number(monto))
+  const formatMonto = (montoStr: string) => {
+    const value = parseMonto(montoStr)
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS'
+    }).format(value)
+  }
 
   const badgeEstado = (estado: EstadoBoleta) => {
     let colorClass = 'bg-gray-100 text-gray-600 border-gray-200'
@@ -119,22 +129,17 @@ export default function UploadBoletas() {
   const [loadingRecaudadores, setLoadingRecaudadores] = useState(false)
   const [, setLoadingBoletas] = useState(false)
 
-  // Estados para boletas
   const [profesionales, setProfesionales] = useState<EnrichedBoleta[]>([])
   const [terceros, setTerceros] = useState<EnrichedBoleta[]>([])
 
-  // Tab activa
   const [tabActiva, setTabActiva] = useState<TipoBoleta>('Profesional')
 
-  // Threshold / modo inhibición
   const [montoThreshold, setMontoThreshold] = useState<number>(30000)
   const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
 
-  // Recaudadores y select
   const [recaudadores, setRecaudadores] = useState<RecaudadorEntity[]>([])
   const [selectedRecaudadorId, setSelectedRecaudadorId] = useState<number>(0)
 
-  // 1) Fetch de recaudadores al montar
   useEffect(() => {
     if (!isAuthenticated) return
 
@@ -152,21 +157,17 @@ export default function UploadBoletas() {
     fetchRecaudadores()
   }, [isAuthenticated])
 
-  // 2) Filtrar recaudadores para mostrar solo los que coinciden con la matrícula del user
   const recaudadoresFiltrados = recaudadores.filter(
     (r) => r.matricula === Number(userData?.matricula)
   )
 
-  // 3) Fetch de boletas **solo** cuando selectedRecaudadorId cambie a algo distinto de 0
   useEffect(() => {
-    // Si no hay recaudador seleccionado, NO hacemos fetch
     if (!isAuthenticated) return
     if (selectedRecaudadorId === 0) return
 
     const fetchBoletas = async () => {
       setLoadingBoletas(true)
       try {
-        // Renombro aquí para no pisar la variable de estado:
         const { profesionales: profesionalesDesdeAPI, terceros: tercerosDesdeAPI } =
           await window.api.getBoletasToUpload(selectedRecaudadorId)
 
@@ -187,25 +188,16 @@ export default function UploadBoletas() {
     fetchBoletas()
   }, [isAuthenticated, selectedRecaudadorId])
 
-  // 4) Opcional: aviso si no está logueado y esta intentando ver boletas
   useEffect(() => {
     if (!isAuthenticated) {
       toast.warning('No estás logueado. Inicia sesión para ver boletas.')
     }
   }, [isAuthenticated])
 
-  // 5) Dependiendo de la pestaña activa, elegimos el array correcto
   const boletasActuales = useMemo(
     () => (tabActiva === 'Profesional' ? profesionales : terceros),
     [tabActiva, profesionales, terceros]
   )
-
-  // 6) *** Para depuración ***: mostramos TODAS las boletas en la tabla
-  // (sin filtrar por estado ni monto). Así confirmas que, al seleccionar un recaudador,
-  // en pantalla aparece la data que llegó desde el servidor.
-  // Luego que valides que esto funciona, puedes volver a aplicar tu lógica de estado → “Revisada” → “25 primeras” → “umbral” → etc.
-
-  // 7) Si quisieras recuperar tu lógica original de “solo las 25 que estén 'Revisadas' y pasen por el umbral” podrías hacer algo así:
 
   const revisadas = useMemo(
     () => boletasActuales.filter((b) => b.estado === 'Revisada').slice(0, 25),
@@ -213,13 +205,13 @@ export default function UploadBoletas() {
   )
   const revisadasConMonto = useMemo(() => {
     return revisadas.filter((b) => {
-      const m = Number(b.monto)
+      const m = parseMonto(b.monto)
+      console.log(`→ Monto de ${b.boleta}:`, m)
       return modoInhibicion === 'con' ? m >= montoThreshold : m < montoThreshold
     })
   }, [revisadas, montoThreshold, modoInhibicion])
   const boletasParaMostrar = revisadasConMonto
 
-  // 8) Saber si habilitamos o no el botón de carga:
   const canUpload = useMemo(
     () => isAuthenticated && boletasParaMostrar.length > 0 && selectedRecaudadorId !== 0,
     [isAuthenticated, boletasParaMostrar, selectedRecaudadorId]
@@ -230,7 +222,7 @@ export default function UploadBoletas() {
   }
 
   const handleUpload = () => {
-    const oficial2 = selectedRecaudadorId === 801 ? true : false // Recaudador Oficial 2+
+    const oficial2 = selectedRecaudadorId === 801 ? true : false
     console.log('oficial2:', oficial2)
 
     window.api.iniciarCargaJudicial(boletasParaMostrar, montoThreshold, modoInhibicion, oficial2)
@@ -239,6 +231,7 @@ export default function UploadBoletas() {
   return (
     <div className="flex min-h-screen p-6">
       <div className="flex-1">
+        {boletasParaMostrar.length}
         {/* Cabecera con nombre de usuario y botón de subir */}
         <div className="flex justify-between items-center mb-6">
           <aside>
@@ -253,7 +246,7 @@ export default function UploadBoletas() {
           </aside>
           <Button
             disabled={!canUpload}
-            className="bg-gray-900 hover:bg-aftercode"
+            className="bg-gray-900 hover:bg-lex}"
             onClick={handleUpload}
           >
             <Upload className="mr-2 h-4 w-4" /> Subir{' '}
@@ -326,7 +319,6 @@ export default function UploadBoletas() {
         {/* Barra de progreso */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           {(['Profesional', 'Tercero'] as TipoBoleta[]).map((type) => {
-            // Contamos según el tipo
             const count = type === 'Profesional' ? profesionales.length : terceros.length
             const title = type === 'Profesional' ? 'Boletas Profesionales' : 'Boletas Terceros'
 
@@ -362,7 +354,6 @@ export default function UploadBoletas() {
           </TabsList>
 
           <TabsContent value={tabActiva} className="p-0 overflow-x-auto">
-            {/* Aquí pasamos “boletasParaMostrar” para que renderice TODO lo que llegó */}
             <BoletasTable boletas={boletasParaMostrar} type={tabActiva} onOpenPdf={handleOpenPdf} />
             {boletasParaMostrar.length === 0 && (
               <div className="py-8 text-center text-gray-500">No hay boletas</div>

@@ -6,9 +6,10 @@ import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
 import { PDFDocument } from 'pdf-lib'
+import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 export async function generateWrittenPdf(data: any): Promise<string> {
-  const escritoPath = 'C:\\boletas\\escrito.docx'
+  const escritoPath = `${BASE_OUTPUT_DIR}\\boletas\\escrito.docx`
   const template = fs.readFileSync(escritoPath)
   const docxBuffer = await createReport({
     template,

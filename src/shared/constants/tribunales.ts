@@ -1,1 +1,1 @@
-export const TRIBUNALES = ['primer', 'segundo', 'tercero']
+export const TRIBUNALES = ['primer', 'segundo', 'tercer']

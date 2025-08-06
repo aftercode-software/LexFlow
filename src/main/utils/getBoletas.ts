@@ -36,7 +36,7 @@ export async function getCSMBoletas(): Promise<{
   const baseDir = BASE_OUTPUT_DIR + '\\cedulas'
   const primerDir = path.join(baseDir, 'primer')
   const segundoDir = path.join(baseDir, 'segundo')
-  const tercerDir = path.join(baseDir, 'tercero')
+  const tercerDir = path.join(baseDir, 'tercer')
 
   await fs.mkdir(primerDir, { recursive: true })
   await fs.mkdir(segundoDir, { recursive: true })
