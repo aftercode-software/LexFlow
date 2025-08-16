@@ -97,7 +97,6 @@ export default function FormProfesionales({
 
       const result = await uploadBoleta(data, 'Profesional')
       if (result.success || result.updated) {
-        toast.success('Boleta subida correctamente')
         onComplete()
       }
     } catch (err) {

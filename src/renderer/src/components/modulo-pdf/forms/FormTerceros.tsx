@@ -98,7 +98,6 @@ export default function FormTerceros({
 
       const result = await uploadBoleta(data, 'Tercero')
       if (result.success || result.updated) {
-        toast.success('Boleta subida correctamente')
         onComplete()
       }
     } catch (err) {

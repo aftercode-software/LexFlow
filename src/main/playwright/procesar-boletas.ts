@@ -2,6 +2,7 @@ import { chromium, Page } from 'playwright'
 import { EnrichedBoleta } from '../../shared/interfaces/boletas'
 import path from 'path'
 import fs from 'fs'
+import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 // Procesar una sola boleta
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: boolean) {
@@ -79,10 +80,10 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
   }
 
   if (boleta.tipo === 'Profesional') {
-    const archivoPath = `C://boletas/profesionales/${boleta.boleta}.pdf`
+    const archivoPath = `${BASE_OUTPUT_DIR}/boletas/profesionales/${boleta.boleta}.pdf`
     await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   } else {
-    const archivoPath = `C://boletas/terceros/${boleta.boleta}.pdf`
+    const archivoPath = `${BASE_OUTPUT_DIR}/boletas/terceros/${boleta.boleta}.pdf`
     await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   }
 

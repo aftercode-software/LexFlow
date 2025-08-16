@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,15 +39,7 @@ function parseMonto(montoStr: string): number {
   return parseFloat(normalized) || 0
 }
 
-const BoletaRow: React.FC<BoletaRowProps> = ({ boleta, type, onOpenPdf }) => {
-  const formatMonto = (montoStr: string) => {
-    const value = parseMonto(montoStr)
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS'
-    }).format(value)
-  }
-
+const BoletaRow = ({ boleta, type, onOpenPdf }: BoletaRowProps) => {
   const badgeEstado = (estado: EstadoBoleta) => {
     let colorClass = 'bg-gray-100 text-gray-600 border-gray-200'
     if (estado === 'Revisada') colorClass = 'bg-blue-50 text-blue-700 border-blue-200'
@@ -68,7 +60,7 @@ const BoletaRow: React.FC<BoletaRowProps> = ({ boleta, type, onOpenPdf }) => {
       <TableCell>{boleta.recaudador.idNombre}</TableCell>
       {type === 'Tercero' && <TableCell>{boleta.expediente || '-'}</TableCell>}
       <TableCell>{boleta.fechaInicioDemanda}</TableCell>
-      <TableCell>{formatMonto(boleta.monto)}</TableCell>
+      <TableCell>${boleta.monto}</TableCell>
       <TableCell>{badgeEstado(boleta.estado)}</TableCell>
       <TableCell>
         <a
@@ -88,7 +80,7 @@ interface BoletasTableProps {
   type: TipoBoleta
   onOpenPdf: (path: string) => void
 }
-const BoletasTable: React.FC<BoletasTableProps> = ({ boletas, type, onOpenPdf }) => {
+const BoletasTable = ({ boletas, type, onOpenPdf }: BoletasTableProps) => {
   const headers = useMemo(
     () =>
       type === 'Profesional'
@@ -206,7 +198,7 @@ export default function UploadBoletas() {
   const revisadasConMonto = useMemo(() => {
     return revisadas.filter((b) => {
       const m = parseMonto(b.monto)
-      console.log(`→ Monto de ${b.boleta}:`, m)
+
       return modoInhibicion === 'con' ? m >= montoThreshold : m < montoThreshold
     })
   }, [revisadas, montoThreshold, modoInhibicion])
@@ -231,8 +223,6 @@ export default function UploadBoletas() {
   return (
     <div className="flex min-h-screen p-6">
       <div className="flex-1">
-        {boletasParaMostrar.length}
-        {/* Cabecera con nombre de usuario y botón de subir */}
         <div className="flex justify-between items-center mb-6">
           <aside>
             {isAuthenticated ? (
@@ -254,9 +244,7 @@ export default function UploadBoletas() {
           </Button>
         </div>
 
-        {/* Zona de filtros */}
         <div className="bg-white p-4 rounded-lg border border-gray-200 flex gap-6 mb-6">
-          {/* Monto mínimo para Inhibición */}
           <div>
             <Label className="flex items-center space-x-2">
               <span>Monto mínimo para Inhibición:</span>
@@ -269,7 +257,6 @@ export default function UploadBoletas() {
             </Label>
           </div>
 
-          {/* Filtro Inhibición */}
           <div>
             <Label className="flex items-center space-x-2">
               <span>Filtro Inhibición:</span>
@@ -288,7 +275,6 @@ export default function UploadBoletas() {
             </Label>
           </div>
 
-          {/* Select de Recaudadores filtrados */}
           <div>
             <Label className="flex items-center space-x-2">
               <span>Recaudador:</span>
@@ -303,7 +289,6 @@ export default function UploadBoletas() {
                     <SelectValue placeholder="Seleccionar recaudador" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Iteramos solo los que coinciden con la matrícula del user */}
                     {recaudadoresFiltrados.map((r) => (
                       <SelectItem key={r.id} value={String(r.id)}>
                         {r.id} – {r.nombre}
@@ -316,7 +301,6 @@ export default function UploadBoletas() {
           </div>
         </div>
 
-        {/* Barra de progreso */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           {(['Profesional', 'Tercero'] as TipoBoleta[]).map((type) => {
             const count = type === 'Profesional' ? profesionales.length : terceros.length
@@ -335,7 +319,6 @@ export default function UploadBoletas() {
           })}
         </div>
 
-        {/* Tabs Profesional / Tercero */}
         <Tabs
           value={tabActiva}
           onValueChange={(v) => {

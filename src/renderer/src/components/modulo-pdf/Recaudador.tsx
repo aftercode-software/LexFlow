@@ -28,6 +28,7 @@ export default function Recaudador() {
       setIsLoading(true)
       try {
         const recaudadores = (await window.api.getRecaudadores()) as Recaudador[]
+        console.log('Recaudadores obtenidos:', recaudadores)
         setRecaudadores(recaudadores)
       } catch (error) {
         console.error('Error al obtener recaudadores:', error)

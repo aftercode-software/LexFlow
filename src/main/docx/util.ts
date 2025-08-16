@@ -11,6 +11,7 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 export async function generateWrittenPdf(data: any): Promise<string> {
   const escritoPath = `${BASE_OUTPUT_DIR}\\boletas\\escrito.docx`
   const template = fs.readFileSync(escritoPath)
+  console.log('Generando PDF escrito con los datos:', data)
   const docxBuffer = await createReport({
     template,
     data,
