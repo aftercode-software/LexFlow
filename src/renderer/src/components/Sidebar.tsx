@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Link, useLocation } from 'react-router'
 import { useState } from 'react'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
-import aftercodeLogo from '../assets/aftercode-logo-white.png'
+import aftercodeLogo from '../assets/lexflow-white.png'
 
 const ICON_SIZE = 19
 
