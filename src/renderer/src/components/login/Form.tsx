@@ -80,7 +80,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         </Button>
         <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t flex justify-center after:content-['']">
           <span className="bg-background text-muted-foreground relative z-10 px-2">
-            Al usar el LexFlow aceptas los{' '}
+            Al usar el Legali aceptas los{' '}
             <Link
               to="/terminos-condiciones"
               className="underline-offset-4 text-lex hover:underline font-semibold"

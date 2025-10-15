@@ -17,7 +17,7 @@ function createWindow(): void {
     width: 1600,
     height: 900,
     show: false,
-    title: 'LexFlow',
+    title: 'Legali',
     titleBarOverlay: {
       color: '#ffffff',
       symbolColor: '#000000',

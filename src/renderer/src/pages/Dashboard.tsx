@@ -13,7 +13,7 @@ import {
 export default function Dashboard() {
   return (
     <div className="p-6 flex flex-col min-h-screen">
-      <Title title="Dashboard" subtitle="Bienvenido al panel de control de LexFlow" />
+      <Title title="Dashboard" subtitle="Bienvenido al panel de control de Legali" />
       <div className="grid grid-cols-1 my-10 md:grid-cols-2 lg:grid-cols-5 gap-4 blur-sm">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

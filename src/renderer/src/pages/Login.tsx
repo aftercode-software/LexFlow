@@ -17,7 +17,7 @@ export default function Login() {
               <img src={aftercodeLogo} alt="" />
             </div>
             <aside>
-              <p className="font-semibold text-black">LexFlow</p>
+              <p className="font-semibold text-black">Legali</p>
               <p className="text-sm text-zinc-600">
                 producto de{' '}
                 <b className="font-medium hover:text-aftercode transition-colors duration-200">

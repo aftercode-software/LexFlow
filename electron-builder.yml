@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: LexFlow
+productName: Legali
 copyright: Copyright © 2025 Aftercode
 directories:
   buildResources: build
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: LexFlow
+  executableName: Legali
   icon: resources/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}

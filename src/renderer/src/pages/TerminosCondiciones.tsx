@@ -19,7 +19,7 @@ export default function TerminosCondiciones() {
               <img src={aftercodeLogo} alt="" />
             </div>
             <aside>
-              <p className="font-semibold text-black">LexFlow</p>
+              <p className="font-semibold text-black">Legali</p>
               <p className="text-sm text-zinc-600">
                 producto de{' '}
                 <b className="font-medium hover:text-aftercode transition-colors duration-200">
@@ -41,7 +41,7 @@ export default function TerminosCondiciones() {
         <div className="flex flex-1 mt-10 items-center justify-center">
           <div className="w-full">
             <h1 className="scroll-m-20 text-center text-4xl font-bold tracking-tight text-balance">
-              Términos y Condiciones de Uso – LexFlow{' '}
+              Términos y Condiciones de Uso – Legali{' '}
             </h1>
 
             <p className="leading-7 [&:not(:first-child)]:mt-6">
@@ -54,7 +54,7 @@ export default function TerminosCondiciones() {
               1. Responsabilidad del Usuario
             </h2>
             <p className="leading-7 [&:not(:first-child)]:mt-6">
-              LexFlow es una herramienta de apoyo diseñada para optimizar y automatizar procesos
+              Legali es una herramienta de apoyo diseñada para optimizar y automatizar procesos
               relacionados con la gestión y carga de documentos judiciales. Sin embargo,{' '}
               <b className="font-semibold">
                 {' '}
@@ -84,7 +84,7 @@ export default function TerminosCondiciones() {
               2. Limitación de Responsabilidad
             </h2>
             <p className="leading-7 [&:not(:first-child)]:mt-6">
-              LexFlow
+              Legali
               <b className="font-semibold">
                 {' '}
                 no se responsabiliza por errores, omisiones, omisión de plazos, documentos mal
@@ -94,12 +94,12 @@ export default function TerminosCondiciones() {
               sitio web del Poder Judicial de Mendoza, en el Portal de la Caja Forense ni en sus
               respectivos sistemas de gestión, por lo que{' '}
               <b className="font-semibold">
-                cualquier acción realizada por el usuario fuera de LexFlow escapa totalmente al
+                cualquier acción realizada por el usuario fuera de Legali escapa totalmente al
                 alcance de esta herramienta.
               </b>
               <br />
               <br />
-              Asimismo, LexFlow no garantiza que los archivos escaneados, completados o subidos sean
+              Asimismo, Legali no garantiza que los archivos escaneados, completados o subidos sean
               aceptados por las plataformas externas ni se hace responsable por posibles rechazos,
               observaciones, demoras o consecuencias legales derivadas del uso incorrecto del
               sistema.
@@ -109,8 +109,8 @@ export default function TerminosCondiciones() {
               3. OBJETO
             </h2>
             <p className="leading-7 [&:not(:first-child)]:mt-6">
-              Al utilizar LexFlow, el usuario declara conocer y aceptar estos términos, asumiendo
-              plena responsabilidad por el uso del sistema. LexFlow funciona únicamente como un
+              Al utilizar Legali, el usuario declara conocer y aceptar estos términos, asumiendo
+              plena responsabilidad por el uso del sistema. Legali funciona únicamente como un
               asistente técnico-operativo y{' '}
               <b className="font-semibold">
                 no reemplaza la revisión profesional, ni exonera al usuario de sus obligaciones como
@@ -120,10 +120,10 @@ export default function TerminosCondiciones() {
 
             <p className="leading-7 [&:not(:first-child)]:mt-6">
               <em>
-                Al usar LexFlow, el usuario acepta que la plataforma no es responsable por haber
+                Al usar Legali, el usuario acepta que la plataforma no es responsable por haber
                 leído, entendido y aceptado en su totalidad los presentes Términos y Condiciones de
                 Uso, obligándose a darles estricto cumplimiento desde el momento en que instale o
-                utilice el Software LexFlow.
+                utilice el Software Legali.
               </em>
             </p>
           </div>

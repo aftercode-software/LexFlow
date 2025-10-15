@@ -48,7 +48,7 @@ export function Sidebar() {
                 isOpen ? 'opacity-100 delay-500' : 'opacity-0 delay-0 pointer-events-none'
               )}
             >
-              <p className="font-semibold text-black">LexFlow</p>
+              <p className="font-semibold text-black">Legali</p>
               <p className="text-sm text-zinc-600">Tu gestor de boletas</p>
             </div>
           </div>

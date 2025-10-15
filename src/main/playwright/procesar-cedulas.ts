@@ -58,7 +58,7 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
     .fill(cedula.cuij)
   await page.locator('xpath=/html/body/div[5]/div[2]/form/div[1]/span/input[1]').click()
   await page.waitForTimeout(1000)
-  const archivoPath = `C://LexFlow/cedulas/${cedula.tipoTribunal}/${cedula.cuij}.pdf`
+  const archivoPath = `C://Legali/cedulas/${cedula.tipoTribunal}/${cedula.cuij}.pdf`
   await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   await page.waitForTimeout(2000)
   await page
