@@ -2,15 +2,21 @@
 import { spawn } from 'child_process'
 import { createReport } from 'docx-templates'
 import fsPromises from 'fs/promises'
-import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
 import { PDFDocument } from 'pdf-lib'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
+let cachedEscritoTemplate: Buffer | null = null
+
 export async function generateWrittenPdf(data: any): Promise<string> {
-  const escritoPath = `${BASE_OUTPUT_DIR}\\boletas\\escrito.docx`
-  const template = fs.readFileSync(escritoPath)
+  const escritoPath = path.join(BASE_OUTPUT_DIR, 'boletas', 'escrito.docx')
+
+  if (!cachedEscritoTemplate) {
+    cachedEscritoTemplate = await fsPromises.readFile(escritoPath)
+  }
+  const template = cachedEscritoTemplate
+
   console.log('Generando PDF escrito con los datos:', data)
   const docxBuffer = await createReport({
     template,
@@ -35,6 +41,7 @@ export async function generateWrittenPdf(data: any): Promise<string> {
       docxPath
     ])
     proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`soffice exit ${code}`))))
+    proc.on('error', reject)
   })
 
   const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
@@ -45,21 +52,35 @@ export async function mergePdfs(
   originalPdfPath: string,
   writtenPdfPath: string
 ): Promise<Uint8Array> {
-  const [origBytes, writtenBytes] = await Promise.all([
-    fsPromises.readFile(originalPdfPath),
-    fsPromises.readFile(writtenPdfPath)
-  ])
+  const tempOut = path.join(app.getPath('temp'), `merged-${Date.now()}.pdf`)
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const proc = spawn('pdfunite', [originalPdfPath, writtenPdfPath, tempOut])
+      proc.on('close', (code) =>
+        code === 0 ? resolve() : reject(new Error(`pdfunite exit ${code}`))
+      )
+      proc.on('error', reject)
+    })
+    const merged = await fsPromises.readFile(tempOut)
+    await fsPromises.unlink(tempOut).catch(() => null)
+    return merged
+  } catch {
+    const [origBytes, writtenBytes] = await Promise.all([
+      fsPromises.readFile(originalPdfPath),
+      fsPromises.readFile(writtenPdfPath)
+    ])
 
-  const mergedDoc = await PDFDocument.create()
-  const [origDoc, writtenDoc] = await Promise.all([
-    PDFDocument.load(origBytes),
-    PDFDocument.load(writtenBytes)
-  ])
+    const mergedDoc = await PDFDocument.create()
+    const [origDoc, writtenDoc] = await Promise.all([
+      PDFDocument.load(origBytes),
+      PDFDocument.load(writtenBytes)
+    ])
 
-  const origPages = await mergedDoc.copyPages(origDoc, origDoc.getPageIndices())
-  const writtenPages = await mergedDoc.copyPages(writtenDoc, writtenDoc.getPageIndices())
-  origPages.forEach((p) => mergedDoc.addPage(p))
-  writtenPages.forEach((p) => mergedDoc.addPage(p))
+    const origPages = await mergedDoc.copyPages(origDoc, origDoc.getPageIndices())
+    const writtenPages = await mergedDoc.copyPages(writtenDoc, writtenDoc.getPageIndices())
+    origPages.forEach((p) => mergedDoc.addPage(p))
+    writtenPages.forEach((p) => mergedDoc.addPage(p))
 
-  return mergedDoc.save()
+    return mergedDoc.save()
+  }
 }
