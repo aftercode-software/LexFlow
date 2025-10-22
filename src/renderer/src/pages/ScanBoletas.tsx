@@ -21,7 +21,7 @@ export default function ScanBoletas() {
   const [step, setStep] = useState<Steps>(Steps.UPLOAD)
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>(null)
+  const [typePDF, setTypePDF] = useState<'profesional' | 'tercero' | null>('tercero')
   const [extractedData, setExtractedData] = useState<
     FormularioProfesionales | FormularioTerceros | null
   >(null)
@@ -115,12 +115,11 @@ export default function ScanBoletas() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Profesional Card */}
                 <Card
-                  className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  className={`cursor-pointer transition-all duration-200  ${
                     typePDF === 'profesional'
                       ? 'ring-2 ring-blue-500 bg-blue-50 border-blue-200'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setTypePDF('profesional')}
                 >
                   <CardContent className="p-4 text-center">
                     <div className="flex flex-col items-center space-y-3">
@@ -128,14 +127,14 @@ export default function ScanBoletas() {
                         className={`w-12 h-12 rounded-full flex items-center justify-center ${
                           typePDF === 'profesional'
                             ? 'bg-blue-100 text-blue-600'
-                            : 'bg-gray-100 text-gray-500'
+                            : 'bg-gray-100 text-gray-400'
                         }`}
                       >
-                        <BriefcaseBusiness className="w-6 h-6" />
+                        <BriefcaseBusiness className="w-6 h-6 text-gray-400" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">Profesional</h3>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <h3 className="font-medium text-gray-400">Profesional</h3>
+                        <p className="text-sm text-gray-400 mt-1">
                           Boleta de servicios profesionales
                         </p>
                       </div>

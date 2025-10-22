@@ -7,7 +7,7 @@ export async function createWorker() {
 
 export const options = {
   quality: 100,
-  density: 300,
+  density: 450,
   format: 'jpg',
   width: 1200,
   height: 1600

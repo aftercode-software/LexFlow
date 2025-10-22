@@ -10,7 +10,7 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 let cachedEscritoTemplate: Buffer | null = null
 
 export async function generateWrittenPdf(data: any): Promise<string> {
-  const escritoPath = path.join(BASE_OUTPUT_DIR, 'boletas', 'escrito.docx')
+  const escritoPath = path.join(BASE_OUTPUT_DIR, 'boletas', 'escritoATM.docx')
 
   if (!cachedEscritoTemplate) {
     cachedEscritoTemplate = await fsPromises.readFile(escritoPath)
