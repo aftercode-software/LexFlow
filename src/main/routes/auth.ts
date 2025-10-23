@@ -9,6 +9,7 @@ const tokenFile = path.join(app.getPath('userData'), 'token.enc')
 export function registerAuthHandlers() {
   ipcMain.handle('login', async (_, username: string, password: string) => {
     const res = await backend.post('/auth/login', { username, password })
+    console.log('res', username, password)
     if (!res.ok) throw new Error(res.statusText)
 
     const { access_token } = res.data

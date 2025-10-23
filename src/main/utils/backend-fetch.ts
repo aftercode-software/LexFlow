@@ -36,8 +36,9 @@ export async function apiRequest<T = any>(
     defaultHeaders['Content-Type'] = 'application/json'
   }
 
-  const url = `https://scrapper-back-two.vercel.app/api${endpoint}`
+  const url = `http://localhost:3000/api${endpoint}`
 
+  console.log('url', url)
   try {
     const response = await fetch(url, {
       method,

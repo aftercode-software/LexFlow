@@ -14,13 +14,12 @@ import { Search, CheckCircle2 } from 'lucide-react'
 import { validateDocument, buscarDemandado } from '@renderer/utils/document'
 import { cn } from '@/lib/utils'
 import { z } from 'zod'
-import { baseFormSchema } from '@renderer/lib/schemas/forms.schemas'
 import { DocField } from '@shared/interfaces/demandado'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { extraerDocumento } from '@shared/utils/document'
 import { toast } from 'sonner'
+import { datosFormularioSchema } from '@renderer/lib/schemas/forms.schemas'
 
-type FormValues = z.infer<typeof baseFormSchema>
+type FormValues = z.infer<typeof datosFormularioSchema>
 
 export default function Demandado({ form }: { form: UseFormReturn<FormValues> }) {
   const {
@@ -38,10 +37,11 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
   const [accordionOpen, setAccordionOpen] = useState<string>('')
   const previousValue = useRef('')
 
-  const tipo = watch('tipo')
   const dni = watch('demandado.dni')
   const cuil = watch('demandado.cuil')
   const cuit = watch('demandado.cuit')
+
+  console.log('form', form.getValues())
 
   useEffect(() => {
     let field: DocField = 'dni'
@@ -151,22 +151,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
         )}
       />
 
-      {tipo === 'Profesional' && (
-        <FormField
-          name="demandado.matricula"
-          control={control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Matrícula</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value ?? ''} />
-              </FormControl>
-              <FormMessage>{errors.demandado?.matricula?.message}</FormMessage>
-            </FormItem>
-          )}
-        />
-      )}
-
       {/* Autocompletados */}
       {autoFields.length > 0 ? (
         <Accordion
@@ -223,31 +207,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                         <FormLabel>Nombre completo</FormLabel>
                         <FormControl>
                           <Input {...field} className="border-green-200 bg-green-50" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Fila 2 */}
-                <div className="col-span-1">
-                  <FormField
-                    name="demandado.domicilioTipo"
-                    control={control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipo domicilio</FormLabel>
-                        <FormControl>
-                          <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Seleccione tipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="REAL">REAL</SelectItem>
-                              <SelectItem value="ESPECIAL">ESPECIAL</SelectItem>
-                              <SelectItem value="FISCAL">FISCAL</SelectItem>
-                            </SelectContent>
-                          </Select>
                         </FormControl>
                       </FormItem>
                     )}
@@ -314,31 +273,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                   <FormLabel>Nombre completo</FormLabel>
                   <FormControl>
                     <Input {...field} className="" />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Fila 2 */}
-          <div className="col-span-1">
-            <FormField
-              name="demandado.domicilioTipo"
-              control={control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tipo domicilio</FormLabel>
-                  <FormControl>
-                    <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleccione tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="REAL">REAL</SelectItem>
-                        <SelectItem value="ESPECIAL">ESPECIAL</SelectItem>
-                        <SelectItem value="FISCAL">FISCAL</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </FormControl>
                 </FormItem>
               )}

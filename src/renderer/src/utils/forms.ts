@@ -1,3 +1,4 @@
+import { Naturalezas } from '@shared/interfaces/boletas'
 import { toast } from 'sonner'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -13,10 +14,14 @@ export async function generatePDF(
 
 export async function uploadBoleta(
   data: any,
-  tipo: 'Tercero' | 'Profesional'
+  tipo: Naturalezas
 ): Promise<{ success: boolean; updated: boolean; message: string }> {
   try {
-    const result = await window.api.uploadBoleta(data, tipo)
+    console.log('data', data)
+    const normalizedType = tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase()
+
+    console.log('normalizedType', normalizedType)
+    const result = await window.api.uploadBoleta(data, normalizedType)
     console.log('Resultado de la subida de boleta:', result)
     switch (result) {
       case 201:

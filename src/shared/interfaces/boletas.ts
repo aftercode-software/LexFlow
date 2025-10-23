@@ -4,6 +4,8 @@ export type TribunalKey = 'primer' | 'segundo' | 'tercer'
 export type TipoBoleta = 'Profesional' | 'Tercero'
 export type EstadoBoleta = 'Generada' | 'Revisada' | 'Subida' | 'Error'
 
+export type Naturalezas = 'automotores' | 'inmobiliarios' | 'ingresos-brutos' | 'sellos' | 'multas'
+
 export interface EnrichedBoleta {
   id: number
   boleta: string

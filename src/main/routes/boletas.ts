@@ -7,12 +7,13 @@ export function registerBoletaHandlers() {
   ipcMain.handle('uploadBoleta', async (_, { data, tipo }) => {
     const boleta = {
       recaudadorId: data.recaudador.idNombre,
-      fechaEmision: data.fechaEmision,
-      tipo,
       boleta: data.boleta,
+      fechaEmision: data.fechaEmision,
+      secuencia: data.secuencia,
+      tipo,
       bruto: data.bruto,
       valorEnLetras: data.valorEnLetras,
-      expediente: data.expediente,
+      objeto: data.objeto,
       demandado: data.demandado,
       estado: data.estado
     }

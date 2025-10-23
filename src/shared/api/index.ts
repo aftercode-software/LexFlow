@@ -1,5 +1,5 @@
 import { APIResponse } from 'playwright'
-import { EnrichedBoleta } from '../interfaces/boletas'
+import { EnrichedBoleta, Naturalezas } from '../interfaces/boletas'
 import { CedulaFiltrada } from '../interfaces/cedulas'
 import { FormularioCSM } from '../interfaces/form'
 import { RecaudadorEntity } from '../interfaces/recaudador'
@@ -10,7 +10,7 @@ export interface Api {
   getToken: () => Promise<string | null>
   logout: () => Promise<any>
 
-  extractDataFromPdf: (arrayBuffer: ArrayBuffer, pdfType: 'profesional' | 'tercero') => Promise<any>
+  extractDataFromPdf: (arrayBuffer: ArrayBuffer, pdfType: Naturalezas) => Promise<any>
   extractDataFromCSMPdf: (arrayBuffer: ArrayBuffer) => Promise<any>
 
   getDemandados(): Promise<any>
