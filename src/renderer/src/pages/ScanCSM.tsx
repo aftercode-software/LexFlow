@@ -172,7 +172,7 @@ export default function ScanCedulas() {
             <div className="grid gap-6">
               <FormCSM
                 cuij={extractedData.cuij}
-                numeroJuicio={extractedData.numeroJuicio}
+                boleta={extractedData.boleta}
                 pdfRoute={originalPdfPath}
                 tribunal={typePDF}
                 onComplete={handleFormComplete}

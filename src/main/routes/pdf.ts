@@ -15,16 +15,21 @@ export function registerPdfHandlers() {
 
   ipcMain.handle('generateDocument', async (_, { data, originalPdfPath }) => {
     const writtenPdfPath = await generateWrittenPdf(data)
-
     const mergedBytes = await mergePdfs(originalPdfPath, writtenPdfPath)
 
-    const outputDir =
-      data.tipo === 'Profesional'
-        ? `${BASE_OUTPUT_DIR}\\boletas\\profesionales`
-        : `${BASE_OUTPUT_DIR}\\boletas\\terceros`
+    console.log('datssssa', data)
+
+    let outputDir = `${BASE_OUTPUT_DIR}\\boletas`
+
+    if (data.tipo === 'multas') {
+      outputDir = path.join(outputDir, 'multas')
+    } else {
+      outputDir = path.join(outputDir, 'otros')
+    }
+
     await fsPromises.mkdir(outputDir, { recursive: true })
 
-    const finalPath = path.join(outputDir, `${data.boleta}.pdf`)
+    const finalPath = path.join(outputDir, `ATM${data.boleta}.pdf`)
     await fsPromises.writeFile(finalPath, mergedBytes)
 
     return { success: true, path: finalPath }

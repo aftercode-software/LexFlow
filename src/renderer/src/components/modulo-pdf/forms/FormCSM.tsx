@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { baseFormSchema, csmSchema } from '@renderer/lib/schemas/forms.schemas'
+import { csmSchema } from '@renderer/lib/schemas/forms.schemas'
 import { FieldErrors, useForm } from 'react-hook-form'
 import { z } from 'zod'
 
@@ -18,11 +18,10 @@ import { FormularioCSM } from '@shared/interfaces/form'
 import { uploadBoletaCSM } from '@renderer/utils/csm'
 
 type FormValues = z.infer<typeof csmSchema>
-export type BaseFormValues = z.infer<typeof baseFormSchema>
 
 export default function FormCSM({
   cuij,
-  numeroJuicio,
+  boleta,
   pdfRoute,
   tribunal,
   onComplete
@@ -33,7 +32,7 @@ export default function FormCSM({
     resolver: zodResolver(csmSchema),
     defaultValues: {
       cuij: cuij || '',
-      numeroJuicio: numeroJuicio || ''
+      boleta: boleta || ''
     }
   })
 
@@ -96,11 +95,11 @@ export default function FormCSM({
             )}
           />
           <FormField
-            name="numeroJuicio"
+            name="boleta"
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Número de juicio</FormLabel>
+                <FormLabel>Boleta</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

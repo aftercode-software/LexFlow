@@ -72,11 +72,11 @@ export const datosFormularioSchema = z.object({
     .string({ required_error: 'La fecha de emisión es obligatoria' })
     .min(1, 'La fecha de emisión es obligatoria'),
 
-  secuencia: z
-    .string({ required_error: 'La secuencia es obligatoria' })
-    .min(1, 'La secuencia es obligatoria'),
+  secuencia: z.string().nullable().optional(),
 
-  objeto: z.string().nullable().optional(),
+  objeto: z
+    .string({ required_error: 'El objeto es obligatorio' })
+    .min(1, 'El objeto es obligatorio'),
 
   bruto: z
     .number({ required_error: 'El monto bruto es obligatorio' })
@@ -91,7 +91,7 @@ export type DatosFormulario = z.infer<typeof datosFormularioSchema>
 
 export const csmSchema = z.object({
   cuij: z.string({ required_error: 'El CUIJ es obligatorio' }).min(1, 'El CUIJ es obligatorio'),
-  numeroJuicio: z
-    .string({ required_error: 'El número de juicio es obligatorio' })
-    .min(1, 'El número de juicio es obligatorio')
+  boleta: z
+    .string({ required_error: 'El número de boleta es obligatorio' })
+    .min(1, 'El número de boleta es obligatorio')
 })

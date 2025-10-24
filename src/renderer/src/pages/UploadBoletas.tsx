@@ -16,7 +16,7 @@ import { FileText, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@renderer/context/PoderJudicialContext'
 import { toast } from 'sonner'
-import { EnrichedBoleta, TipoBoleta, EstadoBoleta } from '@renderer/interface/boleta'
+import { EnrichedBoleta, EstadoBoleta } from '@renderer/interface/boleta'
 import { RecaudadorEntity } from '@shared/interfaces/recaudador'
 import { Label } from '@renderer/components/ui/label'
 import {
@@ -27,19 +27,21 @@ import {
   SelectValue
 } from '@renderer/components/ui/select'
 import { Input } from '@renderer/components/ui/input'
-import { BASE_OUTPUT_DIR } from '@shared/constants/output-dir'
+
+type TabKey = 'Todas' | 'Multas'
 
 type BoletaRowProps = {
   boleta: EnrichedBoleta
-  type: TipoBoleta
+  showExpediente: boolean
+  pdfDir: string
   onOpenPdf: (path: string) => void
 }
+
 function parseMonto(montoStr: string): number {
-  const normalized = montoStr.replace(/\s|\./g, '').replace(',', '.')
-  return parseFloat(normalized) || 0
+  return parseFloat(montoStr) || 0
 }
 
-const BoletaRow = ({ boleta, type, onOpenPdf }: BoletaRowProps) => {
+const BoletaRow = ({ boleta, showExpediente, pdfDir, onOpenPdf }: BoletaRowProps) => {
   const badgeEstado = (estado: EstadoBoleta) => {
     let colorClass = 'bg-gray-100 text-gray-600 border-gray-200'
     if (estado === 'Revisada') colorClass = 'bg-blue-50 text-blue-700 border-blue-200'
@@ -51,21 +53,21 @@ const BoletaRow = ({ boleta, type, onOpenPdf }: BoletaRowProps) => {
     )
   }
 
-  const folder = type === 'Tercero' ? 'terceros' : 'profesionales'
+  const pdfPath = `${pdfDir}\\${boleta.boleta}.pdf`
 
   return (
     <TableRow>
       <TableCell className="font-medium">{boleta.boleta}</TableCell>
       <TableCell>{boleta.demandado.apellidoYNombre}</TableCell>
       <TableCell>{boleta.recaudador.idNombre}</TableCell>
-      {type === 'Tercero' && <TableCell>{boleta.expediente || '-'}</TableCell>}
+      {showExpediente && <TableCell>{boleta.expediente || '-'}</TableCell>}
       <TableCell>{boleta.fechaInicioDemanda}</TableCell>
       <TableCell>${boleta.monto}</TableCell>
       <TableCell>{badgeEstado(boleta.estado)}</TableCell>
       <TableCell>
         <a
           className="flex items-center hover:underline cursor-pointer"
-          onClick={() => onOpenPdf(`${BASE_OUTPUT_DIR}\\boletas\\${folder}\\${boleta.boleta}.pdf`)}
+          onClick={() => onOpenPdf(pdfPath)}
         >
           <FileText className="mr-2 h-4 w-4 text-gray-400" />
           {boleta.boleta}
@@ -77,15 +79,16 @@ const BoletaRow = ({ boleta, type, onOpenPdf }: BoletaRowProps) => {
 
 interface BoletasTableProps {
   boletas: EnrichedBoleta[]
-  type: TipoBoleta
+  showExpediente: boolean
+  pdfDir: string
   onOpenPdf: (path: string) => void
 }
-const BoletasTable = ({ boletas, type, onOpenPdf }: BoletasTableProps) => {
+
+const BoletasTable = ({ boletas, showExpediente, pdfDir, onOpenPdf }: BoletasTableProps) => {
   const headers = useMemo(
     () =>
-      type === 'Profesional'
-        ? ['Boleta', 'Demandado', 'Recaudador', 'Fecha Demanda', 'Monto', 'Estado', 'Escrito']
-        : [
+      showExpediente
+        ? [
             'Boleta',
             'Demandado',
             'Recaudador',
@@ -94,8 +97,9 @@ const BoletasTable = ({ boletas, type, onOpenPdf }: BoletasTableProps) => {
             'Monto',
             'Estado',
             'Escrito'
-          ],
-    [type]
+          ]
+        : ['Boleta', 'Demandado', 'Recaudador', 'Fecha Demanda', 'Monto', 'Estado', 'Escrito'],
+    [showExpediente]
   )
 
   return (
@@ -109,7 +113,13 @@ const BoletasTable = ({ boletas, type, onOpenPdf }: BoletasTableProps) => {
       </TableHeader>
       <TableBody>
         {boletas.map((b) => (
-          <BoletaRow key={b.id} boleta={b} type={type} onOpenPdf={onOpenPdf} />
+          <BoletaRow
+            key={b.id}
+            boleta={b}
+            showExpediente={showExpediente}
+            pdfDir={pdfDir}
+            onOpenPdf={onOpenPdf}
+          />
         ))}
       </TableBody>
     </Table>
@@ -121,10 +131,13 @@ export default function UploadBoletas() {
   const [loadingRecaudadores, setLoadingRecaudadores] = useState(false)
   const [, setLoadingBoletas] = useState(false)
 
-  const [profesionales, setProfesionales] = useState<EnrichedBoleta[]>([])
-  const [terceros, setTerceros] = useState<EnrichedBoleta[]>([])
+  const [todas, setTodas] = useState<EnrichedBoleta[]>([])
+  const [multas, setMultas] = useState<EnrichedBoleta[]>([])
 
-  const [tabActiva, setTabActiva] = useState<TipoBoleta>('Profesional')
+  const [otrosDir, setOtrosDir] = useState<string>('') // dir para "Todas"
+  const [multasDir, setMultasDir] = useState<string>('') // dir para "Multas"
+
+  const [tabActiva, setTabActiva] = useState<TabKey>('Todas')
 
   const [montoThreshold, setMontoThreshold] = useState<number>(30000)
   const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
@@ -160,18 +173,26 @@ export default function UploadBoletas() {
     const fetchBoletas = async () => {
       setLoadingBoletas(true)
       try {
-        const { profesionales: profesionalesDesdeAPI, terceros: tercerosDesdeAPI } =
-          await window.api.getBoletasToUpload(selectedRecaudadorId)
+        const {
+          boletasTodas,
+          boletasMultas,
+          multasDir: mDir,
+          otrosDir: oDir
+        } = await window.api.getBoletasToUpload(selectedRecaudadorId)
 
-        console.log('→ RAW [profesionalesDesdeAPI]:', profesionalesDesdeAPI)
-        console.log('→ RAW [tercerosDesdeAPI]:', tercerosDesdeAPI)
+        console.log('→ RAW [boletasTodas]:', todas)
+        console.log('→ RAW [boletasMultas]:', boletasMultas)
 
-        setProfesionales(profesionalesDesdeAPI || [])
-        setTerceros(tercerosDesdeAPI || [])
+        setTodas(boletasTodas || [])
+        setMultas(boletasMultas || [])
+        setMultasDir(mDir || '')
+        setOtrosDir(oDir || '')
       } catch (error) {
         console.error('Error al obtener boletas:', error)
-        setProfesionales([])
-        setTerceros([])
+        setTodas([])
+        setMultas([])
+        setMultasDir('')
+        setOtrosDir('')
       } finally {
         setLoadingBoletas(false)
       }
@@ -187,21 +208,22 @@ export default function UploadBoletas() {
   }, [isAuthenticated])
 
   const boletasActuales = useMemo(
-    () => (tabActiva === 'Profesional' ? profesionales : terceros),
-    [tabActiva, profesionales, terceros]
+    () => (tabActiva === 'Todas' ? todas : multas),
+    [tabActiva, todas, multas]
   )
 
   const revisadas = useMemo(
     () => boletasActuales.filter((b) => b.estado === 'Revisada').slice(0, 25),
     [boletasActuales]
   )
+
   const revisadasConMonto = useMemo(() => {
     return revisadas.filter((b) => {
       const m = parseMonto(b.monto)
-
       return modoInhibicion === 'con' ? m >= montoThreshold : m < montoThreshold
     })
   }, [revisadas, montoThreshold, modoInhibicion])
+
   const boletasParaMostrar = revisadasConMonto
 
   const canUpload = useMemo(
@@ -214,11 +236,16 @@ export default function UploadBoletas() {
   }
 
   const handleUpload = () => {
-    const oficial2 = selectedRecaudadorId === 801 ? true : false
+    const oficial2 = selectedRecaudadorId === 801
     console.log('oficial2:', oficial2)
-
     window.api.iniciarCargaJudicial(boletasParaMostrar, montoThreshold, modoInhibicion, oficial2)
   }
+
+  const countTodas = todas.length
+  const countMultas = multas.length
+
+  const currentPdfDir = tabActiva === 'Multas' ? multasDir : otrosDir
+  const showExpediente = tabActiva === 'Multas' // si solo querés mostrar expediente en Multas
 
   return (
     <div className="flex min-h-screen p-6">
@@ -234,13 +261,8 @@ export default function UploadBoletas() {
               <p className="text-sm text-gray-500">Inicia sesión para ver boletas</p>
             )}
           </aside>
-          <Button
-            disabled={!canUpload}
-            className="bg-gray-900 hover:bg-lex}"
-            onClick={handleUpload}
-          >
-            <Upload className="mr-2 h-4 w-4" /> Subir{' '}
-            {tabActiva === 'Profesional' ? 'Profesionales' : 'Terceros'}
+          <Button disabled={!canUpload} className="bg-gray-900 hover:bg-lex" onClick={handleUpload}>
+            <Upload className="mr-2 h-4 w-4" /> Subir {tabActiva}
           </Button>
         </div>
 
@@ -302,42 +324,42 @@ export default function UploadBoletas() {
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
-          {(['Profesional', 'Tercero'] as TipoBoleta[]).map((type) => {
-            const count = type === 'Profesional' ? profesionales.length : terceros.length
-            const title = type === 'Profesional' ? 'Boletas Profesionales' : 'Boletas Terceros'
-
-            return (
-              <div key={type} className="bg-white p-4 rounded-lg border border-gray-200">
-                <div className="flex justify-between mb-2">
-                  <h3 className="font-medium">{title}</h3>
-                  <span className="text-sm font-medium">{count}</span>
-                </div>
-                <Progress value={(count / 25) * 100} className="h-2" />
-                <p className="text-sm text-gray-500 mt-2">{count} disponibles</p>
+          {[
+            { key: 'Todas' as const, count: countTodas, title: 'Todas las boletas' },
+            { key: 'Multas' as const, count: countMultas, title: 'Boletas de Multa' }
+          ].map(({ key, count, title }) => (
+            <div key={key} className="bg-white p-4 rounded-lg border border-gray-200">
+              <div className="flex justify-between mb-2">
+                <h3 className="font-medium">{title}</h3>
+                <span className="text-sm font-medium">{count}</span>
               </div>
-            )
-          })}
+              <Progress value={(count / 25) * 100} className="h-2" />
+              <p className="text-sm text-gray-500 mt-2">{count} disponibles</p>
+            </div>
+          ))}
         </div>
 
         <Tabs
           value={tabActiva}
-          onValueChange={(v) => {
-            console.log('Cambiando tab a:', v)
-            setTabActiva(v as TipoBoleta)
-          }}
+          onValueChange={(v) => setTabActiva(v as TabKey)}
           className="bg-white rounded-lg border border-gray-200"
         >
           <TabsList className="w-full border-b border-gray-200">
-            <TabsTrigger value="Profesional" className="flex-1">
-              Profesionales
+            <TabsTrigger value="Todas" className="flex-1">
+              Todas
             </TabsTrigger>
-            <TabsTrigger value="Tercero" className="flex-1">
-              Terceros
+            <TabsTrigger value="Multas" className="flex-1">
+              Multas
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value={tabActiva} className="p-0 overflow-x-auto">
-            <BoletasTable boletas={boletasParaMostrar} type={tabActiva} onOpenPdf={handleOpenPdf} />
+            <BoletasTable
+              boletas={boletasParaMostrar}
+              showExpediente={showExpediente}
+              pdfDir={currentPdfDir}
+              onOpenPdf={handleOpenPdf}
+            />
             {boletasParaMostrar.length === 0 && (
               <div className="py-8 text-center text-gray-500">No hay boletas</div>
             )}

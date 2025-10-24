@@ -15,5 +15,5 @@ export type DatosFormulario = {
 
 export type FormularioCSM = {
   cuij: string
-  numeroJuicio: string
+  boleta?: string
 }

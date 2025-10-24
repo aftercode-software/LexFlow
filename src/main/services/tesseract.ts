@@ -12,3 +12,11 @@ export const options = {
   width: 1200,
   height: 1600
 }
+
+export const optionsCSM = {
+  quality: 100,
+  density: 450,
+  format: 'jpg',
+  width: 1600,
+  height: 1131
+}

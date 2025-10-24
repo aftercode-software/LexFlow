@@ -14,8 +14,10 @@ export async function generatePDF(
 
 export async function uploadBoleta(
   data: any,
-  tipo: Naturalezas
+  tipo: Naturalezas | null
 ): Promise<{ success: boolean; updated: boolean; message: string }> {
+  if (!tipo) return { success: false, updated: false, message: 'no type' }
+
   try {
     console.log('data', data)
     const normalizedType = tipo.charAt(0).toUpperCase() + tipo.slice(1).toLowerCase()

@@ -4,25 +4,34 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 export async function getPdfNames(dir: string): Promise<string[]> {
   const files = await fs.readdir(dir)
-  return files.filter((f) => f.toLowerCase().endsWith('.pdf')).map((f) => path.parse(f).name)
+
+  return files
+    .filter((f) => f.toLowerCase().endsWith('.pdf'))
+    .map((f) => {
+      const name = path.parse(f).name
+      return name.startsWith('ATM') ? name.slice(3) : name
+    })
 }
 
 export async function getBoletas(): Promise<{
-  profesionales: string[]
-  terceros: string[]
-  profDir: string
-  terDir: string
+  todas: string[]
+  multas: string[]
+  baseDir: string
+  multasDir: string
+  otrosDir: string
 }> {
-  const baseDir = BASE_OUTPUT_DIR + '\\boletas'
-  const profDir = path.join(baseDir, 'profesionales')
-  const terDir = path.join(baseDir, 'terceros')
+  const baseDir = path.join(BASE_OUTPUT_DIR, 'boletas')
+  const multasDir = path.join(baseDir, 'multas')
+  const otrosDir = path.join(baseDir, 'otros')
 
-  await fs.mkdir(profDir, { recursive: true })
-  await fs.mkdir(terDir, { recursive: true })
+  await fs.mkdir(multasDir, { recursive: true })
+  await fs.mkdir(otrosDir, { recursive: true })
 
-  const [profesionales, terceros] = await Promise.all([getPdfNames(profDir), getPdfNames(terDir)])
+  const [multas, otras] = await Promise.all([getPdfNames(multasDir), getPdfNames(otrosDir)])
 
-  return { profesionales, terceros, profDir, terDir }
+  const todas = Array.from(new Set([...multas, ...otras]))
+
+  return { todas, multas, baseDir, multasDir, otrosDir }
 }
 
 export async function getCSMBoletas(): Promise<{

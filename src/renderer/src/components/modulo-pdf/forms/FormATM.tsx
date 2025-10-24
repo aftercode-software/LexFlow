@@ -91,7 +91,9 @@ export default function FormATM({
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const { success } = await generatePDF(data, pdfRoute)
+      const payloadT = { ...data, tipo: typePDF as string }
+      console.log('dataSUBMIT', payloadT)
+      const { success } = await generatePDF(payloadT, pdfRoute)
       const estado: 'Generada' | 'Error' = success ? 'Generada' : 'Error'
       const payload = { ...data, estado } as any
 

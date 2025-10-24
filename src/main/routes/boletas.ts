@@ -24,23 +24,25 @@ export function registerBoletaHandlers() {
   })
 
   ipcMain.handle('boletas:get-to-upload', async (_, id: number) => {
-    const { profesionales, terceros, profDir, terDir } = await getBoletas()
+    const { todas, multas, multasDir, otrosDir } = await getBoletas()
 
+    console.log(todas, multas)
     const res = await backend.post('/boletas/filtrar', {
-      boletasTerceros: terceros,
-      boletasProfesionales: profesionales,
-      id: id
+      boletasTodas: todas,
+      boletasMultas: multas,
+      id
     })
 
     if (!res.ok) {
       throw new Error('Error al obtener las boletas desde el servidor')
     }
 
+    console.log('res.data', res.data)
     return {
-      profesionales: res.data.boletasProfesionales,
-      terceros: res.data.boletasTerceros,
-      profDir,
-      terDir
+      boletasTodas: res.data.boletasTodas,
+      boletasMultas: res.data.boletasMultas,
+      multasDir,
+      otrosDir
     }
   })
 
