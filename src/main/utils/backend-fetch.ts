@@ -36,7 +36,7 @@ export async function apiRequest<T = any>(
     defaultHeaders['Content-Type'] = 'application/json'
   }
 
-  const url = `http://localhost:3000/api${endpoint}`
+  const url = `https://legali-back.vercel.app/api${endpoint}`
 
   console.log('url', url)
   try {
