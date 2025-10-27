@@ -1,8 +1,8 @@
 import { Documento } from '../interfaces/demandado'
 
 export function numeroALetras(n: number): string {
-  if (!Number.isFinite(n) || n < 0 || n > 999_999_999) {
-    throw new RangeError('El número debe ser un entero positivo menor que 1 000 000 000')
+  if (!Number.isFinite(n) || n < 0) {
+    throw new RangeError('El número debe ser un entero positivo')
   }
   if (n === 0) return 'Cero'
 
