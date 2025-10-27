@@ -1,7 +1,7 @@
 export type TipoDocumento = 'CUIT' | 'CUIL' | 'DNI'
 export type TipoDemandado = 'Tercero' | 'Profesional'
 export type TribunalKey = 'primer' | 'segundo' | 'tercer'
-export type TipoBoleta = 'Profesional' | 'Tercero'
+export type TipoBoleta = 'Profesional' | 'Tercero' | 'Multas' | 'Inmobiliarios' | 'Automotores' | 'Ingresos-brutos' | 'Sellos'
 export type EstadoBoleta = 'Generada' | 'Revisada' | 'Subida' | 'Error'
 
 export type Naturalezas = 'automotores' | 'inmobiliarios' | 'ingresos-brutos' | 'sellos' | 'multas'
@@ -41,6 +41,7 @@ export interface EnrichedBoleta {
   expediente?: string
   fechaInicioDemanda: string
   monto: string
+  objeto: string
   montoEnLetras: string
   fechaSentencia?: string
   observaciones?: string
