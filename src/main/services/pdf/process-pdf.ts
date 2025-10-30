@@ -18,6 +18,31 @@ import { getLastPageBuffer } from './pageCount'
 import { Naturalezas } from '../../../shared/interfaces/boletas'
 import { DatosFormulario } from '../../../shared/interfaces/form'
 
+// export async function pruebaEscaneoMasivo() {
+//   const worker = await createWorker()
+//   const baseDir = 'C:\\Users\\germh\\Downloads\\drive-download-20251022T181617Z-1-001'
+
+//   const files = (await fsPromises.readdir(baseDir))
+//     .filter((f) => f.toLowerCase().endsWith('.pdf'))
+//     .map((f) => path.join(baseDir, f))
+
+//   console.log(`Encontrados ${files.length} PDFs`)
+
+//   const resultados = []
+
+//   for (const pdfPath of files) {
+//     try {
+//       console.log('Procesando:', pdfPath)
+//       const extractedData = await processExtraction(worker, pdfPath)
+//       console.log('SALIDA FINAL', extractedData)
+//     } catch (err) {
+//       console.error('Error al procesar:', pdfPath, err)
+//     }
+//   }
+
+//   console.log('✅ Escaneo masivo finalizado.')
+//   return resultados
+// }
 export async function extractDataFromPdf(
   arrayBuffer: ArrayBuffer,
   pdfType: Naturalezas
@@ -32,7 +57,7 @@ export async function extractDataFromPdf(
   await fsPromises.writeFile(originalPdfPath, Buffer.from(arrayBuffer))
 
   const data = await processPDF(originalPdfPath)
-
+  // pruebaEscaneoMasivo()
   return { data, originalPdfPath }
 }
 
@@ -83,6 +108,8 @@ async function processExtraction(
   const objeto = extraerObjeto(montoTxt)
   const bruto = extraerMonto(montoTxt) ?? 0
   const valorEnLetras = numeroALetras(bruto).toUpperCase()
+
+  // console.log('TEXTOS OBTENIDOS', superiorTxt, mediaTxt, montoTxt)
   return {
     boleta,
     fechaEmision,

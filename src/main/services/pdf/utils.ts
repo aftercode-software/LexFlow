@@ -11,52 +11,48 @@ export function cropImage(
   return image.extract({ left: x, top: y, width, height }).toBuffer()
 }
 
-export function extraerBoleta(texto: string, minLen = 8, maxLen = 18): string | null {
+export function extraerBoleta(texto: string, minLen = 10, maxLen = 18): string | null {
   if (!texto) return null
-
   const norm = normalizarOCR(texto)
 
-  const rx = /BOLETA\s*N?[°º*:\-"]?\s*([0-9OODSIl|B\s]{6,24})/g
-
+  // 1) patrón clásico
+  const rx = /BOLETA\s*N?[°º*:\-"]?\s*([0-9OODSIl|B\s]{6,24})/gi
   const candidatos: string[] = []
   for (const m of norm.matchAll(rx)) {
-    const crudo = m[1] ?? ''
-    const fijo = crudo
+    const fijo = (m[1] ?? '')
       .replace(/[OQD]/g, '0')
       .replace(/[S]/g, '5')
       .replace(/[Il|]/g, '1')
       .replace(/[B]/g, '8')
       .replace(/\s+/g, '')
       .replace(/[^\d]/g, '')
-
-    if (fijo.length >= minLen && fijo.length <= maxLen) {
-      candidatos.push(fijo)
-    }
+    if (fijo.length >= minLen && fijo.length <= maxLen) candidatos.push(fijo)
   }
 
+  // 2) fallback: buscar secuencias que *parecen* boletas (13–14 dígitos empezando en 20…)
   if (candidatos.length === 0) {
-    const rxPos = /BOLETA/g
-    let m: RegExpExecArray | null
-    while ((m = rxPos.exec(norm))) {
-      const frag = norm.slice(m.index, m.index + 60)
-      const mNum = frag.match(/[0-9OODSIl|B\s]{6,24}/)
-      if (mNum) {
-        const fijo = mNum[0]
-          .replace(/[OQD]/g, '0')
-          .replace(/[S]/g, '5')
-          .replace(/[Il|]/g, '1')
-          .replace(/[B]/g, '8')
-          .replace(/\s+/g, '')
-          .replace(/[^\d]/g, '')
-        if (fijo.length >= minLen && fijo.length <= maxLen) candidatos.push(fijo)
-      }
+    const rxSoloNum = /\b20[\dOQDSIl|B]{10,12}\b/g
+    for (const m of norm.matchAll(rxSoloNum)) {
+      const fijo = m[0]
+        .replace(/[OQD]/g, '0')
+        .replace(/[S]/g, '5')
+        .replace(/[Il|]/g, '1')
+        .replace(/[B]/g, '8')
+      if (/^20\d{11,13}$/.test(fijo)) candidatos.push(fijo)
     }
   }
 
-  if (candidatos.length === 0) return null
+  // 3) último recurso: tomar el número “tipo boleta” más largo
+  if (candidatos.length === 0) {
+    const m = norm.match(/\b\d{10,14}\b/g) || []
+    for (const tok of m) {
+      if (/^20\d{9,13}$/.test(tok)) candidatos.push(tok)
+    }
+  }
 
+  if (!candidatos.length) return null
   candidatos.sort((a, b) => b.length - a.length)
-  return candidatos[0] || null
+  return candidatos[0]
 }
 
 function parseMontoMixto(raw: string): number | null {
@@ -154,7 +150,33 @@ export function extraerMonto(texto: string): number | null {
   }
 
   if (candidatos.length) {
-    return Math.max(...candidatos)
+    // Ya no devolvemos Math.max(...candidatos)
+    // Vamos a re-escanear por contexto y puntuar:
+    type Cand = { n: number; score: number; raw: string }
+    const scored: Cand[] = []
+
+    const lines = t.split(/\r?\n/)
+    for (const line of lines) {
+      const isTotal = /\bT[0O]T[AI1]L\b/i.test(line) && !/\bSUB\s*T[0O]T[AI1]L\b/i.test(line)
+      const nums = line.match(new RegExp(NUM_PATTERN, 'g')) || []
+      for (const tok of nums) {
+        if (!esPlausibleNumero(tok)) continue
+        const n = parseMontoMixto(tok)
+        if (n == null) continue
+        let score = 0
+        if (isTotal) score += 2
+        if (/[.,]\d{2}\b/.test(tok)) score += 3 // decimal de 2 dígitos
+        if (/\d{1,3}([.,]\d{3})+([.,]\d{2})?\b/.test(tok)) score += 1 // miles correctos
+        if (!/[.,]/.test(tok) && String(Math.trunc(n)).length >= 7) score -= 3 // entero enorme
+
+        scored.push({ n, score, raw: tok })
+      }
+    }
+
+    if (scored.length) {
+      scored.sort((a, b) => b.score - a.score || b.n - a.n)
+      return scored[0].n
+    }
   }
 
   const m = t.match(new RegExp(NUM_PATTERN, 'g')) || []
@@ -268,21 +290,44 @@ export function extraerNombreEmplazado(mediaTxt: string): string {
 export function extraerDomicilio(texto: string): string {
   if (!texto) return ''
 
-  const t = texto
+  const T = texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[|¦•·│▏▕]+/g, ' ')
     .toUpperCase()
-    .replace(/\s+/g, ' ')
 
-  const regex = /\b[SD]OM[I1]C[I1]L[I1]O\b\s*(?:EN\s*)?([\s\S]+?)(?=\s+\bPROVINCIA\b|$)/i
+  // Tomo desde DOMICILIO...
+  const m = T.match(/\bD[0O]M[I1]C[ I1]L[I1]O\b\s*([\s\S]+?)(?=$|\r?\n)/i)
+  let s = m?.[1] ?? ''
 
-  const match = t.match(regex)
-  if (!match?.[1]) return ''
+  if (!s) return ''
 
-  return match[1]
+  // Cortes duros si aparece NAT/INAT, OBJETO, EMISION, etc.
+  const stopMarkers = [
+    /\bI?N?ATURALEZA\b/, // NATURALEZA / INATURALEZA / NAT...
+    /\bOBJET[O0]\b/,
+    /\bEMISION\b/,
+    /\bSECUENCIA\b/,
+    /\bFECHA\b/,
+    /\bEXPTE\b/,
+    /\bHOJA\b/,
+    /\bCUIT\b/,
+    /\bDNI\b/
+  ]
+
+  let cut = s.length
+  for (const r of stopMarkers) {
+    const mm = s.search(r)
+    if (mm >= 0 && mm < cut) cut = mm
+  }
+  s = s.slice(0, cut)
+
+  // Limpieza y normalización
+  return s
     .replace(/[\n\r]+/g, ' ')
     .replace(/\s{2,}/g, ' ')
-    .replace(/[.,]/g, ' ')
+    .replace(/\s*-\s*(?=-|$)/g, ' ')
+    .replace(/[.,](?=\s|$)/g, '')
     .trim()
 }
 
@@ -318,28 +363,42 @@ export function extraerSecuencia(texto: string): string | null {
   return ultimo
 }
 
-function normalizeObjetoToken(raw: string): string | null {
+function normalizeObjetoToken(
+  raw: string,
+  opts: { mode?: 'alnum' | 'numeric'; min?: number; max?: number } = {}
+): string | null {
+  const mode = opts.mode ?? 'alnum'
+  const min = opts.min ?? 7
+  const max = opts.max ?? 12
   if (!raw) return null
 
+  // Base: limpieza y correcciones OCR de letras que suelen ser dígitos
   let t = raw
     .toUpperCase()
     .replace(/^[`'"]/g, '')
     .replace(/[^A-Z0-9]/g, '')
 
+  // Correcciones OCR comunes
+  t = t.replace(/[OQD]/g, '0').replace(/S/g, '5').replace(/B/g, '8')
+
   if (!t) return null
 
-  t = t.replace(/^O(?=[A-Z0-9])/, '0').replace(/(?<=\d)O(?=\d)/g, '0')
+  // Evitar "IMPORTE" y variantes
+  const tLettersOnly = raw.toUpperCase().replace(/[^A-Z]/g, '')
+  if (/^I?MPORTE$/.test(tLettersOnly)) return null
 
-  t = t.replace(/S/g, '5').replace(/[IL]/g, '1').replace(/Z/g, '2')
-
-  if (/^ON[A-Z0-9]/.test(t)) t = '0' + t.slice(2)
-
-  if (t.length < 7 || t.length > 10) return null
-  if (!/[A-Z]/.test(t) || !/\d/.test(t)) return null
-
-  if (!t.startsWith('0') && t.startsWith('O')) t = '0' + t.slice(1)
-
-  return t
+  if (mode === 'numeric') {
+    // Para INMOBILIARIO: solo dígitos (después de correcciones), longitudes más permisivas
+    const digits = t.replace(/\D/g, '')
+    if (digits.length < 5 || digits.length > 16) return null
+    return digits
+  } else {
+    // Alfanumérico: 7–12, debe tener al menos una letra y un dígito
+    if (t.length < min || t.length > max) return null
+    if (!/[A-Z]/.test(t) || !/\d/.test(t)) return null
+    // Corrección inicial común (si empieza con O -> 0) ya cubierta por reemplazos
+    return t
+  }
 }
 
 function pickMostFrequent(cands: string[]): string | null {
@@ -359,57 +418,62 @@ function pickMostFrequent(cands: string[]): string | null {
 
 export function extraerObjeto(texto: string): string | null {
   if (!texto) return null
-
-  const t = texto
+  const T = texto
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase()
-
   const candidatos: string[] = []
 
+  // 1) Después de EMISION PATENTE (alfanumérico)
   {
-    const re = /EMISI[O0]N\s+PATENTE\s+([A-Z0-9]{5,16})\b/g
+    const re = /EMISION\s+PATENTE\s+([A-Z0-9]{5,16})\b/g
     let m: RegExpExecArray | null
-    while ((m = re.exec(t))) {
-      const norm = normalizeObjetoToken(m[1])
+    while ((m = re.exec(T))) {
+      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
       if (norm) candidatos.push(norm)
     }
   }
 
+  // 2) Formato explícito OBJETO: (alfanumérico)
   {
     const re = /\bOBJET[O0]\b\s*[:\-]?\s*([A-Z0-9]{5,16})\b/g
     let m: RegExpExecArray | null
-    while ((m = re.exec(t))) {
-      const norm = normalizeObjetoToken(m[1])
+    while ((m = re.exec(T))) {
+      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
       if (norm) candidatos.push(norm)
     }
   }
 
+  // 3) Claves comunes con N° (INMOBILIARIO solo numérico; resto alfanumérico)
   {
-    const keys = [
-      String.raw`AUT[O0]M[O0]T[O0]R\s+PATENTE`,
-      String.raw`INGRES[O0]S?\s+BRUT[O0]S?`,
-      String.raw`INM[O0]BILIAR[I1][O0]\s+PADR[O0]N`,
-      String.raw`TASA\s+DE\s+JUSTICIA\s+AUT[O0]S?`,
-      String.raw`MULTAS?`,
-      String.raw`SELLO`
+    type KeySpec = { pat: string; mode: 'alnum' | 'numeric' }
+    const keys: KeySpec[] = [
+      { pat: String.raw`AUT[O0]M[O0]T[O0]R\s+PATENTE`, mode: 'alnum' },
+      { pat: String.raw`INGRES[O0]S?\s+BRUT[O0]S?`, mode: 'alnum' },
+      { pat: String.raw`INM[O0]BILIAR[I1][O0]\s+PADR[O0]N`, mode: 'numeric' }, // ← acá forzamos numérico
+      { pat: String.raw`TASA\s+DE\s+JUSTICIA\s+AUT[O0]S?`, mode: 'alnum' },
+      { pat: String.raw`MULTAS?`, mode: 'alnum' },
+      { pat: String.raw`SELLO`, mode: 'alnum' }
     ]
     const afterN = String.raw`(?:N|N[°*º°]|NRO|NUM(?:ERO)?)?\s*[:=\-]?\s*([A-Z0-9]{5,16})\b`
+
     for (const k of keys) {
-      const re = new RegExp(k + String.raw`\s+` + afterN, 'g')
+      const re = new RegExp(k.pat + String.raw`\s+` + afterN, 'g')
       let m: RegExpExecArray | null
-      while ((m = re.exec(t))) {
-        const norm = normalizeObjetoToken(m[1])
+      while ((m = re.exec(T))) {
+        const norm = normalizeObjetoToken(m[1], { mode: k.mode })
         if (norm) candidatos.push(norm)
       }
     }
   }
 
-  if (candidatos.length === 0) {
-    const near = /(?:EMISI[O0]N|PATENTE|OBJET[O0])[\s\S]{0,40}\b([A-Z0-9]{7,12})\b/g
+  // 4) Ventana cerca de palabras clave (fallback alfanumérico)
+  if (!candidatos.length) {
+    const near =
+      /(?:EMISION|PATENTE|OBJET[O0]|AUTOMOTOR|AUTOMOTORES)[\s\S]{0,40}\b([A-Z0-9]{7,12})\b/g
     let m: RegExpExecArray | null
-    while ((m = near.exec(t))) {
-      const norm = normalizeObjetoToken(m[1])
+    while ((m = near.exec(T))) {
+      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
       if (norm) candidatos.push(norm)
     }
   }
