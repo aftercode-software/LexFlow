@@ -22,7 +22,14 @@ export async function generateWrittenPdf(data: any): Promise<string> {
     template,
     data,
     cmdDelimiter: ['{{', '}}'],
-    failFast: true
+    failFast: true,
+    additionalJsContext: {
+      cap: (s: unknown) => {
+        if (typeof s !== 'string' || s.length === 0) return s as any
+        const first = s[0].toLocaleUpperCase('es-AR')
+        return first + s.slice(1).toLocaleLowerCase('es-AR')
+      }
+    }
   })
 
   const tempDir = path.join(app.getPath('temp'), 'boletas-temp')
