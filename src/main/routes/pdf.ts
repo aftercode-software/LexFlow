@@ -21,11 +21,7 @@ export function registerPdfHandlers() {
 
     let outputDir = `${BASE_OUTPUT_DIR}\\boletas`
 
-    if (data.tipo === 'multas') {
-      outputDir = path.join(outputDir, 'multas')
-    } else {
-      outputDir = path.join(outputDir, 'otros')
-    }
+    outputDir = path.join(outputDir, data.tipo)
 
     await fsPromises.mkdir(outputDir, { recursive: true })
 

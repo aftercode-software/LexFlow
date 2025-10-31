@@ -24,12 +24,15 @@ export function registerBoletaHandlers() {
   })
 
   ipcMain.handle('boletas:get-to-upload', async (_, id: number) => {
-    const { todas, multas, multasDir, otrosDir } = await getBoletas()
+    const { todas, porTipo, dirs } = await getBoletas()
 
-    console.log(todas, multas)
+    console.log(todas)
     const res = await backend.post('/boletas/filtrar', {
-      boletasTodas: todas,
-      boletasMultas: multas,
+      boletasAutomotores: porTipo['automotores'],
+      boletasIngresosBrutos: porTipo['brutos'],
+      boletasInmobiliarios: porTipo['inmobiliarios'],
+      boletasMultas: porTipo['multas'],
+      boletasSellos: porTipo['sellos'],
       id
     })
 
@@ -39,10 +42,12 @@ export function registerBoletaHandlers() {
 
     console.log('res.data', res.data)
     return {
-      boletasTodas: res.data.boletasTodas,
+      boletasAutomotores: res.data.boletasAutomotores,
+      boletasIngresosBrutos: res.data.boletasIngresosBrutos,
+      boletasInmobiliarios: res.data.boletasInmobiliarios,
       boletasMultas: res.data.boletasMultas,
-      multasDir,
-      otrosDir
+      boletasSellos: res.data.boletasSellos,
+      dirs
     }
   })
 

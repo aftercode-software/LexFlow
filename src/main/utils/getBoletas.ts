@@ -2,6 +2,16 @@ import fs from 'fs/promises'
 import path from 'path'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
+type Tipo = 'automotores' | 'ingresos-brutos' | 'inmobiliarios' | 'multas' | 'sellos'
+
+const TIPOS: readonly Tipo[] = [
+  'automotores',
+  'ingresos-brutos',
+  'inmobiliarios',
+  'multas',
+  'sellos'
+]
+
 export async function getPdfNames(dir: string): Promise<string[]> {
   const files = await fs.readdir(dir)
 
@@ -15,23 +25,26 @@ export async function getPdfNames(dir: string): Promise<string[]> {
 
 export async function getBoletas(): Promise<{
   todas: string[]
-  multas: string[]
+  porTipo: Record<Tipo, string[]>
   baseDir: string
-  multasDir: string
-  otrosDir: string
+  dirs: Record<Tipo, string>
 }> {
   const baseDir = path.join(BASE_OUTPUT_DIR, 'boletas')
-  const multasDir = path.join(baseDir, 'multas')
-  const otrosDir = path.join(baseDir, 'otros')
 
-  await fs.mkdir(multasDir, { recursive: true })
-  await fs.mkdir(otrosDir, { recursive: true })
+  const dirs = Object.fromEntries(TIPOS.map((t) => [t, path.join(baseDir, t)])) as Record<
+    Tipo,
+    string
+  >
 
-  const [multas, otras] = await Promise.all([getPdfNames(multasDir), getPdfNames(otrosDir)])
+  await Promise.all(Object.values(dirs).map((d) => fs.mkdir(d, { recursive: true })))
 
-  const todas = Array.from(new Set([...multas, ...otras]))
+  const listas = await Promise.all(TIPOS.map((t) => getPdfNames(dirs[t])))
 
-  return { todas, multas, baseDir, multasDir, otrosDir }
+  const porTipo = Object.fromEntries(TIPOS.map((t, i) => [t, listas[i]])) as Record<Tipo, string[]>
+
+  const todas = Array.from(new Set(listas.flat()))
+
+  return { todas, porTipo, baseDir, dirs }
 }
 
 export async function getCSMBoletas(): Promise<{

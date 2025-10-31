@@ -1,3 +1,4 @@
+import { Naturalezas } from '@shared/interfaces/boletas'
 import { TipoDemandado, TipoDocumento } from './demandado'
 
 export type TipoBoleta = 'Profesional' | 'Tercero'
@@ -7,7 +8,7 @@ export interface EnrichedBoleta {
   id: number
   boleta: string
   tanda?: string
-  tipo: TipoBoleta
+  tipo: Naturalezas
   demandado: {
     id: number
     apellido: string

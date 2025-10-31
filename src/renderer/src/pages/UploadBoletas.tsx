@@ -1,7 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState, useMemo } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState, useMemo, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -11,38 +8,37 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { Progress } from '@/components/ui/progress'
 import { FileText, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { useAuth } from '@renderer/context/PoderJudicialContext'
-import { toast } from 'sonner'
-import { EnrichedBoleta, EstadoBoleta } from '@renderer/interface/boleta'
-import { RecaudadorEntity } from '@shared/interfaces/recaudador'
-import { Label } from '@renderer/components/ui/label'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue
-} from '@renderer/components/ui/select'
-import { Input } from '@renderer/components/ui/input'
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { useAuth } from '@renderer/context/PoderJudicialContext'
+import { useRecaudadores } from '@renderer/context/RecaudadoresContext'
+import { AnimatedCircularProgressBar } from '@renderer/components/ui/animated-circular-progress-bar'
+import { EnrichedBoleta } from '@shared/interfaces/boletas'
 
-type TabKey = 'Todas' | 'Multas'
-
-type BoletaRowProps = {
-  boleta: EnrichedBoleta
-  showExpediente: boolean
-  pdfDir: string
-  onOpenPdf: (path: string) => void
-}
+type TipoBoleta = 'automotores' | 'ingresos-brutos' | 'inmobiliarios' | 'multas' | 'sellos'
+type TipoFiltro = 'todas' | TipoBoleta
 
 function parseMonto(montoStr: string): number {
-  return parseFloat(montoStr) || 0
+  return Number.parseFloat(montoStr) || 0
 }
 
-const BoletaRow = ({ boleta, showExpediente, pdfDir, onOpenPdf }: BoletaRowProps) => {
-  const badgeEstado = (estado: EstadoBoleta) => {
+const BoletaRow = ({
+  boleta,
+  showExpediente
+}: {
+  boleta: EnrichedBoleta
+  showExpediente: boolean
+}) => {
+  const badgeEstado = (estado: string) => {
     let colorClass = 'bg-gray-100 text-gray-600 border-gray-200'
     if (estado === 'Revisada') colorClass = 'bg-blue-50 text-blue-700 border-blue-200'
     if (estado === 'Subida') colorClass = 'bg-green-50 text-green-700 border-green-200'
@@ -53,146 +49,116 @@ const BoletaRow = ({ boleta, showExpediente, pdfDir, onOpenPdf }: BoletaRowProps
     )
   }
 
-  const pdfPath = `${pdfDir}\\${boleta.boleta}.pdf`
-
   return (
     <TableRow>
       <TableCell className="font-medium">{boleta.boleta}</TableCell>
       <TableCell>{boleta.demandado.apellidoYNombre}</TableCell>
-      <TableCell>{boleta.recaudador.idNombre}</TableCell>
+      <TableCell>{boleta.recaudador.nombre}</TableCell>
       {showExpediente && <TableCell>{boleta.expediente || '-'}</TableCell>}
       <TableCell>{boleta.fechaInicioDemanda}</TableCell>
       <TableCell>${boleta.monto}</TableCell>
       <TableCell>{badgeEstado(boleta.estado)}</TableCell>
       <TableCell>
-        <a
-          className="flex items-center hover:underline cursor-pointer"
-          onClick={() => onOpenPdf(pdfPath)}
-        >
+        <button className="flex items-center hover:underline cursor-pointer">
           <FileText className="mr-2 h-4 w-4 text-gray-400" />
           {boleta.boleta}
-        </a>
+        </button>
       </TableCell>
     </TableRow>
   )
 }
 
-interface BoletasTableProps {
-  boletas: EnrichedBoleta[]
-  showExpediente: boolean
-  pdfDir: string
-  onOpenPdf: (path: string) => void
-}
-
-const BoletasTable = ({ boletas, showExpediente, pdfDir, onOpenPdf }: BoletasTableProps) => {
-  const headers = useMemo(
-    () =>
-      showExpediente
-        ? [
-            'Boleta',
-            'Demandado',
-            'Recaudador',
-            'Expediente',
-            'Fecha Demanda',
-            'Monto',
-            'Estado',
-            'Escrito'
-          ]
-        : ['Boleta', 'Demandado', 'Recaudador', 'Fecha Demanda', 'Monto', 'Estado', 'Escrito'],
-    [showExpediente]
-  )
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {headers.map((h) => (
-            <TableHead key={h}>{h}</TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {boletas.map((b) => (
-          <BoletaRow
-            key={b.id}
-            boleta={b}
-            showExpediente={showExpediente}
-            pdfDir={pdfDir}
-            onOpenPdf={onOpenPdf}
-          />
-        ))}
-      </TableBody>
-    </Table>
-  )
-}
-
 export default function UploadBoletas() {
   const { userData, isAuthenticated } = useAuth()
-  const [loadingRecaudadores, setLoadingRecaudadores] = useState(false)
-  const [, setLoadingBoletas] = useState(false)
+  const { recaudadores, recaudadorPorMatricula, recargando } = useRecaudadores()
 
-  const [todas, setTodas] = useState<EnrichedBoleta[]>([])
-  const [multas, setMultas] = useState<EnrichedBoleta[]>([])
-
-  const [otrosDir, setOtrosDir] = useState<string>('') // dir para "Todas"
-  const [multasDir, setMultasDir] = useState<string>('') // dir para "Multas"
-
-  const [tabActiva, setTabActiva] = useState<TabKey>('Todas')
-
-  const [montoThreshold, setMontoThreshold] = useState<number>(30000)
-  const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
-
-  const [recaudadores, setRecaudadores] = useState<RecaudadorEntity[]>([])
-  const [selectedRecaudadorId, setSelectedRecaudadorId] = useState<number>(0)
-
+  const [selectedRecaudadorId, setSelectedRecaudadorId] = useState<number | undefined>(undefined)
   useEffect(() => {
-    if (!isAuthenticated) return
+    const m = Number(userData?.matricula)
+    if (!Number.isFinite(m) || m <= 0) return
+    const r = recaudadorPorMatricula(m)
+    if (r) setSelectedRecaudadorId(r.id)
+  }, [userData?.matricula, recaudadorPorMatricula])
 
-    const fetchRecaudadores = async () => {
-      setLoadingRecaudadores(true)
-      try {
-        const lista = (await window.api.getRecaudadores()) as RecaudadorEntity[]
-        setRecaudadores(lista)
-      } catch (error) {
-        console.error('Error al obtener recaudadores:', error)
-      } finally {
-        setLoadingRecaudadores(false)
-      }
-    }
-    fetchRecaudadores()
-  }, [isAuthenticated])
+  const recaudadoresFiltrados = useMemo(() => {
+    const lista = recaudadores ?? []
+    return lista.filter((r) => {
+      const m = Number(r.matricula)
+      return Number.isFinite(m) && m > 0
+    })
+  }, [recaudadores])
 
-  const recaudadoresFiltrados = recaudadores.filter(
-    (r) => r.matricula === Number(userData?.matricula)
+  const selectedRecaudador = useMemo(
+    () => recaudadores?.find((r) => r.id === selectedRecaudadorId) ?? null,
+    [recaudadores, selectedRecaudadorId]
   )
 
+  const [loadingBoletas, setLoadingBoletas] = useState(false)
+  const [boletasPorTipo, setBoletasPorTipo] = useState<Record<TipoBoleta, EnrichedBoleta[]>>({
+    automotores: [],
+    'ingresos-brutos': [],
+    inmobiliarios: [],
+    multas: [],
+    sellos: []
+  })
+
+  const [dirsPorTipo, setDirsPorTipo] = useState<Record<TipoBoleta, string>>({
+    automotores: '',
+    'ingresos-brutos': '',
+    inmobiliarios: '',
+    multas: '',
+    sellos: ''
+  })
+
   useEffect(() => {
     if (!isAuthenticated) return
-    if (selectedRecaudadorId === 0) return
+    if (!selectedRecaudadorId) return
 
     const fetchBoletas = async () => {
       setLoadingBoletas(true)
       try {
+        alert(selectedRecaudadorId)
         const {
-          boletasTodas,
-          boletasMultas,
-          multasDir: mDir,
-          otrosDir: oDir
+          boletasAutomotores = [],
+          boletasIngresosBrutos = [],
+          boletasInmobiliarios = [],
+          boletasMultas = [],
+          boletasSellos = [],
+          dirs = {}
         } = await window.api.getBoletasToUpload(selectedRecaudadorId)
 
-        console.log('→ RAW [boletasTodas]:', todas)
-        console.log('→ RAW [boletasMultas]:', boletasMultas)
+        console.log('auto', boletasAutomotores)
+        setBoletasPorTipo({
+          automotores: boletasAutomotores,
+          'ingresos-brutos': boletasIngresosBrutos,
+          inmobiliarios: boletasInmobiliarios,
+          multas: boletasMultas,
+          sellos: boletasSellos
+        })
 
-        setTodas(boletasTodas || [])
-        setMultas(boletasMultas || [])
-        setMultasDir(mDir || '')
-        setOtrosDir(oDir || '')
-      } catch (error) {
-        console.error('Error al obtener boletas:', error)
-        setTodas([])
-        setMultas([])
-        setMultasDir('')
-        setOtrosDir('')
+        setDirsPorTipo({
+          automotores: dirs['automotores'] ?? '',
+          'ingresos-brutos': dirs['ingresos-brutos'] ?? '',
+          inmobiliarios: dirs['inmobiliarios'] ?? '',
+          multas: dirs['multas'] ?? '',
+          sellos: dirs['sellos'] ?? ''
+        })
+      } catch (err) {
+        console.error('Error al obtener boletas para subir:', err)
+        setBoletasPorTipo({
+          automotores: [],
+          'ingresos-brutos': [],
+          inmobiliarios: [],
+          multas: [],
+          sellos: []
+        })
+        setDirsPorTipo({
+          automotores: '',
+          'ingresos-brutos': '',
+          inmobiliarios: '',
+          multas: '',
+          sellos: ''
+        })
       } finally {
         setLoadingBoletas(false)
       }
@@ -201,19 +167,17 @@ export default function UploadBoletas() {
     fetchBoletas()
   }, [isAuthenticated, selectedRecaudadorId])
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.warning('No estás logueado. Inicia sesión para ver boletas.')
-    }
-  }, [isAuthenticated])
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFiltro>('todas')
+  const [montoThreshold, setMontoThreshold] = useState<number>(30000)
+  const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
 
-  const boletasActuales = useMemo(
-    () => (tabActiva === 'Todas' ? todas : multas),
-    [tabActiva, todas, multas]
-  )
+  const boletasActuales = useMemo(() => {
+    if (tipoSeleccionado === 'todas') return Object.values(boletasPorTipo).flat()
+    return boletasPorTipo[tipoSeleccionado]
+  }, [tipoSeleccionado, boletasPorTipo])
 
   const revisadas = useMemo(
-    () => boletasActuales.filter((b) => b.estado === 'Revisada').slice(0, 25),
+    () => boletasActuales.filter((b) => b.estado === 'Revisada'),
     [boletasActuales]
   )
 
@@ -224,69 +188,103 @@ export default function UploadBoletas() {
     })
   }, [revisadas, montoThreshold, modoInhibicion])
 
-  const boletasParaMostrar = revisadasConMonto
+  const boletasParaMostrar = useMemo(() => revisadasConMonto.slice(0, 25), [revisadasConMonto])
 
   const canUpload = useMemo(
-    () => isAuthenticated && boletasParaMostrar.length > 0 && selectedRecaudadorId !== 0,
-    [isAuthenticated, boletasParaMostrar, selectedRecaudadorId]
+    () => !!isAuthenticated && boletasParaMostrar.length > 0 && !!selectedRecaudadorId,
+    [isAuthenticated, boletasParaMostrar.length, selectedRecaudadorId]
   )
 
-  const handleOpenPdf = (path: string) => {
-    window.api.openPdf(path)
+  const handleOpenPdf = (b: EnrichedBoleta) => {
+    const tipo: TipoBoleta | null =
+      tipoSeleccionado !== 'todas' ? (tipoSeleccionado as TipoBoleta) : null
+    const baseDir = tipo ? dirsPorTipo[tipo] : ''
+    console.log('[openPDF]', { baseDir, boleta: b })
+    window.api.openPdf(`${baseDir}/${b.boleta}.pdf`)
   }
 
-  const handleUpload = () => {
-    const oficial2 = selectedRecaudadorId === 801
-    console.log('oficial2:', oficial2)
-    window.api.iniciarCargaJudicial(boletasParaMostrar, montoThreshold, modoInhibicion, oficial2)
+  const handleUpload = async () => {
+    const payload = {
+      boletasAutomotores: boletasPorTipo.automotores.map((b) => b.boleta),
+      boletasIngresosBrutos: boletasPorTipo['ingresos-brutos'].map((b) => b.boleta),
+      boletasInmobiliarios: boletasPorTipo.inmobiliarios.map((b) => b.boleta),
+      boletasMultas: boletasPorTipo.multas.map((b) => b.boleta),
+      boletasSellos: boletasPorTipo.sellos.map((b) => b.boleta),
+
+      visibles: boletasParaMostrar.map((b) => b.boleta)
+    }
+    console.log('[upload]', {
+      selectedRecaudadorId,
+      payload,
+      threshold: montoThreshold,
+      modoInhibicion
+    })
+    window.api.iniciarCargaJudicial(boletasParaMostrar, montoThreshold, modoInhibicion, false)
   }
 
-  const countTodas = todas.length
-  const countMultas = multas.length
+  const showExpediente = tipoSeleccionado === 'multas'
 
-  const currentPdfDir = tabActiva === 'Multas' ? multasDir : otrosDir
-  const showExpediente = tabActiva === 'Multas' // si solo querés mostrar expediente en Multas
+  const counts = useMemo(
+    () => ({
+      automotores: boletasPorTipo.automotores.length,
+      'ingresos-brutos': boletasPorTipo['ingresos-brutos'].length,
+      inmobiliarios: boletasPorTipo.inmobiliarios.length,
+      multas: boletasPorTipo.multas.length,
+      sellos: boletasPorTipo.sellos.length
+    }),
+    [boletasPorTipo]
+  )
+
+  const tipoLabels: Record<TipoBoleta, string> = {
+    automotores: 'Automotores',
+    'ingresos-brutos': 'Ingresos Brutos',
+    inmobiliarios: 'Inmobiliarios',
+    multas: 'Multas',
+    sellos: 'Sellos'
+  }
 
   return (
-    <div className="flex min-h-screen p-6">
-      <div className="flex-1">
+    <div className="flex min-h-screen p-6 bg-gray-50">
+      <div className="flex-1 max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <aside>
-            {isAuthenticated ? (
-              <>
-                <h1 className="text-2xl font-bold">{userData?.recaudador}</h1>
-                <p className="text-sm text-gray-500">Boletas del recaudador</p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">Inicia sesión para ver boletas</p>
-            )}
+            <h1 className="text-2xl font-bold">
+              {selectedRecaudador ? selectedRecaudador.nombre : 'Seleccionar Recaudador'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {loadingBoletas ? 'Cargando boletas...' : 'Boletas del recaudador'}
+            </p>
           </aside>
-          <Button disabled={!canUpload} className="bg-gray-900 hover:bg-lex" onClick={handleUpload}>
-            <Upload className="mr-2 h-4 w-4" /> Subir {tabActiva}
+          <Button
+            className="bg-gray-900 hover:bg-gray-800"
+            disabled={!canUpload || loadingBoletas}
+            onClick={handleUpload}
+          >
+            <Upload className="mr-2 h-4 w-4" /> Subir Boletas ({boletasParaMostrar.length})
           </Button>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 flex gap-6 mb-6">
-          <div>
-            <Label className="flex items-center space-x-2">
-              <span>Monto mínimo para Inhibición:</span>
+        <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-wrap gap-6 mb-6">
+          <div className="flex-1 min-w-[200px]">
+            <Label className="flex flex-col space-y-2">
+              <span className="text-sm font-medium">Monto mínimo para Inhibición:</span>
               <Input
                 type="number"
                 value={montoThreshold}
                 onChange={(e) => setMontoThreshold(+e.target.value)}
-                className="w-24"
+                className="w-full"
               />
             </Label>
           </div>
 
-          <div>
-            <Label className="flex items-center space-x-2">
-              <span>Filtro Inhibición:</span>
+          <div className="flex-1 min-w-[200px]">
+            <Label className="flex flex-col space-y-2">
+              <span className="text-sm font-medium">Filtro Inhibición:</span>
               <Select
                 value={modoInhibicion}
                 onValueChange={(val) => setModoInhibicion(val as 'con' | 'sin')}
               >
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Seleccionar modo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -297,74 +295,111 @@ export default function UploadBoletas() {
             </Label>
           </div>
 
-          <div>
-            <Label className="flex items-center space-x-2">
-              <span>Recaudador:</span>
-              {loadingRecaudadores ? (
-                <span>Cargando recaudadores...</span>
-              ) : (
-                <Select
-                  value={String(selectedRecaudadorId)}
-                  onValueChange={(val) => setSelectedRecaudadorId(Number(val))}
-                >
-                  <SelectTrigger className="w-56">
-                    <SelectValue placeholder="Seleccionar recaudador" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {recaudadoresFiltrados.map((r) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.id} – {r.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
+          <div className="flex-1 min-w-[200px]">
+            <Label className="flex flex-col space-y-2">
+              <span className="text-sm font-medium">Recaudador:</span>
+              <Select
+                value={selectedRecaudadorId ? String(selectedRecaudadorId) : undefined}
+                onValueChange={(val) => setSelectedRecaudadorId(Number(val))}
+                disabled={recargando}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={recargando ? 'Cargando...' : 'Seleccionar recaudador'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {recaudadoresFiltrados.map((r) => (
+                    <SelectItem key={`${r.id}-${r.matricula}`} value={String(r.id)}>
+                      {r.id} – {r.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Label>
+          </div>
+
+          <div className="flex-1 min-w-[200px]">
+            <Label className="flex flex-col space-y-2">
+              <span className="text-sm font-medium">Tipo de Boleta:</span>
+              <Select
+                value={tipoSeleccionado}
+                onValueChange={(val) => setTipoSeleccionado(val as TipoFiltro)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="automotores">Automotores</SelectItem>
+                  <SelectItem value="ingresos-brutos">Ingresos Brutos</SelectItem>
+                  <SelectItem value="inmobiliarios">Inmobiliarios</SelectItem>
+                  <SelectItem value="multas">Multas</SelectItem>
+                  <SelectItem value="sellos">Sellos</SelectItem>
+                </SelectContent>
+              </Select>
             </Label>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-6">
-          {[
-            { key: 'Todas' as const, count: countTodas, title: 'Todas las boletas' },
-            { key: 'Multas' as const, count: countMultas, title: 'Boletas de Multa' }
-          ].map(({ key, count, title }) => (
-            <div key={key} className="bg-white p-4 rounded-lg border border-gray-200">
-              <div className="flex justify-between mb-2">
-                <h3 className="font-medium">{title}</h3>
-                <span className="text-sm font-medium">{count}</span>
-              </div>
-              <Progress value={(count / 25) * 100} className="h-2" />
-              <p className="text-sm text-gray-500 mt-2">{count} disponibles</p>
-            </div>
-          ))}
+        <div className="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+          <h3 className="text-lg font-semibold mb-6">Boletas por Tipo</h3>
+          <div className="flex justify-around items-center flex-wrap gap-6">
+            {(Object.keys(counts) as TipoBoleta[]).map((tipo) => (
+              <article key={tipo} className="flex flex-col items-center">
+                <AnimatedCircularProgressBar
+                  value={counts[tipo]}
+                  gaugePrimaryColor="#006BFF"
+                  gaugeSecondaryColor="rgba(0, 0, 0, 0.1)"
+                />
+                <span className="mt-2 text-sm font-medium text-gray-700">{tipo}</span>
+              </article>
+            ))}
+          </div>
         </div>
 
-        <Tabs
-          value={tabActiva}
-          onValueChange={(v) => setTabActiva(v as TabKey)}
-          className="bg-white rounded-lg border border-gray-200"
-        >
-          <TabsList className="w-full border-b border-gray-200">
-            <TabsTrigger value="Todas" className="flex-1">
-              Todas
-            </TabsTrigger>
-            <TabsTrigger value="Multas" className="flex-1">
-              Multas
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={tabActiva} className="p-0 overflow-x-auto">
-            <BoletasTable
-              boletas={boletasParaMostrar}
-              showExpediente={showExpediente}
-              pdfDir={currentPdfDir}
-              onOpenPdf={handleOpenPdf}
-            />
-            {boletasParaMostrar.length === 0 && (
-              <div className="py-8 text-center text-gray-500">No hay boletas</div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="p-4 border-b border-gray-200">
+            <h3 className="font-semibold">
+              {tipoSeleccionado === 'todas'
+                ? 'Todas las Boletas'
+                : tipoLabels[tipoSeleccionado as TipoBoleta]}{' '}
+              ({boletasParaMostrar.length} de {revisadasConMonto.length} - máx. 25)
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            {loadingBoletas ? (
+              <div className="py-8 text-center text-gray-500">Cargando boletas...</div>
+            ) : boletasParaMostrar.length === 0 ? (
+              <div className="py-8 text-center text-gray-500">No hay boletas disponibles</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Boleta</TableHead>
+                    <TableHead>Demandado</TableHead>
+                    <TableHead>Recaudador</TableHead>
+                    {showExpediente && <TableHead>Expediente</TableHead>}
+                    <TableHead>Fecha Demanda</TableHead>
+                    <TableHead>Monto</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Escrito</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {boletasParaMostrar.map((b) => (
+                    <BoletaRow
+                      key={b.id}
+                      boleta={b}
+                      showExpediente={showExpediente}
+                      onOpenPdf={handleOpenPdf}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   )
