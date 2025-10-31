@@ -11,6 +11,84 @@ export function cropImage(
   return image.extract({ left: x, top: y, width, height }).toBuffer()
 }
 
+export function extraerBoletaCSM(texto: string, minLen = 10, maxLen = 18): string | null {
+  if (!texto) return null
+
+  const norm = normalizarOCR(texto)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // sin tildes
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const candidatos: string[] = []
+
+  const fix = (raw: string) =>
+    raw
+      .replace(/[OQD]/gi, '0')
+      .replace(/[S]/gi, '5')
+      .replace(/[Il|]/g, '1')
+      .replace(/[B]/g, '8')
+      .replace(/\s+/g, '')
+      .replace(/[^\d]/g, '')
+
+  const pushIfOk = (n: string) => {
+    const fijo = fix(n)
+    if (fijo.length >= minLen && fijo.length <= maxLen) candidatos.push(fijo)
+  }
+
+  // 0) PRIORIDAD: luego de “Boleta de deuda” / “Resolución n …”, tolerante a OCR y mojibake
+  //   - capta opcional "ATM" y lo descarta (solo devuelve dígitos)
+  //   - deja una ventana corta de caracteres de separación
+  {
+    const rxContexto =
+      /(boleta\s*de\s*deuda|resoluci\w*n\s*n[º°*:\-"]?)\s*[/\-:\s]*\s*(atm)?\s*([0-9OQDSIl|B]{8,24})/gi
+
+    for (const m of norm.matchAll(rxContexto)) {
+      // m[2] es "atm" opcional, m[3] el número con ruido OCR
+      pushIfOk(m[3])
+    }
+  }
+
+  // 0.b) Si aparece el token ATM pegado al número en cualquier lado, también lo intento
+  if (candidatos.length === 0) {
+    const rxATM = /\batm\s*([0-9OQDSIl|B]{8,24})\b/gi
+    for (const m of norm.matchAll(rxATM)) pushIfOk(m[1])
+  }
+
+  // 1) patrón clásico “BOLETA N° …”
+  if (candidatos.length === 0) {
+    const rxClasico = /boleta\s*n?[°º*:\-"]?\s*([0-9OQDSIl|B\s]{6,24})/gi
+    for (const m of norm.matchAll(rxClasico)) pushIfOk(m[1] ?? '')
+  }
+
+  // 2) fallback: secuencias que parecen boletas (empiezan en 20…)
+  if (candidatos.length === 0) {
+    const rxSoloNum = /\b20[0-9OQDSIl|B]{10,16}\b/gi
+    for (const m of norm.matchAll(rxSoloNum)) pushIfOk(m[0])
+  }
+
+  // 3) último recurso: cualquier número largo 10–14/18 y que empiece en 20
+  if (candidatos.length === 0) {
+    const rxLargos = /\b[0-9]{10,24}\b/g
+    for (const m of norm.matchAll(rxLargos)) {
+      const tok = m[0]
+      if (/^20[0-9]{9,23}$/.test(tok)) pushIfOk(tok)
+    }
+  }
+
+  if (!candidatos.length) return null
+
+  // ordeno por longitud desc, luego por el que empieza con 20
+  candidatos.sort((a, b) => {
+    if (b.length !== a.length) return b.length - a.length
+    const ap = /^20/.test(a) ? 1 : 0
+    const bp = /^20/.test(b) ? 1 : 0
+    return bp - ap
+  })
+
+  return candidatos[0]
+}
+
 export function extraerBoleta(texto: string, minLen = 10, maxLen = 18): string | null {
   if (!texto) return null
   const norm = normalizarOCR(texto)

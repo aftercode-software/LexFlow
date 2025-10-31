@@ -3,9 +3,9 @@ import fsPromises from 'fs/promises'
 import { app } from 'electron'
 
 import { fromPath } from 'pdf2pic'
-import { cropImage, extraerBoleta, extraerCUIJ, extraerNumeroJuicio } from './utils'
+import { cropImage, extraerBoleta, extraerBoletaCSM, extraerCUIJ } from './utils'
 import { getTextFromImage } from './ocr'
-import { createWorker, options, optionsCSM } from '../tesseract'
+import { createWorker, optionsCSM } from '../tesseract'
 
 export async function extractDataFromCsm(arrayBuffer: ArrayBuffer) {
   const tmpDir = path.join(app.getPath('temp'), 'scrapper-tmp')
@@ -45,7 +45,7 @@ export async function processCMSPDF(tempPath: string) {
   console.log('Datos Superior:', datosSuperior)
 
   const cuij = extraerCUIJ(datosSuperior)
-  const boleta = extraerBoleta(datosSuperior)
+  const boleta = extraerBoletaCSM(datosSuperior)
   console.log('CUIJ:', cuij)
   console.log('Número de Juicio:', boleta)
   return {
