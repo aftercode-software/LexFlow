@@ -4,7 +4,6 @@ import path from 'path'
 import fs from 'fs'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
-// Procesar una sola boleta
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: boolean) {
   
   await page.waitForTimeout(4000)
@@ -76,11 +75,14 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
       `SELLO N° ${boleta.objeto}`.toUpperCase()
     )
   }
-  await page
-    .locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]')
-    .click()
+
+  const tributo = page.locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]').click()
   await page.waitForTimeout(2500)
-  await page.locator('#_easyui_combobox_i7_1').click()
+  if (boleta.tipo === 'Multas') {
+      await page.locator('#_easyui_combobox_i7_4').click()
+  } else{
+    await page.locator('#_easyui_combobox_i7_1').click()
+  }
   const oficial = page.locator(
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
   )
@@ -123,16 +125,13 @@ export async function subirBoletas(
   const browser = await chromium.launch({
     headless: false,
     executablePath: chromePath
-    // Si quieres que corra oculto, pon headless: true
   })
   const context = await browser.newContext({ storageState: 'auth.json' })
   const page = await context.newPage()
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
-  // Forzar carga de elementos con scroll
   await page.mouse.wheel(0, 50)
   await page.waitForTimeout(4000)
 
-  // Forzar interacción con click invisible (en un lugar seguro
 
   await page.waitForTimeout(1000)
   await page
@@ -175,7 +174,6 @@ export async function subirBoletas(
 }
 
 export function findChromeExe(): string | null {
-  // Rutas típicas en Windows
   const programFiles = process.env['PROGRAMFILES'] || 'C:\\Program Files'
   const programFilesx86 = process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)'
 
