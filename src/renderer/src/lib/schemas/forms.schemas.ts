@@ -26,7 +26,7 @@ export const demandadoSchema = z
     dni: z.string().nullable().optional(),
     cuil: z.string().nullable().optional(),
     cuit: z.string().nullable().optional(),
-    apellido: z.string({ required_error: 'El apellido es obligatorio' }),
+    apellido: z.string().nullable().optional(),
     nombre: z.string({ required_error: 'El nombre es obligatorio' }),
     nombreCompleto: z.string({ required_error: 'El nombre completo es obligatorio' }),
     domicilio: z.string({ required_error: 'El domicilio es obligatorio' })

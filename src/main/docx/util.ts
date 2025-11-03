@@ -9,6 +9,10 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 let cachedEscritoTemplate: Buffer | null = null
 
+const topdf = require('docx2pdf-converter') as {
+  convert: (inputPath: string, outputPath: string, keepActive?: boolean) => void
+}
+
 export async function generateWrittenPdf(data: any): Promise<string> {
   const escritoPath = path.join(BASE_OUTPUT_DIR, 'boletas', 'escritoATM.docx')
 
@@ -17,7 +21,6 @@ export async function generateWrittenPdf(data: any): Promise<string> {
   }
   const template = cachedEscritoTemplate
 
-  console.log('Generando PDF escrito con los datos:', data)
   const docxBuffer = await createReport({
     template,
     data,
@@ -28,6 +31,36 @@ export async function generateWrittenPdf(data: any): Promise<string> {
         if (typeof s !== 'string' || s.length === 0) return s as any
         const first = s[0].toLocaleUpperCase('es-AR')
         return first + s.slice(1).toLocaleLowerCase('es-AR')
+      },
+      esPersonaJuridica: (cuit) => {
+        if (typeof cuit !== 'string') return false
+        const prefijo = cuit.slice(0, 2)
+        return ['30', '33', '34'].includes(prefijo)
+      },
+      extraerDniDeCuit: (cuit) => {
+        if (typeof cuit !== 'string' || cuit.length < 9) return ''
+        return cuit.slice(2, -1)
+      },
+      idFiscal: (cuil, cuit, dni) => {
+        const idBase = cuil
+          ? `CUIL n° ${cuil}`
+          : cuit
+            ? `CUIT n° ${cuit}`
+            : dni
+              ? `DNI n° ${dni}`
+              : ''
+
+        if (!cuit) return idBase
+
+        const prefijo = cuit.slice(0, 2)
+        const esJuridica = ['30', '33', '34'].includes(prefijo)
+
+        if (!esJuridica) {
+          const dniFinal = dni || cuit.slice(2, -1)
+          return `CUIT n° ${cuit}, D.N.I: ${dniFinal}`
+        }
+
+        return idBase
       }
     }
   })
@@ -37,22 +70,19 @@ export async function generateWrittenPdf(data: any): Promise<string> {
 
   const docxPath = path.join(tempDir, `${data.boleta}.docx`)
   await fsPromises.writeFile(docxPath, docxBuffer)
-
-  await new Promise<void>((resolve, reject) => {
-    const proc = spawn('soffice', [
-      '--headless',
-      '--convert-to',
-      'pdf',
-      '--outdir',
-      tempDir,
-      docxPath
-    ])
-    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`soffice exit ${code}`))))
-    proc.on('error', reject)
-  })
-
   const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
-  return pdfPath
+
+  await fsPromises.unlink(pdfPath)
+
+  try {
+    topdf.convert(docxPath, pdfPath)
+
+    return pdfPath
+  } catch (err) {
+    console.error('Fallo docx2pdf-converter, ', err)
+
+    return pdfPath
+  }
 }
 
 export async function mergePdfs(
