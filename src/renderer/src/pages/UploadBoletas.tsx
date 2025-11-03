@@ -117,7 +117,6 @@ export default function UploadBoletas() {
     const fetchBoletas = async () => {
       setLoadingBoletas(true)
       try {
-        alert(selectedRecaudadorId)
         const {
           boletasAutomotores = [],
           boletasIngresosBrutos = [],
