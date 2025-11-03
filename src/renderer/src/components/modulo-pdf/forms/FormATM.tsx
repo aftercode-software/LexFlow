@@ -68,7 +68,7 @@ export default function FormATM({
       boleta,
       fechaEmision,
       secuencia,
-      objeto: objeto ?? null,
+      objeto: objeto ?? undefined,
       bruto,
       valorEnLetras
     }
@@ -164,7 +164,7 @@ export default function FormATM({
               <FormItem>
                 <FormLabel>Secuencia</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value ?? ''} className="" />
                 </FormControl>
                 <FormMessage />
               </FormItem>

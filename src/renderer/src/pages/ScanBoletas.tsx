@@ -16,7 +16,7 @@ import {
   IconRubberStamp
 } from '@tabler/icons-react'
 import { ChevronLeft } from 'lucide-react'
-import { ComponentType, SVGProps, useState } from 'react'
+import { ComponentType, useState } from 'react'
 import { toast } from 'sonner'
 
 enum Steps {
@@ -24,7 +24,7 @@ enum Steps {
   REVIEW = 2
 }
 
-type TablerIcon = ComponentType<SVGProps<SVGSVGElement>>
+type TablerIcon = ComponentType<any>
 
 const naturalezas: { key: Naturalezas; label: string; icon: TablerIcon }[] = [
   { key: 'automotores', label: 'Automotores', icon: IconCar },

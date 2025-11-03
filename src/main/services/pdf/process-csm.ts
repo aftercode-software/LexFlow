@@ -3,7 +3,7 @@ import fsPromises from 'fs/promises'
 import { app } from 'electron'
 
 import { fromPath } from 'pdf2pic'
-import { cropImage, extraerBoleta, extraerBoletaCSM, extraerCUIJ } from './utils'
+import { cropImage, extraerBoletaCSM, extraerCUIJ } from './utils'
 import { getTextFromImage } from './ocr'
 import { createWorker, optionsCSM } from '../tesseract'
 

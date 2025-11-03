@@ -6,8 +6,8 @@ import { EnrichedBoleta } from '../../shared/interfaces/boletas'
 export function registerPoderJudicialHandlers() {
   ipcMain.handle(
     'carga:judicial',
-    async (_, boletas: EnrichedBoleta[], montoThreshold, modoInhibicion, oficial2) => {
-      subirBoletas(boletas, montoThreshold, modoInhibicion, oficial2)
+    async (_, boletas: EnrichedBoleta[], montoThreshold, modoInhibicion) => {
+      subirBoletas(boletas, montoThreshold, modoInhibicion)
     }
   )
 

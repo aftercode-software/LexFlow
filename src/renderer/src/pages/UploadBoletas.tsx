@@ -25,7 +25,7 @@ import { AnimatedCircularProgressBar } from '@renderer/components/ui/animated-ci
 import { EnrichedBoleta } from '@shared/interfaces/boletas'
 
 type TipoBoleta = 'automotores' | 'ingresos-brutos' | 'inmobiliarios' | 'multas' | 'sellos'
-type TipoFiltro = TipoBoleta
+type TipoFiltro = TipoBoleta | 'todas'
 
 function parseMonto(montoStr: string): number {
   return Number.parseFloat(montoStr) || 0
@@ -102,7 +102,7 @@ export default function UploadBoletas() {
     sellos: []
   })
 
-  const [dirsPorTipo, setDirsPorTipo] = useState<Record<TipoBoleta, string>>({
+  const [, setDirsPorTipo] = useState<Record<TipoBoleta, string>>({
     automotores: '',
     'ingresos-brutos': '',
     inmobiliarios: '',
@@ -166,14 +166,14 @@ export default function UploadBoletas() {
     fetchBoletas()
   }, [isAuthenticated, selectedRecaudadorId])
 
- const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFiltro | undefined>(undefined)
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFiltro | undefined>(undefined)
   const [montoThreshold, setMontoThreshold] = useState<number>(30000)
   const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
 
- const boletasActuales = useMemo(() => {
-  if (!tipoSeleccionado) return []
-  return boletasPorTipo[tipoSeleccionado]
-}, [tipoSeleccionado, boletasPorTipo])
+  const boletasActuales = useMemo(() => {
+    if (!tipoSeleccionado) return []
+    return boletasPorTipo[tipoSeleccionado]
+  }, [tipoSeleccionado, boletasPorTipo])
   const revisadas = useMemo(
     () => boletasActuales.filter((b) => b.estado === 'Revisada'),
     [boletasActuales]
@@ -193,11 +193,11 @@ export default function UploadBoletas() {
     [isAuthenticated, boletasParaMostrar.length, selectedRecaudadorId]
   )
 
- const handleOpenPdf = (b: EnrichedBoleta) => {
-  if (!tipoSeleccionado) return
-  const baseDir = dirsPorTipo[tipoSeleccionado]
-  window.api.openPdf(`${baseDir}/${b.boleta}.pdf`)
-}
+  // const handleOpenPdf = (b: EnrichedBoleta) => {
+  //   if (!tipoSeleccionado) return
+  //   const baseDir = dirsPorTipo[tipoSeleccionado]
+  //   window.api.openPdf(`${baseDir}/${b.boleta}.pdf`)
+  // }
 
   const handleUpload = async () => {
     const payload = {
@@ -326,7 +326,9 @@ export default function UploadBoletas() {
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas" disabled >Todas</SelectItem>
+                  <SelectItem value="todas" disabled>
+                    Todas
+                  </SelectItem>
                   <SelectItem value="automotores">Automotores</SelectItem>
                   <SelectItem value="ingresos-brutos">Ingresos Brutos</SelectItem>
                   <SelectItem value="inmobiliarios">Inmobiliarios</SelectItem>
@@ -384,12 +386,7 @@ export default function UploadBoletas() {
                 </TableHeader>
                 <TableBody>
                   {boletasParaMostrar.map((b) => (
-                    <BoletaRow
-                      key={b.id}
-                      boleta={b}
-                      showExpediente={showExpediente}
-                      onOpenPdf={handleOpenPdf}
-                    />
+                    <BoletaRow key={b.id} boleta={b} showExpediente={showExpediente} />
                   ))}
                 </TableBody>
               </Table>

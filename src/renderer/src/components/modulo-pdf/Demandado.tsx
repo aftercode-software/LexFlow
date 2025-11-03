@@ -84,7 +84,6 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
         setValue('demandado.nombre', data.nombre)
         setValue('demandado.nombreCompleto', data.apellidoYNombre)
         setValue('demandado.domicilio', data.domicilio)
-        setValue('demandado.domicilioTipo', data.domicilioTipo ?? 'REAL')
         setAutoFields(['apellido', 'nombre', 'nombreCompleto', 'domicilio', 'domicilioTipo'])
         setAccordionOpen('auto')
         setDocumentFound(true)
@@ -176,7 +175,11 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                       <FormItem>
                         <FormLabel>Apellido</FormLabel>
                         <FormControl>
-                          <Input {...field} className="border-green-200 bg-green-50" />
+                          <Input
+                            {...field}
+                            value={field.value ?? ''}
+                            className="border-green-200 bg-green-50"
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -242,7 +245,7 @@ export default function Demandado({ form }: { form: UseFormReturn<FormValues> })
                 <FormItem>
                   <FormLabel>Apellido</FormLabel>
                   <FormControl>
-                    <Input {...field} className="" />
+                    <Input {...field} value={field.value ?? ''} className="" />
                   </FormControl>
                 </FormItem>
               )}

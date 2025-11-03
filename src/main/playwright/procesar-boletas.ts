@@ -5,7 +5,6 @@ import fs from 'fs'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
-  
   await page.waitForTimeout(4000)
   await page.locator('text="Nuevo Registro"').click()
   await page.waitForSelector('.window:visible', { timeout: 5000 })
@@ -58,30 +57,24 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   )
   if (boleta.tipo === 'Multas') {
     await objetoImponible.fill(`MULTAS N° ${boleta.objeto}`.toUpperCase())
-  } else  if (boleta.tipo === 'Automotores') {
-    await objetoImponible.fill(
-      `AUTOMOTOR PATENTE  N° ${boleta.objeto} `.toUpperCase()
-    )
+  } else if (boleta.tipo === 'Automotores') {
+    await objetoImponible.fill(`AUTOMOTOR PATENTE  N° ${boleta.objeto} `.toUpperCase())
   } else if (boleta.tipo === 'Inmobiliarios') {
-    await objetoImponible.fill(
-      `INMOBILIARIO PADRÓN N° ${boleta.objeto}`.toUpperCase()
-    )
+    await objetoImponible.fill(`INMOBILIARIO PADRÓN N° ${boleta.objeto}`.toUpperCase())
   } else if (boleta.tipo === 'Ingresos-brutos') {
-    await objetoImponible.fill(
-      `INGRESOS BRUTOS N° ${boleta.objeto}`.toUpperCase()
-    )
+    await objetoImponible.fill(`INGRESOS BRUTOS N° ${boleta.objeto}`.toUpperCase())
   } else if (boleta.tipo === 'Sellos') {
-    await objetoImponible.fill(
-      `SELLO N° ${boleta.objeto}`.toUpperCase()
-    )
+    await objetoImponible.fill(`SELLO N° ${boleta.objeto}`.toUpperCase())
   }
 
-  const tributo = page.locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]')
+  const tributo = page.locator(
+    'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]'
+  )
   await tributo.click()
   await page.waitForTimeout(2500)
   if (boleta.tipo === 'Multas') {
-      await page.locator('#_easyui_combobox_i7_4').click()
-  } else{
+    await page.locator('#_easyui_combobox_i7_4').click()
+  } else {
     await page.locator('#_easyui_combobox_i7_1').click()
   }
   const oficial = page.locator(
@@ -113,8 +106,7 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 export async function subirBoletas(
   boletas: EnrichedBoleta[],
   montoThreshold: number,
-  modoInhibicion: string,
-  oficial2: boolean
+  modoInhibicion: string
 ) {
   console.log('montoThreshold', montoThreshold)
   const chromePath = findChromeExe()
@@ -132,7 +124,6 @@ export async function subirBoletas(
   await page.goto('https://www.jus.mendoza.gov.ar/tributario/precarga/index.php')
   await page.mouse.wheel(0, 50)
   await page.waitForTimeout(4000)
-
 
   await page.waitForTimeout(1000)
   await page
@@ -166,7 +157,7 @@ export async function subirBoletas(
   const tipos = new Set<string>()
 
   for (const boleta of boletas.slice(0, maxIterations)) {
-     tipos.add(boleta.tipo)
+    tipos.add(boleta.tipo)
     await procesarBoleta(page, boleta)
   }
   console.log('Tipos de boleta detectados:', Array.from(tipos))

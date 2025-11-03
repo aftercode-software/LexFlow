@@ -5,11 +5,10 @@ import { extractDataFromPdf } from '../services/pdf/process-pdf'
 import fsPromises from 'fs/promises'
 import { extractDataFromCsm } from '../services/pdf/process-csm'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
-import { Naturalezas } from '../../shared/interfaces/boletas'
 
 export function registerPdfHandlers() {
-  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer, pdfType: Naturalezas) => {
-    const { data, originalPdfPath } = await extractDataFromPdf(arrayBuffer, pdfType)
+  ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer) => {
+    const { data, originalPdfPath } = await extractDataFromPdf(arrayBuffer)
     return { data, originalPdfPath }
   })
 
