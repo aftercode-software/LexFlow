@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
-async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: boolean) {
+async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
   
   await page.waitForTimeout(4000)
   await page.locator('text="Nuevo Registro"').click()
@@ -76,7 +76,8 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta, oficial2: bool
     )
   }
 
-  const tributo = page.locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]').click()
+  const tributo = page.locator('xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[19]/td[3]/div/span/input[1]')
+  await tributo.click()
   await page.waitForTimeout(2500)
   if (boleta.tipo === 'Multas') {
       await page.locator('#_easyui_combobox_i7_4').click()
@@ -166,7 +167,7 @@ export async function subirBoletas(
 
   for (const boleta of boletas.slice(0, maxIterations)) {
      tipos.add(boleta.tipo)
-    await procesarBoleta(page, boleta, oficial2)
+    await procesarBoleta(page, boleta)
   }
   console.log('Tipos de boleta detectados:', Array.from(tipos))
 

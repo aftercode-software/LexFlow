@@ -25,7 +25,7 @@ import { AnimatedCircularProgressBar } from '@renderer/components/ui/animated-ci
 import { EnrichedBoleta } from '@shared/interfaces/boletas'
 
 type TipoBoleta = 'automotores' | 'ingresos-brutos' | 'inmobiliarios' | 'multas' | 'sellos'
-type TipoFiltro = 'todas' | TipoBoleta
+type TipoFiltro = TipoBoleta
 
 function parseMonto(montoStr: string): number {
   return Number.parseFloat(montoStr) || 0
@@ -166,15 +166,14 @@ export default function UploadBoletas() {
     fetchBoletas()
   }, [isAuthenticated, selectedRecaudadorId])
 
-  const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFiltro>('todas')
+ const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoFiltro | undefined>(undefined)
   const [montoThreshold, setMontoThreshold] = useState<number>(30000)
   const [modoInhibicion, setModoInhibicion] = useState<'con' | 'sin'>('con')
 
-  const boletasActuales = useMemo(() => {
-    if (tipoSeleccionado === 'todas') return Object.values(boletasPorTipo).flat()
-    return boletasPorTipo[tipoSeleccionado]
-  }, [tipoSeleccionado, boletasPorTipo])
-
+ const boletasActuales = useMemo(() => {
+  if (!tipoSeleccionado) return []
+  return boletasPorTipo[tipoSeleccionado]
+}, [tipoSeleccionado, boletasPorTipo])
   const revisadas = useMemo(
     () => boletasActuales.filter((b) => b.estado === 'Revisada'),
     [boletasActuales]
@@ -194,13 +193,11 @@ export default function UploadBoletas() {
     [isAuthenticated, boletasParaMostrar.length, selectedRecaudadorId]
   )
 
-  const handleOpenPdf = (b: EnrichedBoleta) => {
-    const tipo: TipoBoleta | null =
-      tipoSeleccionado !== 'todas' ? (tipoSeleccionado as TipoBoleta) : null
-    const baseDir = tipo ? dirsPorTipo[tipo] : ''
-    console.log('[openPDF]', { baseDir, boleta: b })
-    window.api.openPdf(`${baseDir}/${b.boleta}.pdf`)
-  }
+ const handleOpenPdf = (b: EnrichedBoleta) => {
+  if (!tipoSeleccionado) return
+  const baseDir = dirsPorTipo[tipoSeleccionado]
+  window.api.openPdf(`${baseDir}/${b.boleta}.pdf`)
+}
 
   const handleUpload = async () => {
     const payload = {
@@ -329,7 +326,7 @@ export default function UploadBoletas() {
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="todas" disabled >Todas</SelectItem>
                   <SelectItem value="automotores">Automotores</SelectItem>
                   <SelectItem value="ingresos-brutos">Ingresos Brutos</SelectItem>
                   <SelectItem value="inmobiliarios">Inmobiliarios</SelectItem>

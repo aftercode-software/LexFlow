@@ -15,7 +15,6 @@ import {
 } from './utils'
 import { createWorker } from '../tesseract'
 import { getLastPageBuffer } from './pageCount'
-import { Naturalezas } from '../../../shared/interfaces/boletas'
 import { DatosFormulario } from '../../../shared/interfaces/form'
 
 // export async function pruebaEscaneoMasivo() {
@@ -44,8 +43,7 @@ import { DatosFormulario } from '../../../shared/interfaces/form'
 //   return resultados
 // }
 export async function extractDataFromPdf(
-  arrayBuffer: ArrayBuffer,
-  pdfType: Naturalezas
+  arrayBuffer: ArrayBuffer
 ): Promise<{
   data: DatosFormulario
   originalPdfPath: string
