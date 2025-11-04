@@ -72,7 +72,11 @@ export async function generateWrittenPdf(data: any): Promise<string> {
   await fsPromises.writeFile(docxPath, docxBuffer)
   const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
 
-  await fsPromises.unlink(pdfPath)
+  try {
+    await fsPromises.unlink(pdfPath)
+  } catch {
+    /* empty */
+  }
 
   try {
     topdf.convert(docxPath, pdfPath)
