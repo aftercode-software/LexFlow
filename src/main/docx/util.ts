@@ -9,10 +9,6 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 let cachedEscritoTemplate: Buffer | null = null
 
-const topdf = require('docx2pdf-converter') as {
-  convert: (inputPath: string, outputPath: string, keepActive?: boolean) => void
-}
-
 export async function generateWrittenPdf(data: any): Promise<string> {
   const escritoPath = path.join(BASE_OUTPUT_DIR, 'boletas', 'escritoATM.docx')
 
@@ -70,23 +66,21 @@ export async function generateWrittenPdf(data: any): Promise<string> {
 
   const docxPath = path.join(tempDir, `${data.boleta}.docx`)
   await fsPromises.writeFile(docxPath, docxBuffer)
+
+  await new Promise<void>((resolve, reject) => {
+    const proc = spawn('soffice', [
+      '--headless',
+      '--convert-to',
+      'pdf',
+      '--outdir',
+      tempDir,
+      docxPath
+    ])
+    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`soffice exit ${code}`))))
+    proc.on('error', reject)
+  })
   const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
-
-  try {
-    await fsPromises.unlink(pdfPath)
-  } catch {
-    /* empty */
-  }
-
-  try {
-    topdf.convert(docxPath, pdfPath)
-
-    return pdfPath
-  } catch (err) {
-    console.error('Fallo docx2pdf-converter, ', err)
-
-    return pdfPath
-  }
+  return pdfPath
 }
 
 export async function mergePdfs(
