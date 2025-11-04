@@ -61,15 +61,15 @@ async function procesarCedula(page: Page, cedula: CedulaFiltrada) {
   const archivoPath = `C://Legali/cedulas/${cedula.tipoTribunal}/${cedula.cuij}.pdf`
   await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   await page.waitForTimeout(2000)
-  // await page
-  //   .locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
-  //   .click()
-  // await page.waitForTimeout(1000)
-  // await page.locator('xpath=/html/body/div[7]/div[3]/a/span').click()
-  // await page.waitForTimeout(1000)
-  // const grabar = page.locator('xpath=/html/body/div[5]/div[3]/a[1]/span/span[1]')
-  // await grabar.click()
-  // await page.waitForTimeout(1000)
+  await page
+    .locator('xpath=/html/body/div[5]/div[2]/form/table/tbody/tr[8]/td/form/input[2]')
+    .click()
+  await page.waitForTimeout(1000)
+  await page.locator('xpath=/html/body/div[7]/div[3]/a/span').click()
+  await page.waitForTimeout(1000)
+  const grabar = page.locator('xpath=/html/body/div[5]/div[3]/a[1]/span/span[1]')
+  await grabar.click()
+  await page.waitForTimeout(1000)
 }
 
 function mapTribunalToIndex(tribunal: 'primer' | 'segundo' | 'tercer'): number {
