@@ -61,7 +61,7 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     await objetoImponible.fill(`AUTOMOTOR PATENTE  N° ${boleta.objeto} `.toUpperCase())
   } else if (boleta.tipo === 'Inmobiliarios') {
     await objetoImponible.fill(`INMOBILIARIO PADRÓN N° ${boleta.objeto}`.toUpperCase())
-  } else if (boleta.tipo === 'Ingresos-brutos') {
+  } else if (boleta.tipo === 'Ingresos Brutos') {
     await objetoImponible.fill(`INGRESOS BRUTOS N° ${boleta.objeto}`.toUpperCase())
   } else if (boleta.tipo === 'Sellos') {
     await objetoImponible.fill(`SELLO N° ${boleta.objeto}`.toUpperCase())
@@ -85,20 +85,29 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 
   await page.waitForTimeout(2500)
 
-  if (boleta.tipo === 'Multas') {
-    const archivoPath = `${BASE_OUTPUT_DIR}/boletas/multas/ATM${boleta.boleta}.pdf`
-    await page.setInputFiles('input#filebox_file_id_1', archivoPath)
-  } else {
-    const archivoPath = `${BASE_OUTPUT_DIR}/boletas/otros/ATM${boleta.boleta}.pdf`
-    await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  console.log('boleee', boleta)
+  let path = ''
+  switch (boleta.tipo) {
+    case 'Ingresos Brutos':
+      path = 'ingresos-brutos'
+      break
+    case 'Automotores':
+      path = 'automotores'
+      break
+    case 'Sellos':
+      path = 'sellos'
+      break
+    case 'Multas':
+      path = 'multas'
+      break
+    case 'Inmobiliarios':
+      path = 'inmobiliarios'
+      break
   }
+  console.log(path)
+  const archivoPath = `${BASE_OUTPUT_DIR}/boletas/${path}/ATM${boleta.boleta}.pdf`
+  await page.setInputFiles('input#filebox_file_id_1', archivoPath)
 
-  await page.locator('input[type="submit"][value="Guardar"]').click()
-  await page.waitForTimeout(1500)
-  await page.locator('xpath=/html/body/div[13]/div[3]/a/span/span').click()
-  await page.waitForTimeout(1500)
-  const grabar = page.locator('xpath=/html/body/div[11]/div[3]/a[1]/span')
-  await grabar.click()
   console.log(`✅ Boleta ${boleta.boleta} completada`)
 }
 

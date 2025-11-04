@@ -29,7 +29,7 @@ export function registerBoletaHandlers() {
     console.log(todas)
     const res = await backend.post('/boletas/filtrar', {
       boletasAutomotores: porTipo['automotores'],
-      boletasIngresosBrutos: porTipo['brutos'],
+      boletasIngresosBrutos: porTipo['ingresos-brutos'],
       boletasInmobiliarios: porTipo['inmobiliarios'],
       boletasMultas: porTipo['multas'],
       boletasSellos: porTipo['sellos'],

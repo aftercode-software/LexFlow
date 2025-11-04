@@ -1,7 +1,14 @@
 export type TipoDocumento = 'CUIT' | 'CUIL' | 'DNI'
 export type TipoDemandado = 'Tercero' | 'Profesional'
 export type TribunalKey = 'primer' | 'segundo' | 'tercer'
-export type TipoBoleta = 'Profesional' | 'Tercero' | 'Multas' | 'Inmobiliarios' | 'Automotores' | 'Ingresos-brutos' | 'Sellos'
+export type TipoBoleta =
+  | 'Profesional'
+  | 'Tercero'
+  | 'Multas'
+  | 'Inmobiliarios'
+  | 'Automotores'
+  | 'Ingresos Brutos'
+  | 'Sellos'
 export type EstadoBoleta = 'Generada' | 'Revisada' | 'Subida' | 'Error'
 
 export type Naturalezas = 'automotores' | 'inmobiliarios' | 'ingresos-brutos' | 'sellos' | 'multas'
