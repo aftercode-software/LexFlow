@@ -2,7 +2,14 @@ import Tesseract, { OEM } from 'tesseract.js'
 
 export async function createWorker() {
   const { createWorker } = Tesseract
-  return await createWorker('spa', OEM.DEFAULT)
+  const w = await createWorker('spa', OEM.DEFAULT)
+  await w.load('spa')
+  await w.reinitialize('spa', OEM.LSTM_ONLY)
+  await w.setParameters({
+    user_defined_dpi: '300',
+    preserve_interword_spaces: '1'
+  })
+  return w
 }
 
 export const options = {

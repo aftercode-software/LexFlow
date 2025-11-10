@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+import { cleanSpaces, normalizeOCR, parseMontoMixto, upperNoAccents } from './helpers'
 
 export function cropImage(
   imageToCrop: Buffer<ArrayBufferLike>,
@@ -11,12 +12,36 @@ export function cropImage(
   return image.extract({ left: x, top: y, width, height }).toBuffer()
 }
 
+export async function recortarCuartoDerecho(lastPage: Buffer<ArrayBufferLike>) {
+  const metadata = await sharp(lastPage).metadata()
+
+  if (!metadata.width || !metadata.height) {
+    throw new Error('No se pudieron leer las dimensiones de la imagen')
+  }
+
+  const fullWidth = metadata.width
+  const fullHeight = metadata.height
+
+  const cropWidth = Math.round(fullWidth / 4)
+  const cropLeft = fullWidth - cropWidth
+
+  const cropHeight = Math.round(fullHeight / 1.5)
+
+  const cropTop = fullHeight - cropHeight
+
+  console.log(`Recortando en: x=${cropLeft}, y=${cropTop}, w=${cropWidth}, h=${cropHeight}`)
+
+  const montoImg = await cropImage(lastPage, cropLeft, cropTop, cropWidth, cropHeight)
+
+  return montoImg
+}
+
 export function extraerBoletaCSM(texto: string, minLen = 10, maxLen = 18): string | null {
   if (!texto) return null
 
-  const norm = normalizarOCR(texto)
+  const norm = normalizeOCR(texto)
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '') // sin tildes
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 
@@ -36,38 +61,30 @@ export function extraerBoletaCSM(texto: string, minLen = 10, maxLen = 18): strin
     if (fijo.length >= minLen && fijo.length <= maxLen) candidatos.push(fijo)
   }
 
-  // 0) PRIORIDAD: luego de “Boleta de deuda” / “Resolución n …”, tolerante a OCR y mojibake
-  //   - capta opcional "ATM" y lo descarta (solo devuelve dígitos)
-  //   - deja una ventana corta de caracteres de separación
   {
     const rxContexto =
       /(boleta\s*de\s*deuda|resoluci\w*n\s*n[º°*:\-"]?)\s*[/\-:\s]*\s*(atm)?\s*([0-9OQDSIl|B]{8,24})/gi
 
     for (const m of norm.matchAll(rxContexto)) {
-      // m[2] es "atm" opcional, m[3] el número con ruido OCR
       pushIfOk(m[3])
     }
   }
 
-  // 0.b) Si aparece el token ATM pegado al número en cualquier lado, también lo intento
   if (candidatos.length === 0) {
     const rxATM = /\batm\s*([0-9OQDSIl|B]{8,24})\b/gi
     for (const m of norm.matchAll(rxATM)) pushIfOk(m[1])
   }
 
-  // 1) patrón clásico “BOLETA N° …”
   if (candidatos.length === 0) {
     const rxClasico = /boleta\s*n?[°º*:\-"]?\s*([0-9OQDSIl|B\s]{6,24})/gi
     for (const m of norm.matchAll(rxClasico)) pushIfOk(m[1] ?? '')
   }
 
-  // 2) fallback: secuencias que parecen boletas (empiezan en 20…)
   if (candidatos.length === 0) {
     const rxSoloNum = /\b20[0-9OQDSIl|B]{10,16}\b/gi
     for (const m of norm.matchAll(rxSoloNum)) pushIfOk(m[0])
   }
 
-  // 3) último recurso: cualquier número largo 10–14/18 y que empiece en 20
   if (candidatos.length === 0) {
     const rxLargos = /\b[0-9]{10,24}\b/g
     for (const m of norm.matchAll(rxLargos)) {
@@ -78,7 +95,6 @@ export function extraerBoletaCSM(texto: string, minLen = 10, maxLen = 18): strin
 
   if (!candidatos.length) return null
 
-  // ordeno por longitud desc, luego por el que empieza con 20
   candidatos.sort((a, b) => {
     if (b.length !== a.length) return b.length - a.length
     const ap = /^20/.test(a) ? 1 : 0
@@ -89,182 +105,93 @@ export function extraerBoletaCSM(texto: string, minLen = 10, maxLen = 18): strin
   return candidatos[0]
 }
 
-export function extraerBoleta(texto: string, minLen = 10, maxLen = 18): string | null {
+export function extraerBoleta(texto: string): string | null {
   if (!texto) return null
-  const norm = normalizarOCR(texto)
+  const norm = normalizeOCR(texto)
 
-  // 1) patrón clásico
-  const rx = /BOLETA\s*N?[°º*:\-"]?\s*([0-9OODSIl|B\s]{6,24})/gi
-  const candidatos: string[] = []
-  for (const m of norm.matchAll(rx)) {
-    const fijo = (m[1] ?? '')
-      .replace(/[OQD]/g, '0')
-      .replace(/[S]/g, '5')
-      .replace(/[Il|]/g, '1')
-      .replace(/[B]/g, '8')
-      .replace(/\s+/g, '')
-      .replace(/[^\d]/g, '')
-    if (fijo.length >= minLen && fijo.length <= maxLen) candidatos.push(fijo)
+  const rx = /BOLETA\s*N?[°º*:\-"]?\s*([0-9OQDSIl|B]{10,18})(?!\S)/i
+  const m = norm.match(rx)
+
+  const clean = (s: string) =>
+    s.replace(/[OQD]/g, '0').replace(/[S]/g, '5').replace(/[Il|]/g, '1').replace(/[B]/g, '8')
+
+  if (m?.[1]) {
+    let fijo = clean(m[1])
+
+    if (fijo.length > 13 && fijo.startsWith('20')) fijo = fijo.slice(0, 13)
+    if (fijo.length >= 10 && fijo.length <= 14) return fijo
   }
 
-  // 2) fallback: buscar secuencias que *parecen* boletas (13–14 dígitos empezando en 20…)
-  if (candidatos.length === 0) {
-    const rxSoloNum = /\b20[\dOQDSIl|B]{10,12}\b/g
-    for (const m of norm.matchAll(rxSoloNum)) {
-      const fijo = m[0]
-        .replace(/[OQD]/g, '0')
-        .replace(/[S]/g, '5')
-        .replace(/[Il|]/g, '1')
-        .replace(/[B]/g, '8')
-      if (/^20\d{11,13}$/.test(fijo)) candidatos.push(fijo)
-    }
+  const m2 = norm.match(/\b20[0-9OQDSIl|B]{10,13}\b/)
+  if (m2) {
+    let fijo = clean(m2[0])
+    if (fijo.length > 13) fijo = fijo.slice(0, 13)
+    return fijo
   }
 
-  // 3) último recurso: tomar el número “tipo boleta” más largo
-  if (candidatos.length === 0) {
-    const m = norm.match(/\b\d{10,14}\b/g) || []
-    for (const tok of m) {
-      if (/^20\d{9,13}$/.test(tok)) candidatos.push(tok)
-    }
-  }
-
-  if (!candidatos.length) return null
-  candidatos.sort((a, b) => b.length - a.length)
-  return candidatos[0]
+  return null
 }
 
-function parseMontoMixto(raw: string): number | null {
-  if (!raw) return null
+const NUM_PATTERN = String.raw`\b(?:\d+(?:[.,]\s?\d{3})+|\d+)(?:[.,]\s?\d{1,2})?\b`
 
-  const looksNumeric = /^[\dOISl.,]+$/.test(raw)
-  const token = looksNumeric ? raw.replace(/O/g, '0').replace(/[Il]/g, '1').replace(/S/g, '5') : raw
-
-  const s = token.replace(/[^\d.,]/g, '')
-  if (!s) return null
-
-  if (!/[.,]/.test(s)) {
-    const n = Number(s)
-    return Number.isFinite(n) ? n : null
-  }
-
-  const lastComma = s.lastIndexOf(',')
-  const lastDot = s.lastIndexOf('.')
-
-  const pickAsDecimal = (idx: number) =>
-    idx >= 0 && s.length - idx - 1 === 2 && /^\d{2}$/.test(s.slice(idx + 1))
-
-  let decimalIdx = -1
-
-  if (pickAsDecimal(lastComma)) decimalIdx = lastComma
-  else if (pickAsDecimal(lastDot)) decimalIdx = lastDot
-  else decimalIdx = Math.max(lastComma, lastDot)
-
-  if (decimalIdx >= 0) {
-    const entero = s.slice(0, decimalIdx).replace(/[.,]/g, '')
-    const dec = s.slice(decimalIdx + 1).replace(/[^\d]/g, '')
-    const normalized = `${entero}.${dec}`
-    const n = Number(normalized)
-    return Number.isFinite(n) ? n : null
-  }
-
-  const n = Number(s.replace(/[.,]/g, ''))
-  return Number.isFinite(n) ? n : null
-}
-
-function esPlausibleNumero(str: string): boolean {
-  const hasSep = /[.,]/.test(str)
-  const digits = str.replace(/[^\d]/g, '')
+function esPlausibleNumero(tok: string): boolean {
+  const hasSep = /[.,]/.test(tok)
+  const digits = tok.replace(/[^\d]/g, '')
   return hasSep || digits.length >= 4
 }
 
-const NUM_PATTERN = String.raw`(\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|\d{4,}(?:[.,]\d{2})?|\d{1,3}[.,]\d{2})`
+const SON_PESOS_RE = /\bS[O0]N\s+.{0,15}\bP[A-Z]{0,4}S[O0]S?\b/i
 
-const TOTAL_TOKEN = String.raw`(S\s*U\s*B\s*)?T[0O]T[AI1]L\b`
+const TOTAL_RE = /(?<!SUB\s*)T[O0]T[AI1]L\b/i
+
+const CENTAVOS_RE = /\bC(?:E|É|3|A)NTA[A-Z]{0,4}S\b/i
 
 export function extraerMonto(texto: string): number | null {
   if (!texto) return null
 
-  const t = texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\S\r\n]+/g, ' ')
-    .trim()
+  const t = cleanSpaces(normalizeOCR(texto))
 
-  const candidatos: number[] = []
+  const mSon = SON_PESOS_RE.exec(t)
+  const mCentavos = CENTAVOS_RE.exec(t)
 
-  const lineas = t
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-  for (const linea of lineas) {
-    const mTot = new RegExp(TOTAL_TOKEN, 'i').exec(linea)
-    if (!mTot) continue
-    const precedidaPorSUB = !!mTot[1]
-    if (precedidaPorSUB) continue
+  let endIdx = Infinity
+  if (mSon) endIdx = mSon.index
+  if (mCentavos && mCentavos.index < endIdx) {
+    endIdx = mCentavos.index
+  }
 
-    const numeros = linea.match(new RegExp(NUM_PATTERN, 'g')) || []
-    for (let i = numeros.length - 1; i >= 0; i--) {
-      const tok = numeros[i]
-      if (!esPlausibleNumero(tok)) continue
-      const n = parseMontoMixto(tok)
-      if (n !== null) {
-        candidatos.push(n)
-        break
-      }
+  if (endIdx === Infinity) {
+    const mSonLax = /S[O0]N\s+P(?:E|É|3|A)S[O0]S?\s*:?/i.exec(t)
+    if (mSonLax) endIdx = mSonLax.index
+    else return null
+  }
+
+  let totalMatch: RegExpExecArray | null = null
+  const re = new RegExp(TOTAL_RE, TOTAL_RE.flags + 'g')
+  let m: RegExpExecArray | null
+  while ((m = re.exec(t)) !== null) {
+    if (m.index < endIdx) {
+      totalMatch = m
+    } else {
+      break
     }
   }
 
-  {
-    const reVentana = new RegExp(TOTAL_TOKEN + String.raw`[\s\S]{0,200}?` + NUM_PATTERN, 'gi')
-    let m: RegExpExecArray | null
-    while ((m = reVentana.exec(t))) {
-      const precedidaPorSUB = !!m[1]
-      if (precedidaPorSUB) continue
-      const tok = m[2]
-      if (!tok || !esPlausibleNumero(tok)) continue
-      const n = parseMontoMixto(tok)
-      if (n !== null) candidatos.push(n)
-    }
-  }
+  if (!totalMatch) return null
 
-  if (candidatos.length) {
-    // Ya no devolvemos Math.max(...candidatos)
-    // Vamos a re-escanear por contexto y puntuar:
-    type Cand = { n: number; score: number; raw: string }
-    const scored: Cand[] = []
+  const start = totalMatch.index + totalMatch[0].length
+  const win = t.slice(start, endIdx)
 
-    const lines = t.split(/\r?\n/)
-    for (const line of lines) {
-      const isTotal = /\bT[0O]T[AI1]L\b/i.test(line) && !/\bSUB\s*T[0O]T[AI1]L\b/i.test(line)
-      const nums = line.match(new RegExp(NUM_PATTERN, 'g')) || []
-      for (const tok of nums) {
-        if (!esPlausibleNumero(tok)) continue
-        const n = parseMontoMixto(tok)
-        if (n == null) continue
-        let score = 0
-        if (isTotal) score += 2
-        if (/[.,]\d{2}\b/.test(tok)) score += 3 // decimal de 2 dígitos
-        if (/\d{1,3}([.,]\d{3})+([.,]\d{2})?\b/.test(tok)) score += 1 // miles correctos
-        if (!/[.,]/.test(tok) && String(Math.trunc(n)).length >= 7) score -= 3 // entero enorme
+  const toks = win.match(new RegExp(NUM_PATTERN, 'g')) || []
 
-        scored.push({ n, score, raw: tok })
-      }
-    }
-
-    if (scored.length) {
-      scored.sort((a, b) => b.score - a.score || b.n - a.n)
-      return scored[0].n
-    }
-  }
-
-  const m = t.match(new RegExp(NUM_PATTERN, 'g')) || []
-  const nums = m
+  const numerosPlausibles = toks
     .filter(esPlausibleNumero)
     .map(parseMontoMixto)
-    .filter((x): x is number => x !== null)
-  if (nums.length) return Math.max(...nums)
+    .filter((n): n is number => n != null && n > 0)
 
-  return null
+  if (numerosPlausibles.length === 0) return null
+
+  return Math.max(...numerosPlausibles)
 }
 
 export function extraerCUIJ(texto: string): string | null {
@@ -287,15 +214,6 @@ export function extraerNumeroJuicio(texto: string): string | null {
 
 type Documento = { tipo: 'CUIT' | 'DNI'; valor: string }
 
-function normalizarOCR(s: string) {
-  return s
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[\u2013\u2014\u2212–—]/g, '-')
-    .replace(/[“”«»]/g, '"')
-    .toUpperCase()
-}
-
 function fixDigits(s: string): string {
   return s.replace(/[OQD]/g, '0').replace(/[Il|]/g, '1').replace(/S/g, '5').replace(/B/g, '8')
 }
@@ -303,7 +221,7 @@ function fixDigits(s: string): string {
 export function extraerDocumento(texto: string | null): Documento {
   if (!texto) return { tipo: 'DNI', valor: '' }
 
-  const norm = normalizarOCR(texto)
+  const norm = normalizeOCR(texto)
 
   const DIG = `[0-9OQDSIl|B]`
   const NON = `[^0-9OQDSIl|B]{0,3}`
@@ -341,72 +259,100 @@ export function extraerDocumento(texto: string | null): Documento {
 
 export function extraerNombreEmplazado(mediaTxt: string): string {
   if (!mediaTxt) return ''
-  const t = normalizarOCR(mediaTxt)
+  const raw = normalizeOCR(mediaTxt)
 
-  const inicio = t.search(/E[MN]?[A-Z]{0,2}PLAZA(?:RA)?/)
-  if (inicio === -1) return ''
-  const frag = t.slice(inicio)
+  const sinRec = raw
+    .split(/\r?\n/)
+    .filter((l) => !/^\s*REC\b/i.test(l))
+    .join('\n')
 
-  const corte = frag.search(/\b(DOMICILIO|NATURALEZA|EXPTE|HOJA)\b/)
-  const bloque = (corte >= 0 ? frag.slice(0, corte) : frag).replace(/\s+/g, ' ')
+  const reStart = /EMPLAZAR[AÁ]?\b[\s:\-|]*/i
+  const idx = sinRec.search(reStart)
+  if (idx === -1) return ''
 
-  let m = bloque.match(/-\s*([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\s\.]{3,}?)(?=\s*[:;,.\-]|$)/i)
-  if (m?.[1]) {
-    return m[1].replace(/[.,]/g, '').replace(/\s+/g, ' ').trim()
+  const tail = sinRec.slice(idx)
+  const lines = tail.split(/\r?\n/).slice(0, 3)
+
+  let bloque = cleanSpaces(lines.join(' '))
+  const stop = /\b(DOMICILIO|NATURALEZA|FECHA|EXPTE|HOJA|OBJETO|CUIT\s*:|DNI\s*:)\b/i
+  const stopIdx = bloque.search(stop)
+  if (stopIdx >= 0) bloque = bloque.slice(0, stopIdx)
+
+  bloque = bloque.replace(reStart, '').trim()
+
+  if (!bloque) return ''
+
+  const reCuitTail =
+    /\b\d{2}\s*[-–]?\s*\d{7,8}\s*[-–]?\s*\d\s*[-–]\s*([A-ZÁÉÍÓÚÜÑ0-9.\- \u00BA\u00AA]{3,})$/i
+  const mCuit = reCuitTail.exec(bloque)
+  if (mCuit?.[1]) {
+    let name = mCuit[1]
+      .replace(/^[-–]\s*/, '')
+      .replace(/[.,](?=\s|$)/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+
+    name = name.replace(/\b([A-ZÁÉÍÓÚÜÑ]{2,})-([A-ZÁÉÍÓÚÜÑ]{2,})\b/g, '$1 $2')
+    return name
   }
 
-  m = bloque.match(
-    /\b(20|23|24|27|30|33)\s*[-–]?\s*\d{7,8}\s*[-–]?\s*\d\s*[-–]\s*([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\s\.]{3,})/i
-  )
-  if (m?.[2]) {
-    return m[2].replace(/[.,]/g, '').replace(/\s+/g, ' ').trim()
+  const mDash = /-\s*([A-ZÁÉÍÓÚÜÑ0-9.\- ]{3,})$/i.exec(bloque)
+  if (mDash?.[1]) {
+    let name = mDash[1]
+      .replace(/[.,](?=\s|$)/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+    name = name.replace(/\b([A-ZÁÉÍÓÚÜÑ]{2,})-([A-ZÁÉÍÓÚÜÑ]{2,})\b/g, '$1 $2')
+    return name
   }
 
-  return ''
+  const parts = bloque
+    .split(/\s{2,}|\s-\s|,|;/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+  parts.sort((a, b) => b.length - a.length)
+  return parts[0] ?? ''
 }
 
 export function extraerDomicilio(texto: string): string {
   if (!texto) return ''
+  const raw = normalizeOCR(texto)
+  const U = upperNoAccents(raw)
 
-  const T = texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[|¦•·│▏▕]+/g, ' ')
-    .toUpperCase()
+  const lineRe = /DOMICILIO[^\n]*\n?/i
+  const lineMatch = lineRe.exec(raw) || lineRe.exec(U)
+  if (!lineMatch) return ''
 
-  // Tomo desde DOMICILIO...
-  const m = T.match(/\bD[0O]M[I1]C[ I1]L[I1]O\b\s*([\s\S]+?)(?=$|\r?\n)/i)
-  let s = m?.[1] ?? ''
+  const line = (raw.slice(lineMatch.index) || '')
+    .split(/\r?\n/)[0]
+    .replace(/DOMICILIO\b\s*[:|-]?\s*/i, '')
 
-  if (!s) return ''
-
-  // Cortes duros si aparece NAT/INAT, OBJETO, EMISION, etc.
-  const stopMarkers = [
-    /\bI?N?ATURALEZA\b/, // NATURALEZA / INATURALEZA / NAT...
-    /\bOBJET[O0]\b/,
-    /\bEMISION\b/,
-    /\bSECUENCIA\b/,
-    /\bFECHA\b/,
-    /\bEXPTE\b/,
-    /\bHOJA\b/,
-    /\bCUIT\b/,
-    /\bDNI\b/
+  let s = line
+  const stops = [
+    /\bNATURALEZA\b/i,
+    /\bOBJETO\b/i,
+    /\bEMISION\b/i,
+    /\bFECHA\b/i,
+    /\bEXPTE\b/i,
+    /\bHOJA\b/i,
+    /\bCUIT\b/i,
+    /\bDNI\b/i
   ]
-
-  let cut = s.length
-  for (const r of stopMarkers) {
-    const mm = s.search(r)
-    if (mm >= 0 && mm < cut) cut = mm
+  for (const r of stops) {
+    const i = s.search(r)
+    if (i >= 0) s = s.slice(0, i)
   }
-  s = s.slice(0, cut)
 
-  // Limpieza y normalización
-  return s
-    .replace(/[\n\r]+/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .replace(/\s*-\s*(?=-|$)/g, ' ')
+  s = s
+    .replace(/[|]/g, ' ')
+    .replace(/\s-\s/g, ' - ')
     .replace(/[.,](?=\s|$)/g, '')
+    .replace(/\s{2,}/g, ' ')
     .trim()
+
+  s = s.replace(/\b(CAPITAL)\s+\1\b/gi, '$1')
+
+  return s
 }
 
 export function extraerSecuencia(texto: string): string | null {
@@ -441,42 +387,25 @@ export function extraerSecuencia(texto: string): string | null {
   return ultimo
 }
 
+type ObjetoPick = {
+  todos: string[]
+  mejor: string | null
+}
+
 function normalizeObjetoToken(
   raw: string,
   opts: { mode?: 'alnum' | 'numeric'; min?: number; max?: number } = {}
 ): string | null {
   const mode = opts.mode ?? 'alnum'
-  const min = opts.min ?? 7
-  const max = opts.max ?? 12
+  const min = opts.min ?? 5
+  const max = opts.max ?? 16
   if (!raw) return null
-
-  // Base: limpieza y correcciones OCR de letras que suelen ser dígitos
-  let t = raw
-    .toUpperCase()
-    .replace(/^[`'"]/g, '')
-    .replace(/[^A-Z0-9]/g, '')
-
-  // Correcciones OCR comunes
-  t = t.replace(/[OQD]/g, '0').replace(/S/g, '5').replace(/B/g, '8')
-
+  let t = fixDigits(upperNoAccents(raw)).replace(/[^A-Z0-9]/g, '')
   if (!t) return null
-
-  // Evitar "IMPORTE" y variantes
-  const tLettersOnly = raw.toUpperCase().replace(/[^A-Z]/g, '')
-  if (/^I?MPORTE$/.test(tLettersOnly)) return null
-
-  if (mode === 'numeric') {
-    // Para INMOBILIARIO: solo dígitos (después de correcciones), longitudes más permisivas
-    const digits = t.replace(/\D/g, '')
-    if (digits.length < 5 || digits.length > 16) return null
-    return digits
-  } else {
-    // Alfanumérico: 7–12, debe tener al menos una letra y un dígito
-    if (t.length < min || t.length > max) return null
-    if (!/[A-Z]/.test(t) || !/\d/.test(t)) return null
-    // Corrección inicial común (si empieza con O -> 0) ya cubierta por reemplazos
-    return t
-  }
+  if (mode === 'numeric') t = t.replace(/\D/g, '')
+  if (t.length < min || t.length > max) return null
+  if (mode === 'alnum' && (!/[A-Z]/.test(t) || !/\d/.test(t))) return null
+  return t
 }
 
 function pickMostFrequent(cands: string[]): string | null {
@@ -494,67 +423,73 @@ function pickMostFrequent(cands: string[]): string | null {
   return best || null
 }
 
-export function extraerObjeto(texto: string): string | null {
-  if (!texto) return null
-  const T = texto
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-  const candidatos: string[] = []
+export function extraerObjetos(texto: string): ObjetoPick {
+  const todos: string[] = []
+  if (!texto) return { todos, mejor: null }
 
-  // 1) Después de EMISION PATENTE (alfanumérico)
+  const raw = normalizeOCR(texto)
+  const T = upperNoAccents(raw)
+
   {
-    const re = /EMISION\s+PATENTE\s+([A-Z0-9]{5,16})\b/g
-    let m: RegExpExecArray | null
-    while ((m = re.exec(T))) {
-      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
-      if (norm) candidatos.push(norm)
-    }
-  }
-
-  // 2) Formato explícito OBJETO: (alfanumérico)
-  {
-    const re = /\bOBJET[O0]\b\s*[:\-]?\s*([A-Z0-9]{5,16})\b/g
-    let m: RegExpExecArray | null
-    while ((m = re.exec(T))) {
-      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
-      if (norm) candidatos.push(norm)
-    }
-  }
-
-  // 3) Claves comunes con N° (INMOBILIARIO solo numérico; resto alfanumérico)
-  {
-    type KeySpec = { pat: string; mode: 'alnum' | 'numeric' }
-    const keys: KeySpec[] = [
-      { pat: String.raw`AUT[O0]M[O0]T[O0]R\s+PATENTE`, mode: 'alnum' },
-      { pat: String.raw`INGRES[O0]S?\s+BRUT[O0]S?`, mode: 'alnum' },
-      { pat: String.raw`INM[O0]BILIAR[I1][O0]\s+PADR[O0]N`, mode: 'numeric' }, // ← acá forzamos numérico
-      { pat: String.raw`TASA\s+DE\s+JUSTICIA\s+AUT[O0]S?`, mode: 'alnum' },
-      { pat: String.raw`MULTAS?`, mode: 'alnum' },
-      { pat: String.raw`SELLO`, mode: 'alnum' }
-    ]
-    const afterN = String.raw`(?:N|N[°*º°]|NRO|NUM(?:ERO)?)?\s*[:=\-]?\s*([A-Z0-9]{5,16})\b`
-
-    for (const k of keys) {
-      const re = new RegExp(k.pat + String.raw`\s+` + afterN, 'g')
-      let m: RegExpExecArray | null
-      while ((m = re.exec(T))) {
-        const norm = normalizeObjetoToken(m[1], { mode: k.mode })
-        if (norm) candidatos.push(norm)
+    const re = /OBJETO[^\n]*\n([\s\S]{0,600})/i
+    const m = re.exec(T)
+    if (m) {
+      const bloque = m[1].split(/\r?\n/).slice(0, 10)
+      for (const line of bloque) {
+        const cand = line.match(/\b([A-Z0-9]{5,16})\b/g) || []
+        for (const c of cand) {
+          const normNum = normalizeObjetoToken(c, { mode: 'numeric' })
+          const normAln = normalizeObjetoToken(c, { mode: 'alnum' })
+          if (normNum) todos.push(normNum)
+          else if (normAln) todos.push(normAln)
+        }
       }
     }
   }
 
-  // 4) Ventana cerca de palabras clave (fallback alfanumérico)
-  if (!candidatos.length) {
-    const near =
-      /(?:EMISION|PATENTE|OBJET[O0]|AUTOMOTOR|AUTOMOTORES)[\s\S]{0,40}\b([A-Z0-9]{7,12})\b/g
+  {
+    const re = /\bEMISION(?:\s+MASIVA)?[^\n]*?\b([A-Z0-9]{5,16})\b/gi
     let m: RegExpExecArray | null
-    while ((m = near.exec(T))) {
-      const norm = normalizeObjetoToken(m[1], { mode: 'alnum' })
-      if (norm) candidatos.push(norm)
+    while ((m = re.exec(T))) {
+      const c = m[1]
+      const normNum = normalizeObjetoToken(c, { mode: 'numeric' })
+      const normAln = normalizeObjetoToken(c, { mode: 'alnum' })
+      if (normNum) todos.push(normNum)
+      else if (normAln) todos.push(normAln)
     }
   }
 
-  return pickMostFrequent(candidatos)
+  {
+    const re = /\b(?:N|N[°º*]|NRO|NUM(?:ERO)?)\s*[:=-]?\s*([A-Z0-9]{5,16})\b/gi
+    let m: RegExpExecArray | null
+    while ((m = re.exec(T))) {
+      const c = m[1]
+      const normNum = normalizeObjetoToken(c, { mode: 'numeric' })
+      const normAln = normalizeObjetoToken(c, { mode: 'alnum' })
+      if (normNum) todos.push(normNum)
+      else if (normAln) todos.push(normAln)
+    }
+  }
+
+  {
+    const near =
+      /(PATENTE|AUTOMOTOR|INMOBILIARIO|INGRESOS\s+BRUTOS|SELLO|MULTAS?)[\s\S]{0,60}\b([A-Z0-9]{5,16})\b/gi
+    let m: RegExpExecArray | null
+    while ((m = near.exec(T))) {
+      const c = m[2]
+      const normNum = normalizeObjetoToken(c, {
+        mode: /INMOBILIAR/.test(m[1]) ? 'numeric' : 'alnum'
+      })
+      if (normNum) todos.push(normNum)
+    }
+  }
+
+  const normTodos = todos.filter(Boolean)
+  const mejor = pickMostFrequent(normTodos)
+
+  return { todos: Array.from(new Set(normTodos)), mejor }
+}
+
+export function extraerObjeto(texto: string): string | null {
+  return extraerObjetos(texto).mejor
 }

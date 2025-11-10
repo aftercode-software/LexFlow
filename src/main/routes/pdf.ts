@@ -8,8 +8,8 @@ import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
 
 export function registerPdfHandlers() {
   ipcMain.handle('pdf:extract-data', async (_, arrayBuffer: ArrayBuffer) => {
-    const { data, originalPdfPath } = await extractDataFromPdf(arrayBuffer)
-    return { data, originalPdfPath }
+    const { data, originalPdfPath, pngPath } = await extractDataFromPdf(arrayBuffer)
+    return { data, originalPdfPath, pngPath }
   })
 
   ipcMain.handle('generateDocument', async (_, { data, originalPdfPath }) => {

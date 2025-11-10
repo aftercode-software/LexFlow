@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import ImageMagnifier from '@renderer/components/ImageMagnifier'
 import { FileUpload } from '@renderer/components/modulo-pdf/FileUpload'
 
 import FormATM from '@renderer/components/modulo-pdf/forms/FormATM'
@@ -15,6 +16,7 @@ import {
   IconReceiptOff,
   IconRubberStamp
 } from '@tabler/icons-react'
+
 import { ChevronLeft } from 'lucide-react'
 import { ComponentType, useState } from 'react'
 import { toast } from 'sonner'
@@ -41,6 +43,7 @@ export default function ScanBoletas() {
   const [typePDF, setTypePDF] = useState<Naturalezas | null>(null)
   const [extractedData, setExtractedData] = useState<DatosFormulario | null>(null)
   const [originalPdfPath, setOriginalPdfPath] = useState<string>('')
+  const [imageUrl, setImageUrl] = useState('')
 
   const handleProcess = () => {
     if (!file || !typePDF) return
@@ -49,11 +52,15 @@ export default function ScanBoletas() {
       try {
         const buffer = reader.result as ArrayBuffer
         setLoading(true)
-        const { data, originalPdfPath } = await window.api.extractDataFromPdf(buffer, typePDF)
+        const { data, originalPdfPath, pngPath } = await window.api.extractDataFromPdf(
+          buffer,
+          typePDF
+        )
 
-        console.log('Ruta del PDF original:', originalPdfPath)
+        console.log('Ruta del png original:', pngPath)
         setExtractedData(data)
         setOriginalPdfPath(originalPdfPath)
+        setImageUrl(pngPath)
         setStep(Steps.REVIEW)
       } catch (e) {
         if (
@@ -186,34 +193,47 @@ export default function ScanBoletas() {
       )}
 
       {step === Steps.REVIEW && extractedData && (
-        <Card>
-          <CardHeader className="flex flex-row justify-between items-center">
-            <aside>
-              <p className="text-xl font-medium text-zinc-800">Boleta de {typePDF}</p>
-              <p className="text-base text-zinc-500">
-                Revisá que los datos sean correctos antes de enviar
-              </p>
-            </aside>
-            <Button size="lg" onClick={handleSubmitForm}>
-              {loading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-              ) : (
-                'Generar escrito'
-              )}
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-6">
-              <FormATM
-                estado={''}
-                {...extractedData}
-                pdfRoute={originalPdfPath}
-                onComplete={handleFormComplete}
-                typePDF={typePDF}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex w-full gap-6">
+          <div className="w-1/2">
+            <Card className="h-full">
+              <CardHeader className="flex flex-row justify-between items-center">
+                <aside>
+                  <p className="text-xl font-medium text-zinc-800">Boleta de {typePDF}</p>
+                  <p className="text-base text-zinc-500">
+                    Revisá que los datos sean correctos antes de enviar
+                  </p>
+                </aside>
+                <Button size="lg" onClick={handleSubmitForm}>
+                  {loading ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+                  ) : (
+                    'Generar escrito'
+                  )}
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-6">
+                  <FormATM
+                    estado=""
+                    {...extractedData}
+                    pdfRoute={originalPdfPath}
+                    onComplete={handleFormComplete}
+                    typePDF={typePDF}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <aside className="w-1/2 flex items-center justify-center">
+            <ImageMagnifier
+              src={imageUrl}
+              alt="Vista previa de la boleta"
+              zoom={2}
+              lensSize={300}
+            />
+          </aside>
+        </div>
       )}
     </div>
   )
