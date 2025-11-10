@@ -104,6 +104,11 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
       path = 'inmobiliarios'
       break
   }
+  await page.locator('input[type="submit"][value="Guardar"]').click()
+  await page.waitForTimeout(1500)
+  const grabar = page.locator('xpath=/html/body/div[11]/div[3]/a[1]/span')
+  await grabar.click()
+  console.log(`✅ Boleta ${boleta.boleta} completada`)
   console.log(path)
   const archivoPath = `${BASE_OUTPUT_DIR}/boletas/${path}/ATM${boleta.boleta}.pdf`
   await page.setInputFiles('input#filebox_file_id_1', archivoPath)
@@ -159,9 +164,9 @@ export async function subirBoletas(
   } else {
     await page.locator('#_easyui_combobox_i3_9').click()
   }
-  // await page.waitForTimeout(4000)
-  // await page.locator('#buttonGuardar').click()
-  // await page.waitForTimeout(3000)
+  await page.waitForTimeout(4000)
+  await page.locator('#buttonGuardar').click()
+  await page.waitForTimeout(3000)
   const maxIterations = Math.min(boletas.length, 25)
   const tipos = new Set<string>()
 
