@@ -159,9 +159,9 @@ export async function subirBoletas(
   } else {
     await page.locator('#_easyui_combobox_i3_9').click()
   }
-  await page.waitForTimeout(4000)
-  await page.locator('#buttonGuardar').click()
-  await page.waitForTimeout(3000)
+  // await page.waitForTimeout(4000)
+  // await page.locator('#buttonGuardar').click()
+  // await page.waitForTimeout(3000)
   const maxIterations = Math.min(boletas.length, 25)
   const tipos = new Set<string>()
 
