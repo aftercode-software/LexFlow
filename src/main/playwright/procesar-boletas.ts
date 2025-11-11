@@ -85,7 +85,7 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
 
   await page.waitForTimeout(2500)
 
-  console.log('boleee', boleta)
+  console.log('boleta', boleta)
   let path = ''
   switch (boleta.tipo) {
     case 'Ingresos Brutos':
@@ -104,16 +104,15 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
       path = 'inmobiliarios'
       break
   }
+  console.log(path)
+  const archivoPath = `${BASE_OUTPUT_DIR}/boletas/${path}/ATM${boleta.boleta}.pdf`
+  await page.setInputFiles('input#filebox_file_id_1', archivoPath)
   await page.locator('input[type="submit"][value="Guardar"]').click()
   await page.waitForTimeout(1500)
   const grabar = page.locator('xpath=/html/body/div[11]/div[3]/a[1]/span')
   await grabar.click()
-  console.log(`✅ Boleta ${boleta.boleta} completada`)
-  console.log(path)
-  const archivoPath = `${BASE_OUTPUT_DIR}/boletas/${path}/ATM${boleta.boleta}.pdf`
-  await page.setInputFiles('input#filebox_file_id_1', archivoPath)
+  console.log(`✅ Boleta ${boleta.boleta} completada`) 
 
-  console.log(`✅ Boleta ${boleta.boleta} completada`)
 }
 
 // Flujo principal
