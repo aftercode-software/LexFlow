@@ -3,9 +3,10 @@ import { spawn } from 'child_process'
 import { createReport } from 'docx-templates'
 import fsPromises from 'fs/promises'
 import path from 'path'
-import { app } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { PDFDocument } from 'pdf-lib'
 import { BASE_OUTPUT_DIR } from '../../shared/constants/output-dir'
+import mammoth from 'mammoth'
 
 let cachedEscritoTemplate: Buffer | null = null
 
@@ -61,25 +62,152 @@ export async function generateWrittenPdf(data: any): Promise<string> {
     }
   })
 
+  const { value: rawHtml } = await mammoth.convertToHtml({ buffer: docxBuffer })
+
+  const customStyles = `
+      <style>
+        /* --- 1. Globales --- */
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.5;
+          font-size: 11pt;
+          padding-left: 1.5cm;
+        }
+
+        /* --- 2. Párrafos (Default) --- */
+        p {
+          text-align: justify;
+          margin-bottom: 12px;
+          text-indent: 80px;
+        }
+
+        /* --- 3. Listas (para 1.- y 2.-) --- */
+        ol {
+          text-align: justify;
+          padding-left: 40px;
+          margin-bottom: 12px;
+        }
+        li {
+          margin-bottom: 4px;
+        }
+
+        /* =================================================== */
+        /* --- 4. ANULACIONES (Párrafos especiales) --- */
+        /* =================================================== */
+
+        /* "JUICIO MONITORIO..." (1er p) */
+        body > p:nth-of-type(1) {
+          text-align: right; /* <-- CAMBIO: 'center' a 'right' */
+          font-weight: bold;
+          margin-bottom: 25px;
+          margin-right: 50px; /* <-- AÑADIDO: para alinear */
+          text-indent: 0;
+        }
+
+        /* "SEÑOR/A JUEZ:" (2do p) */
+        body > p:nth-of-type(2) {
+          text-align: left; /* <-- CAMBIO: 'right' a 'left' */
+          font-weight: bold;
+          margin-bottom: 20px;
+          text-indent: 0 !important;
+        }
+
+        /* "Marcela Ines Amarillo..." (3er p) */
+        /* ... */
+        /* "I.- Que en virtud..." (4to p) */
+        /* ... */
+
+        /* --- 5. Final del Documento --- */
+
+        /* "ES JUSTICIA." (Anteúltimo párrafo) */
+        body > p:nth-last-of-type(2) {
+          text-align: right;
+          font-weight: bold;
+          margin-left: 0;
+          margin-right: 50px;
+          text-indent: 0;
+        }
+
+        /* Párrafo que CONTIENE la firma (Último párrafo) */
+        body > p:nth-last-of-type(1) {
+          text-align: right;
+          margin-left: 0;
+          margin-right: 50px;
+          margin-bottom: 0;
+          margin-top: 10px;
+          text-indent: 0;
+        }
+
+        /* La imagen de la firma */
+        img {
+          width: 100px !important;
+          height: 100px !important;
+          object-fit: contain;
+        }
+      </style>
+    `
+  // Envolvemos el HTML de mammoth con nuestros estilos
+  const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          ${customStyles}
+        </head>
+        <body>
+          ${rawHtml}
+        </body>
+      </html>
+    `
+
+  const pdfBytes = await new Promise<Buffer>((resolve, reject) => {
+    // Creamos una ventana invisible
+    const offscreenWindow = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        // La seguridad de Electron puede bloquear 'data:' URLs,
+        // esto es más seguro si el HTML es complejo
+        nodeIntegration: false,
+        contextIsolation: true
+      }
+    })
+
+    // Cargamos nuestro HTML generado
+    // Usamos data:text/html;charset=utf-8, para manejar acentos
+    offscreenWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
+
+    offscreenWindow.webContents.on('did-finish-load', async () => {
+      try {
+        // "Imprimimos" la página a PDF
+        const pdf = await offscreenWindow.webContents.printToPDF({
+          margins: {
+            marginType: 'printableArea'
+          },
+          printBackground: true,
+          pageSize: 'A4'
+        })
+        resolve(pdf)
+      } catch (err) {
+        reject(err)
+      } finally {
+        // Cerramos la ventana invisible
+        offscreenWindow.close()
+      }
+    })
+
+    offscreenWindow.webContents.on('did-fail-load', (e, code, desc) => {
+      reject(new Error(`Ventana invisible falló al cargar: ${desc}`))
+      offscreenWindow.close()
+    })
+  })
+
+  // --- Guardar el PDF ---
   const tempDir = path.join(app.getPath('temp'), 'boletas-temp')
   await fsPromises.mkdir(tempDir, { recursive: true })
 
-  const docxPath = path.join(tempDir, `${data.boleta}.docx`)
-  await fsPromises.writeFile(docxPath, docxBuffer)
-
-  await new Promise<void>((resolve, reject) => {
-    const proc = spawn('soffice', [
-      '--headless',
-      '--convert-to',
-      'pdf',
-      '--outdir',
-      tempDir,
-      docxPath
-    ])
-    proc.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`soffice exit ${code}`))))
-    proc.on('error', reject)
-  })
   const pdfPath = path.join(tempDir, `${data.boleta}.pdf`)
+  await fsPromises.writeFile(pdfPath, pdfBytes)
+
   return pdfPath
 }
 
