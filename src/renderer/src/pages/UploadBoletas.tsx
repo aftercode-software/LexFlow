@@ -51,17 +51,24 @@ const BoletaRow = ({
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{boleta.boleta}</TableCell>
-      <TableCell>{boleta.demandado.apellidoYNombre}</TableCell>
-      <TableCell>{boleta.recaudador.nombre}</TableCell>
-      {showExpediente && <TableCell>{boleta.expediente || '-'}</TableCell>}
-      <TableCell>{boleta.fechaInicioDemanda}</TableCell>
-      <TableCell>${boleta.monto}</TableCell>
-      <TableCell>{badgeEstado(boleta.estado)}</TableCell>
+      <TableCell className="font-medium">{boleta?.boleta ?? ''}</TableCell>
+
+      <TableCell>{boleta?.demandado?.apellidoYNombre ?? ''}</TableCell>
+
+      <TableCell>{boleta?.recaudador?.nombre ?? ''}</TableCell>
+
+      {showExpediente && <TableCell>{boleta?.expediente ?? ''}</TableCell>}
+
+      <TableCell>{boleta?.fechaInicioDemanda ?? ''}</TableCell>
+
+      <TableCell>${boleta?.monto ?? ''}</TableCell>
+
+      <TableCell>{badgeEstado(boleta?.estado ?? '')}</TableCell>
+
       <TableCell>
         <button className="flex items-center hover:underline cursor-pointer">
           <FileText className="mr-2 h-4 w-4 text-gray-400" />
-          {boleta.boleta}
+          {boleta?.boleta ?? ''}
         </button>
       </TableCell>
     </TableRow>
