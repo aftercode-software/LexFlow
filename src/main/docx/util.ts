@@ -64,24 +64,22 @@ export async function generateWrittenPdf(data: any): Promise<string> {
 
   const { value: rawHtml } = await mammoth.convertToHtml({ buffer: docxBuffer })
 
+  console.log('html', rawHtml)
   const customStyles = `
       <style>
-        /* --- 1. Globales --- */
         body {
           font-family: Arial, sans-serif;
           line-height: 1.5;
-          font-size: 11pt;
+          font-size: 12pt;
           padding-left: 1.5cm;
         }
 
-        /* --- 2. Párrafos (Default) --- */
         p {
           text-align: justify;
           margin-bottom: 12px;
           text-indent: 80px;
         }
 
-        /* --- 3. Listas (para 1.- y 2.-) --- */
         ol {
           text-align: justify;
           padding-left: 40px;
@@ -91,35 +89,27 @@ export async function generateWrittenPdf(data: any): Promise<string> {
           margin-bottom: 4px;
         }
 
-        /* =================================================== */
-        /* --- 4. ANULACIONES (Párrafos especiales) --- */
-        /* =================================================== */
-
-        /* "JUICIO MONITORIO..." (1er p) */
         body > p:nth-of-type(1) {
-          text-align: right; /* <-- CAMBIO: 'center' a 'right' */
+          text-align: right;
           font-weight: bold;
           margin-bottom: 25px;
-          margin-right: 50px; /* <-- AÑADIDO: para alinear */
           text-indent: 0;
         }
 
-        /* "SEÑOR/A JUEZ:" (2do p) */
-        body > p:nth-of-type(2) {
-          text-align: left; /* <-- CAMBIO: 'right' a 'left' */
+        body > p:nth-of-type(3) {
+          text-align: left;
           font-weight: bold;
           margin-bottom: 20px;
           text-indent: 0 !important;
         }
 
-        /* "Marcela Ines Amarillo..." (3er p) */
-        /* ... */
-        /* "I.- Que en virtud..." (4to p) */
-        /* ... */
+        body > p:nth-last-of-type(4) {
+          line-height: 0.5;
+        }
+        body > p:nth-last-of-type(3) {
+          line-height: 0.5;
+        }
 
-        /* --- 5. Final del Documento --- */
-
-        /* "ES JUSTICIA." (Anteúltimo párrafo) */
         body > p:nth-last-of-type(2) {
           text-align: right;
           font-weight: bold;
@@ -128,7 +118,6 @@ export async function generateWrittenPdf(data: any): Promise<string> {
           text-indent: 0;
         }
 
-        /* Párrafo que CONTIENE la firma (Último párrafo) */
         body > p:nth-last-of-type(1) {
           text-align: right;
           margin-left: 0;
@@ -138,10 +127,9 @@ export async function generateWrittenPdf(data: any): Promise<string> {
           text-indent: 0;
         }
 
-        /* La imagen de la firma */
         img {
-          width: 100px !important;
-          height: 100px !important;
+          width: 120px !important;
+          height: 120px !important;
           object-fit: contain;
         }
       </style>
