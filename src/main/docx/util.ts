@@ -62,7 +62,8 @@ export async function generateWrittenPdf(data: any): Promise<string> {
     }
   })
 
-  const { value: rawHtml } = await mammoth.convertToHtml({ buffer: docxBuffer })
+  const docxBufferNode = Buffer.from(docxBuffer)
+  const { value: rawHtml } = await mammoth.convertToHtml({ buffer: docxBufferNode })
 
   console.log('html', rawHtml)
   const customStyles = `
@@ -134,7 +135,7 @@ export async function generateWrittenPdf(data: any): Promise<string> {
         }
       </style>
     `
-  // Envolvemos el HTML de mammoth con nuestros estilos
+
   const html = `
       <!DOCTYPE html>
       <html>
@@ -149,24 +150,18 @@ export async function generateWrittenPdf(data: any): Promise<string> {
     `
 
   const pdfBytes = await new Promise<Buffer>((resolve, reject) => {
-    // Creamos una ventana invisible
     const offscreenWindow = new BrowserWindow({
       show: false,
       webPreferences: {
-        // La seguridad de Electron puede bloquear 'data:' URLs,
-        // esto es más seguro si el HTML es complejo
         nodeIntegration: false,
         contextIsolation: true
       }
     })
 
-    // Cargamos nuestro HTML generado
-    // Usamos data:text/html;charset=utf-8, para manejar acentos
     offscreenWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`)
 
     offscreenWindow.webContents.on('did-finish-load', async () => {
       try {
-        // "Imprimimos" la página a PDF
         const pdf = await offscreenWindow.webContents.printToPDF({
           margins: {
             marginType: 'printableArea'
@@ -178,18 +173,16 @@ export async function generateWrittenPdf(data: any): Promise<string> {
       } catch (err) {
         reject(err)
       } finally {
-        // Cerramos la ventana invisible
         offscreenWindow.close()
       }
     })
 
-    offscreenWindow.webContents.on('did-fail-load', (e, code, desc) => {
+    offscreenWindow.webContents.on('did-fail-load', (desc) => {
       reject(new Error(`Ventana invisible falló al cargar: ${desc}`))
       offscreenWindow.close()
     })
   })
 
-  // --- Guardar el PDF ---
   const tempDir = path.join(app.getPath('temp'), 'boletas-temp')
   await fsPromises.mkdir(tempDir, { recursive: true })
 
