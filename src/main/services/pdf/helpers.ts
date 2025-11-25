@@ -1,28 +1,44 @@
 export function normalizeOCR(s: string): string {
   if (!s) return ''
+
   return s
 
-    .replace(/ΓÇö/g, '—')
-    .replace(/├ü/g, 'Á')
-    .replace(/├│/g, 'Ó')
-    .replace(/├¡/g, 'á')
-    .replace(/├⌐/g, 'é')
-    .replace(/├│/g, 'ó')
-    .replace(/├║/g, 'ú')
-    .replace(/├ë/g, 'ë')
     .replace(/Ã±/g, 'ñ')
+    .replace(/Ã‘/g, 'Ñ')
     .replace(/Ã¡/g, 'á')
+    .replace(/Ã/g, 'Á')
     .replace(/Ã©/g, 'é')
+    .replace(/Ã‰/g, 'É')
     .replace(/Ã­/g, 'í')
+    .replace(/Ã/g, 'Í')
     .replace(/Ã³/g, 'ó')
+    .replace(/Ã“/g, 'Ó')
     .replace(/Ãº/g, 'ú')
+    .replace(/Ãš/g, 'Ú')
     .replace(/Ãœ/g, 'Ü')
     .replace(/Ã§/g, 'ç')
 
-    .replace(/[|¦•·│▏▕├─┬┤┘└╔╗╚╝═╟╢╠╣╦╩╬]/g, ' ')
+    .replace(/├ü/g, 'Á')
+    .replace(/├í/g, 'á')
+    .replace(/├®/g, 'é')
+    .replace(/├⌐/g, 'é')
+    .replace(/├¡/g, 'í')
+    .replace(/├│/g, 'ó')
+    .replace(/├║/g, 'ú')
+    .replace(/├æ/g, 'Ñ')
+    .replace(/├▒/g, 'ñ')
+    .replace(/├ë/g, 'É')
+    .replace(/├/g, '')
+
+    .replace(/ΓÇö/g, '-')
+
+    .replace(/[|¦•·│▏▕├─┬┤┘└╔╗╚╝═╟╢╠╣╦╩╬_¬°]/g, ' ')
     .replace(/[“”«»]/g, '"')
     .replace(/[\u2013\u2014\u2212–—]/g, '-')
     .replace(/\u00A0/g, ' ')
+
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 export function upperNoAccents(s: string): string {

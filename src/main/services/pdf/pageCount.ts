@@ -33,7 +33,7 @@ async function findLastPageByTrial(pdfPath: string, max = 50): Promise<number> {
   return lastOk
 }
 
-export async function getLastPageBuffer(pdfPath: string): Promise<Buffer> {
+export async function getSecondToLastPageBuffer(pdfPath: string): Promise<Buffer> {
   const toImage = fromPath(pdfPath, options)
 
   let pageCount = await countPdfPagesRegex(pdfPath)
@@ -42,7 +42,19 @@ export async function getLastPageBuffer(pdfPath: string): Promise<Buffer> {
     pageCount = await findLastPageByTrial(pdfPath, 50)
   }
 
-  const { buffer: lastPage } = await toImage(pageCount!, { responseType: 'buffer' })
-  if (!lastPage) throw new Error('Error convirtiendo la última hoja a imagen.')
-  return lastPage as Buffer
+  let targetPageNumber: number
+
+  if (pageCount === 2) {
+    targetPageNumber = 1
+  } else if (pageCount >= 3) {
+    targetPageNumber = pageCount - 1
+  } else {
+    throw new Error('El PDF tiene menos de dos páginas, no se puede obtener la página deseada.')
+  }
+
+  const { buffer: targetPageBuffer } = await toImage(targetPageNumber, {
+    responseType: 'buffer'
+  })
+  if (!targetPageBuffer) throw new Error('Error convirtiendo la página deseada a imagen.')
+  return targetPageBuffer as Buffer
 }

@@ -3,7 +3,7 @@ import fsPromises from 'fs/promises'
 import { app } from 'electron'
 
 import { fromPath } from 'pdf2pic'
-import { cropImage, extraerBoletaCSM, extraerCUIJ } from './utils'
+import { cropImageCedula, extraerBoletaCSM, extraerCUIJ } from './utils'
 import { getTextFromImage } from './ocr'
 import { createWorker, optionsCSM } from '../tesseract'
 
@@ -29,7 +29,7 @@ export async function processCMSPDF(tempPath: string) {
     throw new Error('Error convirtiendo PDF a imagen (CSM).')
   }
 
-  const seccionSuperior = await cropImage(convertedPage1, 0, 200, 600, 400)
+  const seccionSuperior = await cropImageCedula(convertedPage1, 0, 200, 600, 400)
   const seccionSuperiorPath = path.join(
     path.dirname(tempPath),
     `seccion-superior-${Date.now()}.png`

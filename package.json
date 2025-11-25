@@ -106,6 +106,15 @@
         "zip"
       ]
     },
+    "extraResources": [
+      {
+        "from": "resources",
+        "to": "bin",
+        "filter": [
+          "**/*.exe"
+        ]
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "perMachine": false,

@@ -11,13 +11,13 @@ import {
   extraerMonto,
   extraerNombreEmplazado,
   extraerObjeto,
-  extraerSecuencia,
-  recortarCuartoDerecho
+  extraerSecuencia
 } from './utils'
 import { createWorker } from '../tesseract'
-import { getLastPageBuffer } from './pageCount'
+import { getSecondToLastPageBuffer } from './pageCount'
 import { DatosFormulario } from '../../../shared/interfaces/form'
 import sharp from 'sharp'
+import { getScannerConfig } from '../../utils/getScannerConfig'
 
 export async function pruebaEscaneoMasivo() {
   const worker = await createWorker()
@@ -94,12 +94,14 @@ async function processExtraction(
   worker: Tesseract.Worker,
   pdfPath: string
 ): Promise<DatosFormulario> {
-  const lastPage = await getLastPageBuffer(pdfPath)
+  const lastPage = await getSecondToLastPageBuffer(pdfPath)
 
-  const datosSuperiorImg = await cropImage(lastPage, 0, 0, 1200, 500)
-  const mediaImg = await cropImage(lastPage, 0, 150, 1200, 200)
-  const tablaImg = await cropImage(lastPage, 0, 320, 1200, 760)
-  const montoImg = await recortarCuartoDerecho(lastPage)
+  const scannerConfig = await getScannerConfig()
+
+  const datosSuperiorImg = await cropImage(lastPage, scannerConfig.header)
+  const mediaImg = await cropImage(lastPage, scannerConfig.media)
+  const tablaImg = await cropImage(lastPage, scannerConfig.tabla)
+  const montoImg = await cropImage(lastPage, scannerConfig.monto)
 
   const tmpDir = path.join(app.getPath('temp'), 'scrapper-debug')
   await fsPromises.mkdir(tmpDir, { recursive: true })
@@ -119,9 +121,12 @@ async function processExtraction(
 
   const superiorTxt = await getTextFromImage(worker, datosSuperiorImg, 'header')
 
+  console.log('superiorTxt', superiorTxt)
   const mediaTxt = await getTextFromImage(worker, mediaImg, 'table')
   const tablaTxt = await getTextFromImage(worker, tablaImg, 'table')
   const montoTxt = await getTextFromImage(worker, montoImg, 'table')
+  console.log('montoTxt', montoTxt)
+  console.log('mediaTxt', mediaTxt)
 
   const boleta = extraerBoleta(superiorTxt) ?? ''
   const fechaEmision = superiorTxt.match(/\b([0-3]\d\/[01]\d\/(?:19|20)\d{2})\b/)?.[1] ?? ''

@@ -1,7 +1,14 @@
 import sharp from 'sharp'
 import { cleanSpaces, normalizeOCR, parseMontoMixto, upperNoAccents } from './helpers'
 
-export function cropImage(
+interface CropConfig {
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export function cropImageCedula(
   imageToCrop: Buffer<ArrayBufferLike>,
   x: number,
   y: number,
@@ -10,6 +17,41 @@ export function cropImage(
 ): Promise<Buffer<ArrayBufferLike>> {
   const image = sharp(imageToCrop)
   return image.extract({ left: x, top: y, width, height }).toBuffer()
+}
+
+export async function cropImage(imageBuffer: Buffer, config: CropConfig): Promise<Buffer> {
+  const image = sharp(imageBuffer)
+  const metadata = await image.metadata()
+
+  if (!metadata.width || !metadata.height) {
+    throw new Error('No se pudieron leer las dimensiones de la imagen')
+  }
+
+  const fullW = metadata.width
+  const fullH = metadata.height
+
+  const left = Math.floor(fullW * config.x)
+  const top = Math.floor(fullH * config.y)
+  let width = Math.floor(fullW * config.w)
+  let height = Math.floor(fullH * config.h)
+
+  if (left + width > fullW) width = fullW - left
+  if (top + height > fullH) height = fullH - top
+
+  return image
+    .extract({ left, top, width, height })
+
+    .grayscale()
+    .normalize()
+    .threshold(160)
+
+    .resize({
+      width: width * 2,
+      kernel: sharp.kernel.lanczos3
+    })
+    .sharpen()
+
+    .toBuffer()
 }
 
 export async function recortarCuartoDerecho(lastPage: Buffer<ArrayBufferLike>) {
@@ -25,13 +67,13 @@ export async function recortarCuartoDerecho(lastPage: Buffer<ArrayBufferLike>) {
   const cropWidth = Math.round(fullWidth / 4)
   const cropLeft = fullWidth - cropWidth
 
-  const cropHeight = Math.round(fullHeight / 1.5)
+  const cropHeight = Math.round(fullHeight / 1.2)
 
   const cropTop = fullHeight - cropHeight
 
   console.log(`Recortando en: x=${cropLeft}, y=${cropTop}, w=${cropWidth}, h=${cropHeight}`)
 
-  const montoImg = await cropImage(lastPage, cropLeft, cropTop, cropWidth, cropHeight)
+  const montoImg = await cropImageCedula(lastPage, cropLeft, cropTop, cropWidth, cropHeight)
 
   return montoImg
 }
@@ -259,75 +301,61 @@ export function extraerDocumento(texto: string | null): Documento {
 
 export function extraerNombreEmplazado(mediaTxt: string): string {
   if (!mediaTxt) return ''
-  const raw = normalizeOCR(mediaTxt)
 
-  const sinRec = raw
-    .split(/\r?\n/)
-    .filter((l) => !/^\s*REC\b/i.test(l))
-    .join('\n')
+  const clean = normalizeOCR(mediaTxt)
 
-  const reStart = /EMPLAZAR[AÁ]?\b[\s:\-|]*/i
-  const idx = sinRec.search(reStart)
-  if (idx === -1) return ''
+  const startPattern = /EMPLAZAR.{0,3}\s+/i
+  const endPattern = /\s+(?:DOMICILIO|NATURALEZA|OBJETO|FECHA)/i
 
-  const tail = sinRec.slice(idx)
-  const lines = tail.split(/\r?\n/).slice(0, 3)
+  const startMatch = clean.match(startPattern)
+  if (!startMatch) return ''
 
-  let bloque = cleanSpaces(lines.join(' '))
-  const stop = /\b(DOMICILIO|NATURALEZA|FECHA|EXPTE|HOJA|OBJETO|CUIT\s*:|DNI\s*:)\b/i
-  const stopIdx = bloque.search(stop)
-  if (stopIdx >= 0) bloque = bloque.slice(0, stopIdx)
+  let bloque = clean.slice(startMatch.index! + startMatch[0].length)
 
-  bloque = bloque.replace(reStart, '').trim()
-
-  if (!bloque) return ''
-
-  const reCuitTail =
-    /\b\d{2}\s*[-–]?\s*\d{7,8}\s*[-–]?\s*\d\s*[-–]\s*([A-ZÁÉÍÓÚÜÑ0-9.\- \u00BA\u00AA]{3,})$/i
-  const mCuit = reCuitTail.exec(bloque)
-  if (mCuit?.[1]) {
-    let name = mCuit[1]
-      .replace(/^[-–]\s*/, '')
-      .replace(/[.,](?=\s|$)/g, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-
-    name = name.replace(/\b([A-ZÁÉÍÓÚÜÑ]{2,})-([A-ZÁÉÍÓÚÜÑ]{2,})\b/g, '$1 $2')
-    return name
+  const endMatch = bloque.match(endPattern)
+  if (endMatch) {
+    bloque = bloque.slice(0, endMatch.index)
   }
 
-  const mDash = /-\s*([A-ZÁÉÍÓÚÜÑ0-9.\- ]{3,})$/i.exec(bloque)
-  if (mDash?.[1]) {
-    let name = mDash[1]
-      .replace(/[.,](?=\s|$)/g, '')
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-    name = name.replace(/\b([A-ZÁÉÍÓÚÜÑ]{2,})-([A-ZÁÉÍÓÚÜÑ]{2,})\b/g, '$1 $2')
-    return name
+  const cuitRegex = /(?:^|[\s\D])1?(?:20|23|24|27|30|33|34)[\s.\-]*\d{7,8}[\s.\-]*\d/
+
+  const matchCuit = bloque.match(cuitRegex)
+
+  let nombre = ''
+
+  if (matchCuit) {
+    const indexEndCuit = (matchCuit.index || 0) + matchCuit[0].length
+    nombre = bloque.slice(indexEndCuit)
+
+    // Limpieza inicial de prefijos sucios (- QUIMAN)
+    nombre = nombre.replace(/^[\s\-\.–|]+/, '').trim()
+  } else {
+    // Fallback
+    nombre = bloque.replace(/^[\d\-\.\s]+/, '').trim()
   }
 
-  const parts = bloque
-    .split(/\s{2,}|\s-\s|,|;/)
-    .map((x) => x.trim())
-    .filter(Boolean)
-  parts.sort((a, b) => b.length - a.length)
-  return parts[0] ?? ''
+  // --- CORRECCIÓN FINAL DE BASURA (. se) ---
+  // Elimina cualquier secuencia al final que empiece con punto o simbolo
+  // y siga con minúsculas o cosas que no son letras mayúsculas de nombres
+  return nombre
+    .replace(/\s*[\.,]\s*[a-z].*$/i, '') // Elimina ". se"
+    .replace(/[^A-Z0-9ÁÉÍÓÚÜÑ\s\.]+$/i, '') // Elimina símbolos raros al final
+    .trim()
 }
 
 export function extraerDomicilio(texto: string): string {
   if (!texto) return ''
   const raw = normalizeOCR(texto)
-  const U = upperNoAccents(raw)
 
-  const lineRe = /DOMICILIO[^\n]*\n?/i
-  const lineMatch = lineRe.exec(raw) || lineRe.exec(U)
+  // 1. Encontrar dónde empieza
+  const lineRe = /DOMICILIO[^\n]*/i
+  const lineMatch = lineRe.exec(raw)
   if (!lineMatch) return ''
 
-  const line = (raw.slice(lineMatch.index) || '')
-    .split(/\r?\n/)[0]
-    .replace(/DOMICILIO\b\s*[:|-]?\s*/i, '')
+  // Tomamos desde DOMICILIO en adelante (sin cortar por salto de linea aun)
+  let s = raw.slice(lineMatch.index).replace(/DOMICILIO\b\s*[:|-]?\s*/i, '')
 
-  let s = line
+  // 2. STOP WORDS (Corte duro si encuentra el siguiente campo)
   const stops = [
     /\bNATURALEZA\b/i,
     /\bOBJETO\b/i,
@@ -343,6 +371,24 @@ export function extraerDomicilio(texto: string): string {
     if (i >= 0) s = s.slice(0, i)
   }
 
+  // 3. LIMPIEZA DE INICIO (El problema del "A CERRO NEGRO")
+  // Elimina caracteres sueltos (letras o simbolos) al inicio seguidos de espacio
+  // Ej: "A " o "- " o "| "
+  s = s.replace(/^[\W_]*[A-Z]?\s+(?=[A-Z0-9])/i, '')
+
+  // 4. LIMPIEZA DE FINAL (El problema de "peines aun...")
+  // Buscamos el ancla geográfica final. Casi siempre termina en "MENDOZA".
+  // Buscamos "PROVINCIA DE MENDOZA" o solo "MENDOZA" al final de la dirección
+  const anclaMendoza = /(PROVINCIA\s+DE\s+MENDOZA|MENDOZA)/i
+  const matchMendoza = s.match(anclaMendoza)
+
+  if (matchMendoza) {
+    // Cortamos JUSTO después de que termina la palabra Mendoza
+    const finIndex = matchMendoza.index! + matchMendoza[0].length
+    s = s.slice(0, finIndex)
+  }
+
+  // Limpieza cosmética final
   s = s
     .replace(/[|]/g, ' ')
     .replace(/\s-\s/g, ' - ')
@@ -350,6 +396,7 @@ export function extraerDomicilio(texto: string): string {
     .replace(/\s{2,}/g, ' ')
     .trim()
 
+  // Fix común: "CAPITAL CAPITAL" -> "CAPITAL"
   s = s.replace(/\b(CAPITAL)\s+\1\b/gi, '$1')
 
   return s
