@@ -19,7 +19,12 @@ export async function apiRequest<T = any>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const { method = 'GET', body, headers = {}, baseUrl = process.env.PUBLIC_BACKEND_URL } = options
+  const {
+    method = 'GET',
+    body,
+    headers = {},
+    baseUrl = import.meta.env.VITE_PUBLIC_BACKEND_URL
+  } = options
 
   const token = await getToken()
   if (!token && endpoint !== '/auth/login') {
@@ -36,7 +41,7 @@ export async function apiRequest<T = any>(
     defaultHeaders['Content-Type'] = 'application/json'
   }
 
-  const url = `https://legali-back.vercel.app/api${endpoint}`
+  const url = `${baseUrl}${endpoint}`
 
   console.log('url', url)
   try {

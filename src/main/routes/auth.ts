@@ -12,14 +12,14 @@ export function registerAuthHandlers() {
     console.log('res', username, password)
     if (!res.ok) throw new Error(res.statusText)
 
-    const { access_token } = res.data
+    const { access_token, id } = res.data
 
     const encrypted = safeStorage.isEncryptionAvailable()
       ? safeStorage.encryptString(access_token)
       : access_token
 
     await fs.writeFile(tokenFile, encrypted)
-    return { success: true }
+    return { success: true, id }
   })
 
   ipcMain.handle('getToken', async () => {
