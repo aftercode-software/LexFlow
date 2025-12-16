@@ -81,7 +81,7 @@ async function procesarBoleta(page: Page, boleta: EnrichedBoleta) {
     'xpath=/html/body/div[11]/div[2]/form[1]/table/tbody/tr[13]/td[3]/div/span/span/a'
   )
   await oficial.click()
-  await page.locator('#_easyui_combobox_i8_2').click()
+  await page.locator('#_easyui_combobox_i8_1').click()
 
   await page.waitForTimeout(2500)
 
