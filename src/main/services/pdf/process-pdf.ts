@@ -14,7 +14,7 @@ import {
   extraerSecuencia
 } from './utils'
 import { createWorker } from '../tesseract'
-import { getSecondToLastPageBuffer } from './pageCount'
+import { getLastPageBuffer } from './pageCount'
 import { DatosFormulario } from '../../../shared/interfaces/form'
 import sharp from 'sharp'
 import { getScannerConfig } from '../../utils/getScannerConfig'
@@ -94,7 +94,7 @@ async function processExtraction(
   worker: Tesseract.Worker,
   pdfPath: string
 ): Promise<DatosFormulario> {
-  const lastPage = await getSecondToLastPageBuffer(pdfPath)
+  const lastPage = await getLastPageBuffer(pdfPath)
 
   const scannerConfig = await getScannerConfig()
 

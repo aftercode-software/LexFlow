@@ -32,7 +32,19 @@ async function findLastPageByTrial(pdfPath: string, max = 50): Promise<number> {
   if (lastOk === 0) throw new Error('No se pudo rasterizar ninguna página del PDF.')
   return lastOk
 }
+export async function getLastPageBuffer(pdfPath: string): Promise<Buffer> {
+  const lastPageNumber = await findLastPageByTrial(pdfPath, 50);
 
+  const toImage = fromPath(pdfPath, options);
+
+  const { buffer } = await toImage(lastPageNumber, { responseType: "buffer" });
+
+  if (!buffer || !Buffer.isBuffer(buffer) || buffer.length === 0) {
+    throw new Error("Error convirtiendo la última página a imagen.");
+  }
+
+  return buffer as Buffer;
+}
 export async function getSecondToLastPageBuffer(pdfPath: string): Promise<Buffer> {
   const toImage = fromPath(pdfPath, options)
 
