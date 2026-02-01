@@ -44,12 +44,14 @@ export async function getSecondToLastPageBuffer(pdfPath: string): Promise<Buffer
 
   let targetPageNumber: number
 
-  if (pageCount === 2) {
+  if (pageCount === 1) {
     targetPageNumber = 1
+  } else if (pageCount === 2) {
+    targetPageNumber = 2
   } else if (pageCount >= 3) {
-    targetPageNumber = pageCount - 1
+    targetPageNumber = pageCount - 2
   } else {
-    throw new Error('El PDF tiene menos de dos páginas, no se puede obtener la página deseada.')
+    throw new Error('El PDF tiene un número de páginas inesperado.')
   }
 
   const { buffer: targetPageBuffer } = await toImage(targetPageNumber, {

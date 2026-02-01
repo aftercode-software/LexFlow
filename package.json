@@ -115,6 +115,15 @@
         ]
       }
     ],
+    "extraFiles": [
+      {
+        "from": ".",
+        "to": ".",
+        "filter": [
+          "*.traineddata"
+        ]
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "perMachine": false,
