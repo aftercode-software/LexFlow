@@ -71,7 +71,7 @@ export async function generateWrittenPdf(data: any): Promise<string> {
         body {
           font-family: Arial, sans-serif;
           line-height: 1.7;
-          font-size: 12pt;
+          font-size: 11pt;
           padding-left: 1.5cm;
         }
 
@@ -129,8 +129,8 @@ export async function generateWrittenPdf(data: any): Promise<string> {
         }
 
         img {
-          width: 120px !important;
-          height: 120px !important;
+          width: 150px !important;
+          height: 150px !important;
           object-fit: contain;
         }
       </style>
